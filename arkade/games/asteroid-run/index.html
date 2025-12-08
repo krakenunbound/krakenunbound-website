@@ -356,7 +356,17 @@
             `;
             document.body.appendChild(musicBtn);
 
-            let isPlaying = false;
+            // Auto-play music on load
+            let isPlaying = true;
+            musicBtn.innerHTML = '🔊';
+            musicBtn.style.borderColor = '#0ff';
+            menuMusic.play().catch(() => {
+                // If autoplay blocked, update button state
+                isPlaying = false;
+                musicBtn.innerHTML = '🔇';
+                musicBtn.style.borderColor = 'rgba(0, 255, 255, 0.5)';
+            });
+
             musicBtn.addEventListener('click', () => {
                 if (isPlaying) {
                     menuMusic.pause();

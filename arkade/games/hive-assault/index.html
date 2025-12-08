@@ -390,10 +390,19 @@
             musicBtn.style.cssText = 'position:fixed;top:15px;right:15px;z-index:9999;width:44px;height:44px;border-radius:50%;border:2px solid rgba(0,255,255,0.5);background:rgba(0,0,0,0.7);color:#0ff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;';
             document.body.appendChild(musicBtn);
 
-            let isPlaying = false;
+            // Auto-play music on load
+            let isPlaying = true;
+            musicBtn.innerHTML = '🔊';
+            musicBtn.style.borderColor = '#0ff';
+            menuMusic.play().catch(() => {
+                isPlaying = false;
+                musicBtn.innerHTML = '🔇';
+                musicBtn.style.borderColor = 'rgba(0,255,255,0.5)';
+            });
+
             musicBtn.onclick = () => {
-                if (isPlaying) { menuMusic.pause(); musicBtn.innerHTML = '🔇'; }
-                else { menuMusic.play().catch(() => {}); musicBtn.innerHTML = '🔊'; }
+                if (isPlaying) { menuMusic.pause(); musicBtn.innerHTML = '🔇'; musicBtn.style.borderColor = 'rgba(0,255,255,0.5)'; }
+                else { menuMusic.play().catch(() => {}); musicBtn.innerHTML = '🔊'; musicBtn.style.borderColor = '#0ff'; }
                 isPlaying = !isPlaying;
             };
         });

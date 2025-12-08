@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KRAKEN KATEGORIES</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <style>
+        :root {
+            --text-color: #ffffff;
+            --accent-color: #00ffff;
+            --card-bg: rgba(20, 30, 50, 0.8);
+            --card-hover: rgba(40, 60, 90, 0.9);
+            --cat-1: #f9ca24;
+            --cat-2: #6ab04c;
+            --cat-3: #22a6b3;
+            --cat-4: #be2edd;
+            --neon-cyan: #00ffff;
+            --neon-magenta: #ff00ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 50%, #0a1a2e 100%);
+            color: var(--text-color);
+            font-family: 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        #wallpaper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -3;
+            object-fit: cover;
+            opacity: 0.4;
+        }
+
+        #star-canvas,
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #star-canvas {
+            z-index: -2;
+        }
+
+        #confetti-canvas {
+            z-index: 100;
+        }
+
+        #music-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            font-size: 18px;
+            cursor: pointer;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        #music-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+        }
+
+        #music-btn.muted {
+            color: #666;
+            border-color: #666;
+        }
+
+        #back-to-arkade {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            opacity: 0.7;
+            font-size: 0.8rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 4px;
+            z-index: 1000;
+            cursor: pointer;
+            color: var(--neon-cyan);
+            border: 1px solid var(--neon-cyan);
+            text-decoration: none;
+        }
+
+        #back-to-arkade:hover {
+            opacity: 1;
+            background: rgba(0, 255, 255, 0.2);
+        }
+
+        h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            margin: 60px 0 20px 0;
+            text-align: center;
+        }
+
+        .glass-panel {
+            background: rgba(10, 20, 40, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            padding: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.15);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 95vw;
+            width: 500px;
+            text-align: center;
+            z-index: 20;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            background: linear-gradient(45deg, var(--neon-cyan), #0099ff);
+            border: none;
+            border-radius: 8px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            font-family: inherit;
+        }
+
+        .action-btn:hover {
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid #444;
+            border-radius: 8px;
+            color: white;
+            text-align: center;
+            font-size: 1.2rem;
+            font-family: inherit;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            z-index: 1;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 15px 8px;
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            border: 2px solid transparent;
+        }
+
+        .card:hover {
+            background: var(--card-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 255, 255, 0.2);
+        }
+
+        .card.selected {
+            border: 2px solid var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+            background: rgba(0, 255, 255, 0.15);
+        }
+
+        .card.shake {
+            animation: shake 0.4s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-5px); }
+            40% { transform: translateX(5px); }
+            60% { transform: translateX(-5px); }
+            80% { transform: translateX(5px); }
+        }
+
+        .solved-cat {
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            color: #000;
+            font-weight: bold;
+            width: 100%;
+        }
+
+        .solved-cat.cat-1 { background: var(--cat-1); }
+        .solved-cat.cat-2 { background: var(--cat-2); }
+        .solved-cat.cat-3 { background: var(--cat-3); }
+        .solved-cat.cat-4 { background: var(--cat-4); }
+
+        .solved-name {
+            font-size: 1rem;
+            margin-bottom: 3px;
+        }
+
+        .solved-words {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .mistakes-container {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            color: #aaa;
+        }
+
+        .mistake-dot {
+            width: 12px;
+            height: 12px;
+            background: var(--neon-cyan);
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        .mistake-dot.empty {
+            background: #333;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            border: 1px solid var(--neon-cyan);
+            background: rgba(0, 255, 255, 0.1);
+            color: var(--neon-cyan);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-family: inherit;
+        }
+
+        .control-btn:hover {
+            background: rgba(0, 255, 255, 0.3);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: 1px solid var(--neon-cyan);
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.error {
+            border-color: #f05;
+        }
+
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--neon-cyan);
+            font-size: 1.5rem;
+            z-index: 1000;
+        }
+
+        @media (max-width: 500px) {
+            .grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 5px;
+            }
+
+            .card {
+                font-size: 0.7rem;
+                padding: 10px 4px;
+                min-height: 55px;
+            }
+
+            h1 {
+                font-size: 1.4rem;
+            }
+
+            .glass-panel {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <img id="wallpaper" src="/arkade/static/wallpaper.png" alt="">
+    <canvas id="star-canvas"></canvas>
+    <canvas id="confetti-canvas"></canvas>
+    <a id="back-to-arkade" href="/arkade/">< ARKADE</a>
+    <button id="music-btn" onclick="toggleMusic()" title="Toggle Music">&#9835;</button>
+    <div id="toast" class="toast">Message</div>
+    <div id="loading">LOADING...</div>
+
+    <!-- SETUP SCREEN -->
+    <div id="setup-screen" class="glass-panel" style="display:none; margin-top: 80px;">
+        <h2 style="margin-bottom: 10px; color: var(--neon-cyan);">DAILY PUZZLE</h2>
+        <p style="color: #aaa; margin-bottom: 20px;">Group 16 words into 4 categories</p>
+        <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+        <button class="action-btn" onclick="handleLogin()">PLAY TODAY'S PUZZLE</button>
+        <button class="action-btn" style="background: #333; color: #fff;" onclick="openLeaderboard()">LEADERBOARD</button>
+        <button class="action-btn" style="background: #500;" onclick="window.location.href='/arkade/'">< BACK TO ARKADE</button>
+    </div>
+
+    <!-- GAME SCREEN -->
+    <div id="game-screen" class="game-container">
+        <h1>KRAKEN KATEGORIES</h1>
+        <div id="solved-area" style="display: flex; flex-direction: column; gap:8px; width:100%;"></div>
+        <div id="grid" class="grid"></div>
+        <div class="mistakes-container">
+            <span>Mistakes:</span>
+            <div class="mistake-dot" id="dot1"></div>
+            <div class="mistake-dot" id="dot2"></div>
+            <div class="mistake-dot" id="dot3"></div>
+            <div class="mistake-dot" id="dot4"></div>
+        </div>
+        <div class="controls">
+            <button class="control-btn" onclick="shuffle()">Shuffle</button>
+            <button class="control-btn" onclick="deselectAll()">Deselect</button>
+            <button class="control-btn" onclick="submitGuess()" id="submitBtn" disabled>Submit</button>
+        </div>
+    </div>
+
+    <!-- RESULTS SCREEN -->
+    <div id="results-screen" class="glass-panel" style="display:none; margin-top:80px;">
+        <h2 id="results-title" style="color: var(--neon-cyan);">PUZZLE COMPLETE</h2>
+        <div id="results-stats" style="margin: 20px 0; color: #aaa;"></div>
+        <div id="results-breakdown" style="margin: 20px 0; width: 100%;"></div>
+        <button class="action-btn" onclick="shareResult()">SHARE RESULT</button>
+        <button class="action-btn" style="background: #333; color: #fff;" onclick="openLeaderboard()">LEADERBOARD</button>
+        <button class="action-btn" style="background: #500;" onclick="window.location.href='/arkade/'">BACK TO ARKADE</button>
+    </div>
+
+    <!-- LEADERBOARD -->
+    <div id="leaderboard-screen" class="glass-panel" style="display:none; margin-top:80px;">
+        <h2 style="color: var(--neon-cyan);">LEADERBOARD</h2>
+        <ul id="score-list" style="list-style: none; padding: 0; width: 100%; max-height: 300px; overflow-y: auto;"></ul>
+        <button class="action-btn" onclick="closeLeaderboard()">CLOSE</button>
+    </div>
+
+    <script>
+        const API_BASE = 'https://kraken-arkade-api.krakenunbound.workers.dev';
+
+        let playerName = "";
+        let puzzleData = null;
+        let activeCards = [];
+        let selectedIndices = [];
+        let solvedCategories = [];
+        let mistakesLeft = 4;
+        let gameFinished = false;
+        let isProcessing = false;
+        let lastScreen = "setup";
+
+        // Music system
+        const musicTracks = [
+            'music/Far and Away.mp3',
+            'music/Journey of Dreams.mp3',
+            'music/Luminous Path.mp3',
+            'music/Midnight Highway.mp3',
+            'music/Moonlit Threads.mp3',
+            'music/Night Passage.mp3',
+            'music/Northern Lights.mp3',
+            'music/Open Skies.mp3'
+        ];
+        let audio = new Audio();
+        let musicMuted = localStorage.getItem('kategories_muted') === 'true';
+        let currentTrack = 0;
+        let musicStarted = false;
+
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function initMusic() {
+            shuffleArray(musicTracks);
+            audio.volume = 0.15;
+            audio.addEventListener('ended', playNextTrack);
+            updateMusicButton();
+
+            const startOnInteraction = () => {
+                startMusic();
+                document.removeEventListener('click', startOnInteraction);
+                document.removeEventListener('keydown', startOnInteraction);
+            };
+            document.addEventListener('click', startOnInteraction);
+            document.addEventListener('keydown', startOnInteraction);
+        }
+
+        function playNextTrack() {
+            currentTrack = (currentTrack + 1) % musicTracks.length;
+            audio.src = musicTracks[currentTrack];
+            if (!musicMuted) audio.play().catch(() => {});
+        }
+
+        function startMusic() {
+            if (musicStarted) return;
+            musicStarted = true;
+            audio.src = musicTracks[currentTrack];
+            if (!musicMuted) {
+                audio.play().catch(() => { musicStarted = false; });
+            }
+        }
+
+        function toggleMusic() {
+            musicMuted = !musicMuted;
+            localStorage.setItem('kategories_muted', musicMuted);
+            updateMusicButton();
+            if (musicMuted) {
+                audio.pause();
+            } else {
+                musicStarted = false;
+                startMusic();
+            }
+        }
+
+        function updateMusicButton() {
+            const btn = document.getElementById('music-btn');
+            if (musicMuted) {
+                btn.classList.add('muted');
+                btn.innerHTML = '&#9834;';
+            } else {
+                btn.classList.remove('muted');
+                btn.innerHTML = '&#9835;';
+            }
+        }
+
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = 'toast show' + (isError ? ' error' : '');
+            setTimeout(() => toast.className = 'toast', 2500);
+        }
+
+        function getToday() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        function formatDate() {
+            return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        // Load game on startup
+        window.onload = async function() {
+            await loadPuzzle();
+            document.getElementById('loading').style.display = 'none';
+
+            // Pre-fill name
+            const n = localStorage.getItem('kategories_user');
+            if (n) {
+                document.getElementById('playerName').value = n;
+            }
+
+            // Check if already played today
+            const saved = localStorage.getItem(`kategories_${getToday()}`);
+            if (saved) {
+                const state = JSON.parse(saved);
+                if (state.finished) {
+                    playerName = state.playerName;
+                    solvedCategories = state.solvedCategories;
+                    mistakesLeft = state.mistakesLeft;
+                    gameFinished = true;
+                    showResults(state.won);
+                    initStars();
+                    initMusic();
+                    animate();
+                    return;
+                }
+            }
+
+            document.getElementById('setup-screen').style.display = 'flex';
+            initStars();
+            initMusic();
+            animate();
+        };
+
+        async function loadPuzzle() {
+            try {
+                const response = await fetch(`${API_BASE}/api/connections/daily?date=${getToday()}`);
+                const data = await response.json();
+                if (data.puzzle_data) {
+                    puzzleData = JSON.parse(data.puzzle_data);
+                }
+            } catch (e) {
+                console.error('Failed to load puzzle:', e);
+            }
+        }
+
+        function handleLogin() {
+            const input = document.getElementById('playerName');
+            if (!input.value.trim()) {
+                showToast("NAME REQUIRED", true);
+                return;
+            }
+            playerName = input.value.trim().toUpperCase();
+            localStorage.setItem('kategories_user', playerName);
+            document.getElementById('setup-screen').style.display = 'none';
+            startGame();
+        }
+
+        function startGame() {
+            if (!puzzleData) {
+                showToast("PUZZLE NOT LOADED", true);
+                return;
+            }
+
+            document.getElementById('game-screen').style.display = 'flex';
+
+            activeCards = [];
+            puzzleData.categories.forEach((cat, idx) => {
+                cat.words.forEach(word => {
+                    activeCards.push({
+                        word: word.toUpperCase(),
+                        category: cat.name,
+                        difficulty: cat.difficulty || (idx + 1)
+                    });
+                });
+            });
+
+            shuffle();
+            renderGrid();
+            lastScreen = "game";
+        }
+
+        function shuffle() {
+            shuffleArray(activeCards);
+            renderGrid();
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            activeCards.forEach((card, index) => {
+                const div = document.createElement('div');
+                div.className = 'card' + (selectedIndices.includes(index) ? ' selected' : '');
+                div.textContent = card.word;
+                div.onclick = () => toggleCard(index);
+                grid.appendChild(div);
+            });
+        }
+
+        function toggleCard(index) {
+            if (isProcessing || gameFinished) return;
+            if (selectedIndices.includes(index)) {
+                selectedIndices = selectedIndices.filter(i => i !== index);
+            } else if (selectedIndices.length < 4) {
+                selectedIndices.push(index);
+            }
+            renderGrid();
+            document.getElementById('submitBtn').disabled = selectedIndices.length !== 4;
+        }
+
+        function deselectAll() {
+            selectedIndices = [];
+            renderGrid();
+            document.getElementById('submitBtn').disabled = true;
+        }
+
+        function submitGuess() {
+            if (selectedIndices.length !== 4 || isProcessing) return;
+            isProcessing = true;
+
+            const selectedCards = selectedIndices.map(i => activeCards[i]);
+            const categories = selectedCards.map(c => c.category);
+            const allSame = categories.every(c => c === categories[0]);
+
+            if (allSame) {
+                const cat = selectedCards[0];
+                solvedCategories.push({
+                    name: cat.category,
+                    words: selectedCards.map(c => c.word),
+                    difficulty: cat.difficulty
+                });
+
+                activeCards = activeCards.filter((_, i) => !selectedIndices.includes(i));
+                selectedIndices = [];
+                renderSolved();
+                renderGrid();
+
+                if (activeCards.length === 0) {
+                    endGame(true);
+                }
+            } else {
+                // Check for "one away"
+                const catCounts = {};
+                categories.forEach(c => catCounts[c] = (catCounts[c] || 0) + 1);
+                const maxCount = Math.max(...Object.values(catCounts));
+                if (maxCount === 3) {
+                    showToast("One away...", true);
+                } else {
+                    showToast("Not quite right...", true);
+                }
+
+                animateWrong();
+                mistakesLeft--;
+                updateMistakes();
+                if (mistakesLeft === 0) {
+                    endGame(false);
+                }
+            }
+
+            isProcessing = false;
+            document.getElementById('submitBtn').disabled = true;
+        }
+
+        function animateWrong() {
+            const cards = document.querySelectorAll('.card.selected');
+            cards.forEach(c => c.classList.add('shake'));
+            setTimeout(() => cards.forEach(c => c.classList.remove('shake')), 400);
+        }
+
+        function updateMistakes() {
+            for (let i = 1; i <= 4; i++) {
+                const dot = document.getElementById('dot' + i);
+                dot.className = 'mistake-dot' + (i > mistakesLeft ? ' empty' : '');
+            }
+        }
+
+        function renderSolved() {
+            const area = document.getElementById('solved-area');
+            area.innerHTML = '';
+            solvedCategories.forEach((cat, i) => {
+                const div = document.createElement('div');
+                div.className = 'solved-cat cat-' + cat.difficulty;
+                div.innerHTML = `
+                    <div class="solved-name">${cat.name}</div>
+                    <div class="solved-words">${cat.words.join(', ')}</div>
+                `;
+                area.appendChild(div);
+            });
+        }
+
+        function endGame(won) {
+            gameFinished = true;
+
+            // Reveal remaining categories if lost
+            if (!won && puzzleData) {
+                puzzleData.categories.forEach(cat => {
+                    if (!solvedCategories.find(s => s.name === cat.name)) {
+                        solvedCategories.push({
+                            name: cat.name,
+                            words: cat.words.map(w => w.toUpperCase()),
+                            difficulty: cat.difficulty
+                        });
+                    }
+                });
+            }
+
+            // Save state
+            localStorage.setItem(`kategories_${getToday()}`, JSON.stringify({
+                finished: true,
+                won,
+                playerName,
+                solvedCategories,
+                mistakesLeft
+            }));
+
+            // Report score
+            reportScore(won);
+
+            if (won) startConfetti();
+
+            setTimeout(() => showResults(won), 800);
+        }
+
+        function showResults(won) {
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('results-screen').style.display = 'flex';
+
+            document.getElementById('results-title').textContent = won ? 'PUZZLE COMPLETE!' : 'GAME OVER';
+
+            const correctCount = solvedCategories.filter((_, i) => i < (won ? 4 : 4 - mistakesLeft)).length;
+            document.getElementById('results-stats').innerHTML = `
+                <p>Player: ${playerName}</p>
+                <p>Mistakes: ${4 - mistakesLeft}</p>
+            `;
+
+            const breakdown = document.getElementById('results-breakdown');
+            breakdown.innerHTML = '';
+            solvedCategories.forEach(cat => {
+                const div = document.createElement('div');
+                div.className = 'solved-cat cat-' + cat.difficulty;
+                div.style.marginBottom = '8px';
+                div.innerHTML = `<strong>${cat.name}</strong><br>${cat.words.join(', ')}`;
+                breakdown.appendChild(div);
+            });
+        }
+
+        async function reportScore(won) {
+            try {
+                await fetch(`${API_BASE}/api/connections/score`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        date: getToday(),
+                        player_name: playerName,
+                        mistakes: 4 - mistakesLeft,
+                        solved: won
+                    })
+                });
+            } catch (e) {
+                console.error('Failed to report score:', e);
+            }
+        }
+
+        function shareResult() {
+            let text = `KRAKEN KATEGORIES (${formatDate()})\n`;
+            text += solvedCategories.map(cat => {
+                const emoji = { 1: '🟨', 2: '🟩', 3: '🟦', 4: '🟪' }[cat.difficulty] || '⬜';
+                return emoji + emoji + emoji + emoji;
+            }).join('\n');
+            text += `\nMistakes: ${4 - mistakesLeft}`;
+            text += '\n\nhttps://krakenunbound.com/arkade/';
+
+            navigator.clipboard.writeText(text).then(
+                () => showToast("COPIED TO CLIPBOARD"),
+                () => prompt("Copy this:", text)
+            );
+        }
+
+        async function openLeaderboard() {
+            lastScreen = document.getElementById('setup-screen').style.display !== 'none' ? 'setup' : 'results';
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('results-screen').style.display = 'none';
+            document.getElementById('leaderboard-screen').style.display = 'flex';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/connections/scores?date=${getToday()}`);
+                const data = await res.json();
+                const list = document.getElementById('score-list');
+                list.innerHTML = '';
+
+                if (!data || data.length === 0) {
+                    list.innerHTML = '<li style="padding: 10px; color: #aaa;">No scores yet today!</li>';
+                } else {
+                    data.forEach((entry, idx) => {
+                        const li = document.createElement('li');
+                        li.style.cssText = 'display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #444;';
+                        const status = entry.solved ? '✓' : '✗';
+                        li.innerHTML = `<span>${idx + 1}. ${entry.player_name}</span><span>${entry.mistakes} mistakes ${status}</span>`;
+                        list.appendChild(li);
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to load leaderboard:', e);
+            }
+        }
+
+        function closeLeaderboard() {
+            document.getElementById('leaderboard-screen').style.display = 'none';
+            if (lastScreen === 'setup') {
+                document.getElementById('setup-screen').style.display = 'flex';
+            } else {
+                document.getElementById('results-screen').style.display = 'flex';
+            }
+        }
+
+        // Star animation
+        const canvas = document.getElementById('star-canvas'), ctx = canvas.getContext('2d');
+        const confettiCanvas = document.getElementById('confetti-canvas'), cCtx = confettiCanvas.getContext('2d');
+        let width, height, stars = [], particles = [];
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            confettiCanvas.width = width;
+            confettiCanvas.height = height;
+            initStars();
+        }
+
+        class Star {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.size = Math.random() * 2;
+                this.baseAlpha = Math.random() * 0.5 + 0.3;
+                this.twinkleOffset = Math.random() * 100;
+            }
+            draw() {
+                const alpha = this.baseAlpha + Math.sin(Date.now() * 0.002 + this.twinkleOffset) * 0.2;
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0, alpha)})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < 150; i++) stars.push(new Star());
+        }
+
+        function startConfetti() {
+            for (let i = 0; i < 150; i++) {
+                particles.push({
+                    x: width / 2, y: height / 2,
+                    vx: (Math.random() - 0.5) * 20,
+                    vy: (Math.random() - 0.5) * 20 - 5,
+                    color: ['#f9ca24', '#6ab04c', '#22a6b3', '#be2edd'][Math.floor(Math.random() * 4)],
+                    size: Math.random() * 8 + 4,
+                    life: 1.0
+                });
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            stars.forEach(star => star.draw());
+
+            cCtx.clearRect(0, 0, width, height);
+            particles = particles.filter(p => p.life > 0);
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.3;
+                p.life -= 0.01;
+                cCtx.fillStyle = p.color;
+                cCtx.globalAlpha = p.life;
+                cCtx.fillRect(p.x, p.y, p.size, p.size);
+            });
+            cCtx.globalAlpha = 1;
+
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+    </script>
+</body>
+
+</html>

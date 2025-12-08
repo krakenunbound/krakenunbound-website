@@ -609,7 +609,10 @@
 
             const n = localStorage.getItem('wordkraken_user');
             if (n) {
-                document.getElementById('name-input').value = n;
+                // Auto-login returning players
+                playerName = n.toUpperCase();
+                document.getElementById('setup').style.display = 'none';
+                startGame();
             }
 
             initStars();
@@ -673,6 +676,14 @@
                 if (state.finished) {
                     gameOver = true;
                     document.getElementById('keyboard').style.display = 'none';
+
+                    // Show completion screen for returning players
+                    const lastGuess = state.guesses[state.guesses.length - 1];
+                    const won = lastGuess === secretWord;
+                    document.getElementById('victory-title').textContent = won ? "ALREADY COMPLETE" : "ALREADY PLAYED";
+                    document.getElementById('victory-message').textContent = won ? `${state.guesses.length} / 6` : "Better luck tomorrow!";
+                    document.getElementById('victory-word').textContent = `The word was: ${secretWord}`;
+                    document.getElementById('victory-modal').style.display = 'block';
                 }
             }
         }

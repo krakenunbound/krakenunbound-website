@@ -344,6 +344,204 @@ Choose letters that allow many common words. Output ONLY valid JSON.`;
   return { date: targetDate, center_letter: puzzleData.center, outer_letters: puzzleData.outer.join(''), valid_words: JSON.stringify(puzzleData.words), pangrams: JSON.stringify(puzzleData.pangrams), max_points: maxPoints };
 }
 
+async function generateBetween(env, targetDate) {
+  // Check if already exists
+  const existing = await env.DB.prepare('SELECT * FROM daily_between WHERE date = ?').bind(targetDate).first();
+  if (existing) return existing;
+
+  // Get past target words to avoid repeats
+  const pastWords = await env.DB.prepare('SELECT target_word FROM daily_between').all();
+  const usedWords = new Set(pastWords.results.map(r => r.target_word));
+
+  const dateObj = new Date(targetDate);
+  const readableDate = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  const prompt = `Create a Betweenle puzzle for ${readableDate}.
+
+BETWEENLE RULES:
+- Player must find a SECRET WORD by guessing words
+- Each guess narrows down an alphabetical range (lower/upper bounds)
+- The secret word is alphabetically BETWEEN the bounds
+
+REQUIREMENTS:
+1. Choose a SECRET WORD that is:
+   - A common English word (5-8 letters preferred)
+   - Not too obscure but not too obvious
+   - Has interesting alphabetical neighbors
+
+2. Set initial bounds:
+   - LOWER BOUND: A common word that comes BEFORE the secret alphabetically
+   - UPPER BOUND: A common word that comes AFTER the secret alphabetically
+   - Bounds should be ~50-200 words apart (not too easy, not too hard)
+
+${readableDate.includes('December') ? 'Consider winter/holiday themed words!' : ''}
+
+FORMAT (JSON only):
+{
+  "target": "KRAKEN",
+  "lower": "IGLOO",
+  "upper": "LUNAR"
+}
+
+Choose interesting words. Output ONLY valid JSON.`;
+
+  let puzzleData = null;
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      const response = await queryGroq(env, prompt, 100);
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        puzzleData = JSON.parse(jsonMatch[0]);
+        const target = (puzzleData.target || '').toUpperCase();
+        const lower = (puzzleData.lower || '').toUpperCase();
+        const upper = (puzzleData.upper || '').toUpperCase();
+
+        // Validate: lower < target < upper alphabetically
+        if (target && lower && upper && lower < target && target < upper && !usedWords.has(target)) {
+          puzzleData = { target, lower, upper };
+          break;
+        }
+      }
+    } catch (e) {
+      console.error(`Between attempt ${attempt + 1} failed:`, e);
+    }
+  }
+
+  if (!puzzleData) {
+    // Fallback with good defaults
+    const fallbacks = [
+      { target: 'HARBOR', lower: 'GARDEN', upper: 'ISLAND' },
+      { target: 'CASTLE', lower: 'BRIDGE', upper: 'DRAGON' },
+      { target: 'FOREST', lower: 'FALCON', upper: 'GALAXY' },
+      { target: 'PIRATE', lower: 'PALACE', upper: 'PUZZLE' },
+      { target: 'SHADOW', lower: 'SEASON', upper: 'SILVER' }
+    ];
+    puzzleData = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+  }
+
+  await env.DB.prepare(
+    'INSERT OR REPLACE INTO daily_between (date, target_word, lower_bound, upper_bound) VALUES (?, ?, ?, ?)'
+  ).bind(targetDate, puzzleData.target, puzzleData.lower, puzzleData.upper).run();
+
+  return { date: targetDate, target_word: puzzleData.target, lower_bound: puzzleData.lower, upper_bound: puzzleData.upper };
+}
+
+async function generatePhrase(env, targetDate) {
+  // Check if already exists
+  const existing = await env.DB.prepare('SELECT * FROM daily_phrases WHERE date = ?').bind(targetDate).first();
+  if (existing) return existing;
+
+  // Get past phrases to avoid repeats
+  const pastPhrases = await env.DB.prepare('SELECT phrase FROM daily_phrases').all();
+  const usedPhrases = new Set(pastPhrases.results.map(r => r.phrase.toUpperCase()));
+
+  const dateObj = new Date(targetDate);
+  const readableDate = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  const prompt = `Create a Phrase puzzle for ${readableDate}.
+
+PHRASE PUZZLE RULES:
+- Player guesses a famous phrase/quote letter by letter (like Wheel of Fortune meets Wordle)
+- Each guess fills in ALL letters across all words
+
+REQUIREMENTS:
+1. Choose a PHRASE that is:
+   - Well-known (famous quote, idiom, movie line, saying)
+   - 2-5 words long
+   - Each word 2-8 letters
+   - Total phrase length 10-30 characters (letters only)
+   - Easy to recognize once solved
+
+2. Provide a CATEGORY hint (e.g., "MOVIE QUOTE", "IDIOM", "FAMOUS SAYING", "SONG LYRIC")
+
+${readableDate.includes('December') ? 'Consider holiday/winter themed phrases!' : ''}
+
+GOOD EXAMPLES:
+- "THE EARLY BIRD" (IDIOM)
+- "MAY THE FORCE" (MOVIE QUOTE)
+- "JUST DO IT" (SLOGAN)
+- "TO BE OR NOT" (SHAKESPEARE)
+
+FORMAT (JSON only):
+{
+  "phrase": "MAY THE FORCE",
+  "category": "MOVIE QUOTE"
+}
+
+Output ONLY valid JSON.`;
+
+  let puzzleData = null;
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      const response = await queryGroq(env, prompt, 100);
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        puzzleData = JSON.parse(jsonMatch[0]);
+        const phrase = (puzzleData.phrase || '').toUpperCase().replace(/[^A-Z ]/g, '').trim();
+        const category = puzzleData.category || 'PHRASE';
+
+        // Validate
+        const words = phrase.split(' ').filter(w => w.length > 0);
+        if (phrase.length >= 8 && phrase.length <= 40 && words.length >= 2 && words.length <= 6 && !usedPhrases.has(phrase)) {
+          puzzleData = { phrase, category };
+          break;
+        }
+      }
+    } catch (e) {
+      console.error(`Phrase attempt ${attempt + 1} failed:`, e);
+    }
+  }
+
+  if (!puzzleData) {
+    // Fallback with famous phrases
+    const fallbacks = [
+      { phrase: 'CARPE DIEM', category: 'LATIN PHRASE' },
+      { phrase: 'TO BE OR NOT TO BE', category: 'SHAKESPEARE' },
+      { phrase: 'JUST DO IT', category: 'SLOGAN' },
+      { phrase: 'MAY THE FORCE BE WITH YOU', category: 'MOVIE QUOTE' },
+      { phrase: 'THE EARLY BIRD', category: 'IDIOM' },
+      { phrase: 'BREAK A LEG', category: 'IDIOM' },
+      { phrase: 'ACTIONS SPEAK LOUDER', category: 'PROVERB' },
+      { phrase: 'TIME IS MONEY', category: 'SAYING' }
+    ];
+    puzzleData = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+  }
+
+  await env.DB.prepare(
+    'INSERT OR REPLACE INTO daily_phrases (date, phrase, category) VALUES (?, ?, ?)'
+  ).bind(targetDate, puzzleData.phrase, puzzleData.category).run();
+
+  return { date: targetDate, phrase: puzzleData.phrase, category: puzzleData.category };
+}
+
+// =============================================================================
+// AD ASTRA HELPERS
+// =============================================================================
+
+// Helper: Hash password for Ad Astra
+async function hashPassword(password) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const buffer = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Helper: Generate token for Ad Astra
+function generateToken() {
+  return crypto.randomUUID() + crypto.randomUUID();
+}
+
+// Helper: Verify token and get account for Ad Astra
+async function verifyToken(env, token) {
+  if (!token) return null;
+  const row = await env.DB.prepare(
+    'SELECT a.id, a.username, a.is_admin FROM adastra_sessions s JOIN adastra_accounts a ON s.account_id = a.id WHERE s.token = ?'
+  ).bind(token).first();
+  return row;
+}
+
 // =============================================================================
 // MAIN HANDLER
 // =============================================================================
@@ -398,6 +596,18 @@ export default {
         result = await generateContexto(env, date);
       }
 
+      else if (path === '/api/generate/between' && request.method === 'POST') {
+        const body = await request.json();
+        const date = body.date || new Date().toISOString().split('T')[0];
+        result = await generateBetween(env, date);
+      }
+
+      else if (path === '/api/generate/phrase' && request.method === 'POST') {
+        const body = await request.json();
+        const date = body.date || new Date().toISOString().split('T')[0];
+        result = await generatePhrase(env, date);
+      }
+
       else if (path === '/api/generate/all' && request.method === 'POST') {
         // Generate all puzzles for a date
         const body = await request.json();
@@ -406,7 +616,9 @@ export default {
         const connections = await generateConnections(env, date);
         const spellingbee = await generateSpellingBee(env, date);
         const contexto = await generateContexto(env, date);
-        result = { date, wordle, connections, spellingbee, contexto };
+        const between = await generateBetween(env, date);
+        const phrase = await generatePhrase(env, date);
+        result = { date, wordle, connections, spellingbee, contexto, between, phrase };
       }
 
       // ===== DAILY WORDS (Word Kraken / Wordle) =====
@@ -558,11 +770,86 @@ export default {
         result = rows.results;
       }
 
+      // ===== SPELLING BEE CHECK =====
+      else if (path === '/api/spellingbee/check' && request.method === 'POST') {
+        const body = await request.json();
+        const word = (body.word || '').toUpperCase().trim();
+        const date = body.date || new Date().toISOString().split('T')[0];
+
+        // Get today's puzzle
+        const puzzle = await env.DB.prepare('SELECT * FROM daily_spellingbee WHERE date = ?').bind(date).first();
+        if (!puzzle) {
+          result = { valid: false, error: 'No puzzle found' };
+        } else {
+          const validWords = JSON.parse(puzzle.valid_words);
+          const pangrams = JSON.parse(puzzle.pangrams);
+
+          if (validWords.map(w => w.toUpperCase()).includes(word)) {
+            const isPangram = pangrams.map(p => p.toUpperCase()).includes(word);
+            const points = word.length === 4 ? 1 : (isPangram ? word.length + 7 : word.length);
+            result = { valid: true, points, is_pangram: isPangram };
+          } else {
+            result = { valid: false, error: 'Not in word list' };
+          }
+        }
+      }
+
       // ===== BETWEEN (Abyssal Between) =====
       else if (path === '/api/between/daily' && request.method === 'GET') {
         const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
-        const row = await env.DB.prepare('SELECT * FROM daily_between WHERE date = ?').bind(date).first();
-        result = row || { error: 'No puzzle for this date' };
+        let row = await env.DB.prepare('SELECT * FROM daily_between WHERE date = ?').bind(date).first();
+        // Auto-generate if missing and it's today
+        if (!row && date === new Date().toISOString().split('T')[0]) {
+          row = await generateBetween(env, date);
+        }
+        // Don't send the target word to client!
+        if (row) {
+          result = { date: row.date, lower_bound: row.lower_bound, upper_bound: row.upper_bound };
+        } else {
+          result = { error: 'No puzzle for this date' };
+        }
+      }
+
+      else if (path === '/api/between/check' && request.method === 'POST') {
+        const body = await request.json();
+        const word = (body.word || '').toUpperCase().trim();
+        const date = body.date || new Date().toISOString().split('T')[0];
+
+        if (!word || word.length < 2) {
+          result = { valid: false, error: 'Invalid word' };
+        } else {
+          // Use AI to validate if it's a real English word
+          const validatePrompt = `Is "${word}" a valid common English word? Answer ONLY "yes" or "no".`;
+          let isValidWord = true;
+
+          try {
+            const response = await queryGroq(env, validatePrompt, 10);
+            isValidWord = response.toLowerCase().includes('yes');
+          } catch (e) {
+            // Default to accepting the word if AI fails
+            isValidWord = true;
+          }
+
+          if (!isValidWord) {
+            result = { valid: false, error: 'Not a valid word' };
+          } else {
+            // Get the puzzle to check against target
+            const puzzle = await env.DB.prepare('SELECT * FROM daily_between WHERE date = ?').bind(date).first();
+            if (!puzzle) {
+              result = { valid: false, error: 'No puzzle found' };
+            } else {
+              const target = puzzle.target_word.toUpperCase();
+
+              if (word === target) {
+                result = { valid: true, result: 'correct' };
+              } else if (word < target) {
+                result = { valid: true, result: 'too_low' };
+              } else {
+                result = { valid: true, result: 'too_high' };
+              }
+            }
+          }
+        }
       }
 
       else if (path === '/api/between/score' && request.method === 'POST') {
@@ -570,15 +857,33 @@ export default {
         const { date, player_name, guesses, score } = body;
         await env.DB.prepare(
           'INSERT OR REPLACE INTO between_scores (date, player_name, guesses, score) VALUES (?, ?, ?, ?)'
-        ).bind(date, player_name, guesses, score).run();
+        ).bind(date || new Date().toISOString().split('T')[0], player_name, guesses, score).run();
         result = { success: true };
       }
 
       // ===== PHRASE (Phrase Kraken) =====
       else if (path === '/api/phrase/daily' && request.method === 'GET') {
         const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
-        const row = await env.DB.prepare('SELECT * FROM daily_phrases WHERE date = ?').bind(date).first();
-        result = row || { error: 'No puzzle for this date' };
+        let row = await env.DB.prepare('SELECT * FROM daily_phrases WHERE date = ?').bind(date).first();
+        // Auto-generate if missing and it's today
+        if (!row && date === new Date().toISOString().split('T')[0]) {
+          row = await generatePhrase(env, date);
+        }
+        if (row) {
+          // Return phrase split into words for display
+          const words = row.phrase.split(' ').filter(w => w.length > 0);
+          result = { date: row.date, words, category: row.category, phrase: row.phrase };
+        } else {
+          result = { error: 'No puzzle for this date' };
+        }
+      }
+
+      else if (path === '/api/phrase/scores' && request.method === 'GET') {
+        const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
+        const rows = await env.DB.prepare(
+          'SELECT * FROM phrase_scores WHERE date = ? AND won = 1 ORDER BY attempts ASC LIMIT 20'
+        ).bind(date).all();
+        result = rows.results;
       }
 
       else if (path === '/api/phrase/score' && request.method === 'POST') {
@@ -586,8 +891,16 @@ export default {
         const { date, player_name, attempts, won, score } = body;
         await env.DB.prepare(
           'INSERT OR REPLACE INTO phrase_scores (date, player_name, attempts, won, score) VALUES (?, ?, ?, ?, ?)'
-        ).bind(date, player_name, attempts, won ? 1 : 0, score).run();
+        ).bind(date || new Date().toISOString().split('T')[0], player_name, attempts, won ? 1 : 0, score).run();
         result = { success: true };
+      }
+
+      else if (path === '/api/between/scores' && request.method === 'GET') {
+        const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
+        const rows = await env.DB.prepare(
+          'SELECT * FROM between_scores WHERE date = ? ORDER BY guesses ASC LIMIT 20'
+        ).bind(date).all();
+        result = rows.results;
       }
 
       // ===== CONTEXTO (Abyssal Guess) =====
@@ -767,6 +1080,547 @@ Keep it SHORT (under 10 words). Do NOT mention the actual word.`;
         result = { success: true };
       }
 
+      // ===== AD ASTRA (Space Trading Game) =====
+
+      // Register new account
+      else if (path === '/api/adastra/register' && request.method === 'POST') {
+        const body = await request.json();
+        const username = (body.username || '').trim();
+        const password = body.password || '';
+        const pilotName = (body.pilotName || '').trim();
+        const shipName = (body.shipName || '').trim();
+        const shipType = body.shipType || 'scout';
+        const shipVariant = body.shipVariant || 1;
+
+        if (!username || !password) {
+          return new Response(JSON.stringify({ error: 'Username and password required' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        // Check if username exists
+        const existing = await env.DB.prepare('SELECT id FROM adastra_accounts WHERE username = ?').bind(username).first();
+        if (existing) {
+          return new Response(JSON.stringify({ error: 'Username already exists' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const passwordHash = await hashPassword(password);
+        const createdAt = new Date().toISOString();
+        const token = generateToken();
+
+        // Create account
+        await env.DB.prepare(
+          'INSERT INTO adastra_accounts (username, password_hash, created_at) VALUES (?, ?, ?)'
+        ).bind(username, passwordHash, createdAt).run();
+
+        const accountRow = await env.DB.prepare('SELECT id FROM adastra_accounts WHERE username = ?').bind(username).first();
+        const accountId = accountRow.id;
+
+        // Create player
+        await env.DB.prepare(
+          'INSERT INTO adastra_players (account_id, pilot_name, ship_name, ship_type, ship_variant) VALUES (?, ?, ?, ?, ?)'
+        ).bind(accountId, pilotName, shipName, shipType, shipVariant).run();
+
+        // Create session
+        await env.DB.prepare(
+          'INSERT INTO adastra_sessions (account_id, token, created_at, expires_at) VALUES (?, ?, ?, ?)'
+        ).bind(accountId, token, createdAt, createdAt).run();
+
+        result = { success: true, token, username };
+      }
+
+      // Login
+      else if (path === '/api/adastra/login' && request.method === 'POST') {
+        const body = await request.json();
+        const username = (body.username || '').trim();
+        const password = body.password || '';
+
+        if (!username || !password) {
+          return new Response(JSON.stringify({ error: 'Username and password required' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const passwordHash = await hashPassword(password);
+        const row = await env.DB.prepare(
+          'SELECT id, is_admin, is_banned FROM adastra_accounts WHERE username = ? AND password_hash = ?'
+        ).bind(username, passwordHash).first();
+
+        if (!row) {
+          return new Response(JSON.stringify({ error: 'Invalid username or password' }), {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        if (row.is_banned) {
+          return new Response(JSON.stringify({ error: 'Account is banned' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const now = new Date().toISOString();
+        await env.DB.prepare('UPDATE adastra_accounts SET last_login = ? WHERE id = ?').bind(now, row.id).run();
+
+        const token = generateToken();
+        await env.DB.prepare(
+          'INSERT INTO adastra_sessions (account_id, token, created_at, expires_at) VALUES (?, ?, ?, ?)'
+        ).bind(row.id, token, now, now).run();
+
+        result = { success: true, token, username, is_admin: !!row.is_admin };
+      }
+
+      // Get player data
+      else if (path === '/api/adastra/player' && request.method === 'GET') {
+        const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+        const account = await verifyToken(env, token);
+
+        if (!account) {
+          return new Response(JSON.stringify({ error: 'Invalid token' }), {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const row = await env.DB.prepare(
+          'SELECT p.*, a.username, a.is_admin FROM adastra_players p JOIN adastra_accounts a ON p.account_id = a.id WHERE p.account_id = ?'
+        ).bind(account.id).first();
+
+        if (!row) {
+          return new Response(JSON.stringify({ error: 'Player not found' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        result = {
+          username: row.username,
+          pilotName: row.pilot_name,
+          shipName: row.ship_name,
+          credits: row.credits,
+          turns: row.turns,
+          currentSector: row.current_sector,
+          shipType: row.ship_type,
+          cargo: row.cargo ? JSON.parse(row.cargo) : {},
+          equipment: row.equipment ? JSON.parse(row.equipment) : {},
+          gameState: row.game_state ? JSON.parse(row.game_state) : {},
+          lastActivity: row.last_activity,
+          shipVariant: row.ship_variant || 1,
+          is_admin: !!row.is_admin
+        };
+      }
+
+      // Update player data
+      else if (path === '/api/adastra/player' && request.method === 'PUT') {
+        const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+        const account = await verifyToken(env, token);
+
+        if (!account) {
+          return new Response(JSON.stringify({ error: 'Invalid token' }), {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const body = await request.json();
+        const now = new Date().toISOString();
+
+        // Check if player exists
+        const existing = await env.DB.prepare('SELECT id FROM adastra_players WHERE account_id = ?').bind(account.id).first();
+
+        if (!existing) {
+          // Create new player record
+          await env.DB.prepare(
+            'INSERT INTO adastra_players (account_id, pilot_name, ship_name, credits, turns, current_sector, ship_type, cargo, equipment, game_state, ship_variant) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+          ).bind(
+            account.id,
+            body.pilotName || 'Unknown',
+            body.shipName || 'Scout',
+            body.credits || 10000,
+            body.turns || 50,
+            body.currentSector || 1,
+            body.shipType || 'scout',
+            JSON.stringify(body.cargo || {}),
+            JSON.stringify(body.equipment || {}),
+            JSON.stringify(body.gameState || {}),
+            body.shipVariant || 1
+          ).run();
+        } else {
+          // Update existing
+          await env.DB.prepare(
+            'UPDATE adastra_players SET pilot_name = ?, ship_name = ?, credits = ?, turns = ?, current_sector = ?, ship_type = ?, cargo = ?, equipment = ?, game_state = ?, last_activity = ?, ship_variant = ? WHERE account_id = ?'
+          ).bind(
+            body.pilotName,
+            body.shipName,
+            body.credits,
+            body.turns,
+            body.currentSector,
+            body.shipType,
+            JSON.stringify(body.cargo || {}),
+            JSON.stringify(body.equipment || {}),
+            JSON.stringify(body.gameState || {}),
+            now,
+            body.shipVariant || 1,
+            account.id
+          ).run();
+        }
+
+        result = { success: true };
+      }
+
+      // Get multiplayer state
+      else if (path === '/api/adastra/multiplayer' && request.method === 'GET') {
+        const row = await env.DB.prepare('SELECT data FROM adastra_multiplayer ORDER BY id DESC LIMIT 1').first();
+        result = row ? JSON.parse(row.data) : {};
+      }
+
+      // Update multiplayer state
+      else if (path === '/api/adastra/multiplayer' && request.method === 'PUT') {
+        const body = await request.json();
+        const now = new Date().toISOString();
+        await env.DB.prepare('DELETE FROM adastra_multiplayer').run();
+        await env.DB.prepare('INSERT INTO adastra_multiplayer (data, updated_at) VALUES (?, ?)').bind(JSON.stringify(body), now).run();
+        result = { success: true };
+      }
+
+      // Admin: Get all players
+      else if (path === '/api/adastra/admin/players' && request.method === 'GET') {
+        const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+        const account = await verifyToken(env, token);
+
+        if (!account || !account.is_admin) {
+          return new Response(JSON.stringify({ error: 'Admin access required' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const rows = await env.DB.prepare(
+          'SELECT p.*, a.username, a.is_admin, a.last_login, a.created_at, a.is_banned FROM adastra_players p JOIN adastra_accounts a ON p.account_id = a.id ORDER BY p.last_activity DESC'
+        ).all();
+
+        const players = rows.results.map(row => ({
+          username: row.username,
+          pilotName: row.pilot_name,
+          shipName: row.ship_name,
+          credits: row.credits,
+          turns: row.turns,
+          currentSector: row.current_sector,
+          shipType: row.ship_type,
+          cargo: row.cargo ? JSON.parse(row.cargo) : {},
+          equipment: row.equipment ? JSON.parse(row.equipment) : {},
+          gameState: row.game_state ? JSON.parse(row.game_state) : {},
+          lastActivity: row.last_activity,
+          shipVariant: row.ship_variant,
+          lastLogin: row.last_login,
+          createdAt: row.created_at,
+          isAdmin: !!row.is_admin,
+          isBanned: !!row.is_banned
+        }));
+
+        result = { players };
+      }
+
+      // Admin: Get player by username
+      else if (path.startsWith('/api/adastra/admin/player/') && request.method === 'GET') {
+        const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+        const account = await verifyToken(env, token);
+
+        if (!account || !account.is_admin) {
+          return new Response(JSON.stringify({ error: 'Admin access required' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const username = path.split('/').pop();
+        const row = await env.DB.prepare(
+          'SELECT p.*, a.username, a.is_admin, a.last_login, a.created_at, a.is_banned FROM adastra_players p JOIN adastra_accounts a ON p.account_id = a.id WHERE a.username = ?'
+        ).bind(username).first();
+
+        if (!row) {
+          return new Response(JSON.stringify({ error: 'Player not found' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        result = {
+          username: row.username,
+          pilotName: row.pilot_name,
+          shipName: row.ship_name,
+          credits: row.credits,
+          turns: row.turns,
+          currentSector: row.current_sector,
+          shipType: row.ship_type,
+          cargo: row.cargo ? JSON.parse(row.cargo) : {},
+          equipment: row.equipment ? JSON.parse(row.equipment) : {},
+          gameState: row.game_state ? JSON.parse(row.game_state) : {},
+          lastActivity: row.last_activity,
+          lastLogin: row.last_login,
+          createdAt: row.created_at,
+          isAdmin: !!row.is_admin,
+          isBanned: !!row.is_banned
+        };
+      }
+
+      // Admin: Update player
+      else if (path.startsWith('/api/adastra/admin/player/') && !path.includes('/kick') && !path.includes('/ban') && request.method === 'PUT') {
+        const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+        const account = await verifyToken(env, token);
+
+        if (!account || !account.is_admin) {
+          return new Response(JSON.stringify({ error: 'Admin access required' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const username = path.split('/').pop();
+        const body = await request.json();
+
+        // Get account ID and current game state
+        const playerRow = await env.DB.prepare(
+          'SELECT p.account_id, p.game_state FROM adastra_players p JOIN adastra_accounts a ON p.account_id = a.id WHERE a.username = ?'
+        ).bind(username).first();
+
+        if (!playerRow) {
+          return new Response(JSON.stringify({ error: 'Player not found' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        let gameState = playerRow.game_state ? JSON.parse(playerRow.game_state) : {};
+
+        // Build update
+        const updates = [];
+        const values = [];
+
+        if ('credits' in body) { updates.push('credits = ?'); values.push(body.credits); }
+        if ('turns' in body) { updates.push('turns = ?'); values.push(body.turns); }
+        if ('currentSector' in body) { updates.push('current_sector = ?'); values.push(body.currentSector); }
+        if ('shipName' in body) { updates.push('ship_name = ?'); values.push(body.shipName); }
+        if ('shipType' in body) { updates.push('ship_type = ?'); values.push(body.shipType); }
+
+        if ('hull' in body || 'fuel' in body) {
+          if (!gameState.ship) gameState.ship = {};
+          if ('hull' in body) gameState.ship.hull = body.hull;
+          if ('fuel' in body) gameState.ship.fuel = body.fuel;
+          updates.push('game_state = ?');
+          values.push(JSON.stringify(gameState));
+        } else if ('gameState' in body) {
+          updates.push('game_state = ?');
+          values.push(JSON.stringify(body.gameState));
+        }
+
+        if (updates.length > 0) {
+          values.push(playerRow.account_id);
+          await env.DB.prepare(`UPDATE adastra_players SET ${updates.join(', ')} WHERE account_id = ?`).bind(...values).run();
+        }
+
+        result = { success: true };
+      }
+
+      // Admin: Delete player
+      else if (path.startsWith('/api/adastra/admin/player/') && !path.includes('/kick') && !path.includes('/ban') && request.method === 'DELETE') {
+        const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+        const account = await verifyToken(env, token);
+
+        if (!account || !account.is_admin) {
+          return new Response(JSON.stringify({ error: 'Admin access required' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const username = path.split('/').pop();
+        const accountRow = await env.DB.prepare('SELECT id FROM adastra_accounts WHERE username = ?').bind(username).first();
+
+        if (!accountRow) {
+          return new Response(JSON.stringify({ error: 'Player not found' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        await env.DB.prepare('DELETE FROM adastra_players WHERE account_id = ?').bind(accountRow.id).run();
+        await env.DB.prepare('DELETE FROM adastra_sessions WHERE account_id = ?').bind(accountRow.id).run();
+        await env.DB.prepare('DELETE FROM adastra_accounts WHERE id = ?').bind(accountRow.id).run();
+
+        result = { success: true, message: `Player ${username} deleted` };
+      }
+
+      // Admin: Kick player
+      else if (path.match(/\/api\/adastra\/admin\/player\/[^\/]+\/kick/) && request.method === 'POST') {
+        const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+        const account = await verifyToken(env, token);
+
+        if (!account || !account.is_admin) {
+          return new Response(JSON.stringify({ error: 'Admin access required' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const parts = path.split('/');
+        const username = parts[parts.length - 2];
+
+        const accountRow = await env.DB.prepare('SELECT id FROM adastra_accounts WHERE username = ?').bind(username).first();
+        if (accountRow) {
+          await env.DB.prepare('DELETE FROM adastra_sessions WHERE account_id = ?').bind(accountRow.id).run();
+        }
+
+        result = { success: true, message: `Player ${username} kicked` };
+      }
+
+      // Admin: Ban/unban player
+      else if (path.match(/\/api\/adastra\/admin\/player\/[^\/]+\/ban/) && request.method === 'POST') {
+        const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+        const account = await verifyToken(env, token);
+
+        if (!account || !account.is_admin) {
+          return new Response(JSON.stringify({ error: 'Admin access required' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const parts = path.split('/');
+        const username = parts[parts.length - 2];
+        const body = await request.json();
+        const isBanned = body.banned !== false;
+
+        await env.DB.prepare('UPDATE adastra_accounts SET is_banned = ? WHERE username = ?').bind(isBanned ? 1 : 0, username).run();
+
+        if (isBanned) {
+          const accountRow = await env.DB.prepare('SELECT id FROM adastra_accounts WHERE username = ?').bind(username).first();
+          if (accountRow) {
+            await env.DB.prepare('DELETE FROM adastra_sessions WHERE account_id = ?').bind(accountRow.id).run();
+          }
+        }
+
+        result = { success: true, message: `Player ${username} ${isBanned ? 'banned' : 'unbanned'}` };
+      }
+
+      // Admin: Reset galaxy
+      else if (path === '/api/adastra/admin/reset-galaxy' && request.method === 'POST') {
+        const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+        const account = await verifyToken(env, token);
+
+        if (!account || !account.is_admin) {
+          return new Response(JSON.stringify({ error: 'Admin access required' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        // Get settings
+        const settings = {};
+        const settingsRows = await env.DB.prepare('SELECT key, value FROM adastra_settings').all();
+        settingsRows.results.forEach(row => { settings[row.key] = row.value; });
+
+        const startingCredits = parseInt(settings.starting_credits || '10000');
+        const startingTurns = parseInt(settings.starting_turns || '50');
+        const startingSector = parseInt(settings.starting_sector || '1');
+
+        await env.DB.prepare(
+          "UPDATE adastra_players SET credits = ?, turns = ?, current_sector = ?, cargo = '{}', equipment = '{}', game_state = '{}' WHERE account_id IN (SELECT id FROM adastra_accounts WHERE is_admin = 0)"
+        ).bind(startingCredits, startingTurns, startingSector).run();
+
+        result = { success: true, message: 'Galaxy reset' };
+      }
+
+      // Admin: Get settings
+      else if (path === '/api/adastra/admin/settings' && request.method === 'GET') {
+        const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+        const account = await verifyToken(env, token);
+
+        if (!account || !account.is_admin) {
+          return new Response(JSON.stringify({ error: 'Admin access required' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const settings = {};
+        const rows = await env.DB.prepare('SELECT key, value FROM adastra_settings').all();
+        rows.results.forEach(row => { settings[row.key] = row.value; });
+
+        result = {
+          success: true,
+          settings: {
+            startingSector: parseInt(settings.starting_sector || '1'),
+            startingCredits: parseInt(settings.starting_credits || '10000'),
+            startingTurns: parseInt(settings.starting_turns || '50'),
+            startingFuel: parseInt(settings.starting_fuel || '100'),
+            startingHull: parseInt(settings.starting_hull || '100'),
+            startingShields: parseInt(settings.starting_shields || '100')
+          }
+        };
+      }
+
+      // Admin: Update settings
+      else if (path === '/api/adastra/admin/settings' && request.method === 'PUT') {
+        const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+        const account = await verifyToken(env, token);
+
+        if (!account || !account.is_admin) {
+          return new Response(JSON.stringify({ error: 'Admin access required' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const body = await request.json();
+        const keyMap = {
+          startingSector: 'starting_sector',
+          startingCredits: 'starting_credits',
+          startingTurns: 'starting_turns',
+          startingFuel: 'starting_fuel',
+          startingHull: 'starting_hull',
+          startingShields: 'starting_shields'
+        };
+
+        const updated = [];
+        for (const [apiKey, dbKey] of Object.entries(keyMap)) {
+          if (apiKey in body) {
+            await env.DB.prepare('INSERT OR REPLACE INTO adastra_settings (key, value) VALUES (?, ?)').bind(dbKey, String(body[apiKey])).run();
+            updated.push(apiKey);
+          }
+        }
+
+        result = { success: true, updated };
+      }
+
+      // Admin: Get stats
+      else if (path === '/api/adastra/admin/stats' && request.method === 'GET') {
+        const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+        const account = await verifyToken(env, token);
+
+        if (!account || !account.is_admin) {
+          return new Response(JSON.stringify({ error: 'Admin access required' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const totalPlayers = (await env.DB.prepare('SELECT COUNT(*) as cnt FROM adastra_accounts WHERE is_admin = 0').first()).cnt;
+        const activeSessions = (await env.DB.prepare('SELECT COUNT(DISTINCT account_id) as cnt FROM adastra_sessions').first()).cnt;
+        const totalConnections = (await env.DB.prepare('SELECT COUNT(*) as cnt FROM adastra_sessions').first()).cnt;
+
+        const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+        const recentlyActive = (await env.DB.prepare('SELECT COUNT(*) as cnt FROM adastra_players WHERE last_activity > ?').bind(tenMinAgo).first()).cnt;
+
+        result = { totalPlayers, activeSessions, recentlyActive, totalConnections };
+      }
+
       // 404 for unknown routes
       else {
         return new Response(JSON.stringify({ error: 'Not found', path }), {
@@ -800,7 +1654,9 @@ Keep it SHORT (under 10 words). Do NOT mention the actual word.`;
       await generateConnections(env, tomorrowStr);
       await generateSpellingBee(env, tomorrowStr);
       await generateContexto(env, tomorrowStr);
-      console.log('Puzzles generated successfully!');
+      await generateBetween(env, tomorrowStr);
+      await generatePhrase(env, tomorrowStr);
+      console.log('All puzzles generated successfully!');
     } catch (e) {
       console.error('Puzzle generation failed:', e);
     }

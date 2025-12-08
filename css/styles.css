@@ -23,6 +23,8 @@
     --youtube-red: #ff0000;
     --x-white: #ffffff;
     --discord-blurple: #5865F2;
+    --instagram-pink: #E1306C;
+    --rumble-green: #85c742;
 }
 
 html, body {
@@ -352,6 +354,24 @@ body {
 
 .discord:hover .card-icon {
     background: rgba(88, 101, 242, 0.25);
+}
+
+.instagram .card-icon {
+    background: rgba(225, 48, 108, 0.15);
+    color: var(--instagram-pink);
+}
+
+.instagram:hover .card-icon {
+    background: rgba(225, 48, 108, 0.25);
+}
+
+.rumble .card-icon {
+    background: rgba(133, 199, 66, 0.15);
+    color: var(--rumble-green);
+}
+
+.rumble:hover .card-icon {
+    background: rgba(133, 199, 66, 0.25);
 }
 
 .card-content {

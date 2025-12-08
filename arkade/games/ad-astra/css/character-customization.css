@@ -1,0 +1,166 @@
+/* Ad Astra - Character Customization Styles */
+/* character-customization.css - Ship selection and customization UI */
+
+/* Character Creation Steps */
+.char-creation-step {
+    display: none;
+}
+
+.char-creation-step.active {
+    display: block;
+}
+
+/* Ship Selection Grid */
+.ship-selection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+    padding: 20px;
+}
+
+.ship-option {
+    position: relative;
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.ship-option:hover {
+    border-color: var(--accent-blue);
+    box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+    transform: translateY(-5px);
+}
+
+.ship-option.selected {
+    border-color: var(--accent-green);
+    box-shadow: 0 4px 20px rgba(68, 255, 68, 0.4);
+    background: rgba(68, 255, 68, 0.1);
+}
+
+.ship-option img {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.ship-option-label {
+    text-align: center;
+    color: var(--text-primary);
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.ship-option-checkmark {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--accent-green);
+    color: #000;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Ship Preview Card */
+.selected-ship-preview {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.ship-preview-card {
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid var(--accent-blue);
+    border-radius: 8px;
+    padding: 20px;
+    display: inline-block;
+    max-width: 400px;
+}
+
+.ship-preview-card img {
+    width: 100%;
+    max-width: 300px;
+    height: auto;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.ship-preview-label {
+    color: var(--accent-blue);
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+/* Character Creation Buttons */
+.char-creation-step button {
+    margin: 10px 5px;
+}
+
+.char-creation-step .btn-primary {
+    background: var(--accent-blue);
+    color: var(--bg-dark);
+}
+
+.char-creation-step .btn-primary:hover:not(:disabled) {
+    background: #5a9ae2;
+}
+
+.char-creation-step .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.char-creation-step .btn-secondary {
+    background: var(--bg-medium);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.char-creation-step .btn-secondary:hover {
+    background: var(--bg-light);
+    border-color: var(--accent-blue);
+}
+
+/* Input Styling */
+.char-creation-step input[type="text"] {
+    width: 100%;
+    max-width: 400px;
+    padding: 12px;
+    margin: 10px auto;
+    display: block;
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-family: 'Unispace', monospace;
+    font-size: 1rem;
+}
+
+.char-creation-step input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 10px rgba(74, 144, 226, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .ship-selection-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .ship-preview-card {
+        max-width: 100%;
+    }
+}

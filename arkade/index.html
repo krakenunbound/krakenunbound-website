@@ -379,11 +379,11 @@
             </div>
 
             <!-- COMPLEX GAMES -->
-            <div class="game-card ad-astra coming-soon">
+            <div class="game-card ad-astra" onclick="launchGame('ad-astra')">
                 <div class="game-icon">✨</div>
                 <div class="game-title">AD ASTRA</div>
                 <div class="game-subtitle">Space Trading Simulation</div>
-                <span class="game-status status-coming">COMING SOON</span>
+                <span class="game-status status-ready">READY</span>
             </div>
         </div>
 
@@ -422,7 +422,7 @@
             'spelling-kraken': { ready: true },
             'abyssal-between': { ready: true },
             'phrase-kraken': { ready: true },
-            'ad-astra': { ready: false }
+            'ad-astra': { ready: true }
         };
 
         function launchGame(gameId) {

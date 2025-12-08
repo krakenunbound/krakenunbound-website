@@ -1,0 +1,316 @@
+// Ad Astra - Utility Functions
+// utils.js - Helper functions and localStorage wrapper
+
+export const Utils = {
+    // localStorage wrapper with JSON serialization
+    storage: {
+        set(key, value) {
+            try {
+                localStorage.setItem(key, JSON.stringify(value));
+                return true;
+            } catch (e) {
+                console.error('Storage error:', e);
+                return false;
+            }
+        },
+
+        get(key, defaultValue = null) {
+            try {
+                const item = localStorage.getItem(key);
+                return item ? JSON.parse(item) : defaultValue;
+            } catch (e) {
+                console.error('Storage retrieval error:', e);
+                return defaultValue;
+            }
+        },
+
+        remove(key) {
+            localStorage.removeItem(key);
+        },
+
+        clear() {
+            localStorage.clear();
+        },
+
+        has(key) {
+            return localStorage.getItem(key) !== null;
+        }
+    },
+
+    // Random number generator helpers
+    random: {
+        int(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        },
+
+        float(min, max) {
+            return Math.random() * (max - min) + min;
+        },
+
+        choice(array) {
+            return array[Math.floor(Math.random() * array.length)];
+        },
+
+        shuffle(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        },
+
+        weighted(choices) {
+            // choices: [{item, weight}, ...]
+            const totalWeight = choices.reduce((sum, c) => sum + c.weight, 0);
+            let random = Math.random() * totalWeight;
+
+            for (const choice of choices) {
+                random -= choice.weight;
+                if (random <= 0) {
+                    return choice.item;
+                }
+            }
+            return choices[choices.length - 1].item;
+        }
+    },
+
+    // Seeded random number generator for deterministic galaxy generation
+    // This ensures all players generate the same galaxy from the same seed
+    SeededRandom: class {
+        constructor(seed) {
+            // Convert string seed to number if needed
+            if (typeof seed === 'string') {
+                let hash = 0;
+                for (let i = 0; i < seed.length; i++) {
+                    hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+                    hash |= 0; // Convert to 32-bit integer
+                }
+                this.seed = Math.abs(hash);
+            } else {
+                this.seed = Math.abs(seed) || 1;
+            }
+
+            // Counter for generating unique values from same seed
+            this.counter = 0;
+        }
+
+        // Mulberry32 algorithm - fast and high-quality PRNG
+        _next() {
+            this.counter++;
+            let t = (this.seed + this.counter) & 0xFFFFFFFF;
+            t = Math.imul(t ^ (t >>> 15), t | 1);
+            t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        }
+
+        // Generate integer between min and max (inclusive)
+        int(min, max) {
+            return Math.floor(this._next() * (max - min + 1)) + min;
+        }
+
+        // Generate float between min and max
+        float(min, max) {
+            return this._next() * (max - min) + min;
+        }
+
+        // Choose random element from array
+        choice(array) {
+            if (!array || array.length === 0) return null;
+            return array[Math.floor(this._next() * array.length)];
+        }
+
+        // Check if random event occurs (probability 0-1)
+        chance(probability) {
+            return this._next() < probability;
+        }
+
+        // Shuffle array (Fisher-Yates)
+        shuffle(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(this._next() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // Weighted random selection
+        weighted(choices) {
+            const totalWeight = choices.reduce((sum, c) => sum + c.weight, 0);
+            let random = this._next() * totalWeight;
+
+            for (const choice of choices) {
+                random -= choice.weight;
+                if (random <= 0) {
+                    return choice.item;
+                }
+            }
+            return choices[choices.length - 1].item;
+        }
+    },
+
+    // Format numbers for display
+    format: {
+        number(num) {
+            return new Intl.NumberFormat('en-US').format(num);
+        },
+
+        credits(amount) {
+            return `₡${this.number(amount)}`;
+        },
+
+        percent(value, max) {
+            return Math.round((value / max) * 100);
+        },
+
+        time(timestamp) {
+            return new Date(timestamp).toLocaleString();
+        }
+    },
+
+    // HTML escape for user-generated content
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    },
+
+    // Distance calculation for galaxy coordinates
+    distance(x1, y1, x2, y2) {
+        return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    },
+
+    // Generate unique ID
+    generateId() {
+        return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    },
+
+    // Clamp value between min and max
+    clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+    },
+
+    // Deep clone object
+    clone(obj) {
+        return JSON.parse(JSON.stringify(obj));
+    },
+
+    // Debounce function
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    },
+
+    // Validate username
+    validateUsername(username) {
+        if (!username || username.trim().length < 3) {
+            return 'Username must be at least 3 characters';
+        }
+        if (username.length > 30) {
+            return 'Username must be less than 30 characters';
+        }
+        if (!/^[a-zA-Z0-9_\- ]+$/.test(username)) {
+            return 'Username can only contain letters, numbers, hyphens, underscores, and spaces';
+        }
+        return null;
+    },
+
+    // Validate password
+    validatePassword(password) {
+        if (!password || password.length < 6) {
+            return 'Password must be at least 6 characters';
+        }
+        if (password.length > 50) {
+            return 'Password must be less than 50 characters';
+        }
+        return null;
+    },
+
+    // Simple hash function (NOT for production security!)
+    // This is just for local testing - use proper backend auth for deployment
+    simpleHash(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+        return hash.toString(36);
+    },
+
+    // Calculate time until next turn regeneration
+    getTurnsRegenTime(lastRegenTime, turnsPerDay) {
+        const msPerTurn = (24 * 60 * 60 * 1000) / turnsPerDay;
+        const timeSinceLast = Date.now() - lastRegenTime;
+        const turnsToAdd = Math.floor(timeSinceLast / msPerTurn);
+        const timeUntilNext = msPerTurn - (timeSinceLast % msPerTurn);
+        return { turnsToAdd, timeUntilNext };
+    }
+};
+
+// Constants
+export const CONSTANTS = {
+    // Game settings
+    DEFAULT_TURNS_PER_DAY: 50,
+    MAX_TURNS: 200,
+    STARTING_CREDITS: 10000,
+    STARTING_SECTOR: 1,
+
+    // Ship defaults
+    STARTING_SHIP: {
+        name: 'Scout',
+        type: 'scout',
+        hullMax: 100,
+        hull: 100,
+        cargoMax: 50,
+        cargo: 0,
+        fuelMax: 100,
+        fuel: 100,
+        shields: 50,
+        shieldsMax: 50,
+        weapons: 20,
+        weaponsMax: 20,
+        speed: 1.0  // Base speed multiplier
+    },
+
+    // Commodity types
+    COMMODITIES: ['Ore', 'Organics', 'Equipment', 'Contraband'],
+
+    // Economy settings
+    ECONOMY: {
+        Ore: { basePrice: 10, variance: 5 },
+        Organics: { basePrice: 15, variance: 7 },
+        Equipment: { basePrice: 25, variance: 10 },
+        Contraband: { basePrice: 100, variance: 50 }
+    },
+
+    // Combat settings
+    COMBAT: {
+        BASE_DAMAGE: 10,
+        DAMAGE_VARIANCE: 5,
+        FLEE_CHANCE: 0.7
+    },
+
+    // Random events
+    EVENT_CHANCE: 0.15, // 15% chance per warp
+
+    // Galaxy generation
+    GALAXY: {
+        MIN_SIZE: 10,
+        MAX_SIZE: 1000,
+        DEFAULT_SIZE: 100,
+        PLANET_CHANCE: 0.3,
+        STATION_CHANCE: 0.1,
+        WARP_CONNECTIONS: 3 // Average connections per sector
+    }
+};
+
+export default Utils;

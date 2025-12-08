@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ad Astra: Trade & Explore</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/ui.css">
+    <link rel="stylesheet" href="css/messageboard.css">
+    <link rel="stylesheet" href="css/alpha-tester.css">
+    <link rel="stylesheet" href="css/character-customization.css">
+
+</head>
+
+<body>
+    <!-- Particle Background Canvas -->
+    <canvas id="particle-canvas"></canvas>
+
+    <div class="cockpit-grid">
+        <!-- ============================================ -->
+        <!-- AUTH SCREEN - Login/Register ONLY -->
+        <!-- ============================================ -->
+        <div id="auth-screen" class="screen active">
+            <div class="auth-container">
+                <h1>Ad Astra</h1>
+                <p class="tagline">Journey to the Stars</p>
+
+                <!-- Login Form -->
+                <div id="login-form" class="form-section active">
+                    <h2>Login</h2>
+                    <input type="text" id="login-username" placeholder="Username" autocomplete="username">
+                    <input type="password" id="login-password" placeholder="Password" autocomplete="current-password">
+                    <button id="login-btn">Enter the Galaxy</button>
+                    <p class="form-switch">New pilot? <a href="#" id="show-register">Create Account</a></p>
+                </div>
+
+                <!-- Register Form -->
+                <div id="register-form" class="form-section">
+                    <h2>Create Account</h2>
+                    <input type="text" id="register-username" placeholder="Username" autocomplete="username">
+                    <input type="password" id="register-password" placeholder="Password" autocomplete="new-password">
+                    <input type="password" id="register-confirm" placeholder="Confirm Password"
+                        autocomplete="new-password">
+                    <button id="register-btn">Launch Career</button>
+                    <p class="form-switch">Already registered? <a href="#" id="show-login">Login</a></p>
+                </div>
+
+                <!-- Character Creation -->
+                <div id="character-creation" class="form-section">
+                    <h2>Character Creation</h2>
+
+                    <!-- Step 1: Pilot Name -->
+                    <div id="char-step-1" class="char-creation-step active">
+                        <p>Welcome, Commander! Choose your pilot name:</p>
+                        <input type="text" id="pilot-name" placeholder="Pilot Name" maxlength="30">
+                        <button id="char-next-1" class="btn-primary">Next: Choose Your Ship</button>
+                    </div>
+
+                    <!-- Step 2: Ship Selection -->
+                    <div id="char-step-2" class="char-creation-step">
+                        <p>Select your starting ship:</p>
+                        <div id="ship-selection-grid" class="ship-selection-grid">
+                            <!-- Ships will be populated by JS -->
+                        </div>
+                        <button id="char-back-2" class="btn-secondary">Back</button>
+                        <button id="char-next-2" class="btn-primary" disabled>Next: Name Your Ship</button>
+                    </div>
+
+                    <!-- Step 3: Ship Naming -->
+                    <div id="char-step-3" class="char-creation-step">
+                        <p>Give your ship a name:</p>
+                        <div id="selected-ship-preview" class="selected-ship-preview">
+                            <!-- Preview will be shown here -->
+                        </div>
+                        <input type="text" id="ship-custom-name"
+                            placeholder="Ship Name (e.g., Starhawk, Millennium Falcon)" maxlength="30">
+                        <button id="char-back-3" class="btn-secondary">Back</button>
+                        <button id="create-character-btn">Begin Your Journey</button>
+                    </div>
+                </div>
+
+                <!-- Admin Login -->
+                <div id="admin-login-form" class="form-section">
+                    <h2>Sysop Access</h2>
+                    <input type="text" id="admin-username" placeholder="Admin Username" autocomplete="username">
+                    <input type="password" id="admin-password" placeholder="Admin Password"
+                        autocomplete="current-password">
+                    <button id="admin-login-btn">Access Admin Panel</button>
+                    <p class="form-switch"><a href="#" id="show-login-from-admin">Back to Login</a></p>
+                </div>
+
+                <!-- Admin Login Link -->
+                <div class="admin-section">
+                    <a href="#" id="show-admin-login">Sysop Access</a>
+                </div>
+
+                <!-- Back to Arkade -->
+                <div class="arkade-link">
+                    <a href="/arkade/" class="back-to-arkade">← Back to Kraken Arkade</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- GAME SCREEN -->
+        <!-- ============================================ -->
+        <div id="game-screen" class="screen">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div class="player-info">
+                    <span id="pilot-name-display">Pilot: Unknown</span> |
+                    <span id="credits-display">Credits: 0</span> |
+                    <span id="turns-display">Turns: 0</span> |
+                    <span id="sector-display">Sector: 1</span> |
+                    <span id="fuel-display">Fuel: 0/0</span>
+                </div>
+                <div class="nav-buttons">
+                    <button id="nav-sector">Sector</button>
+                    <button id="nav-ship">Ship</button>
+                    <button id="nav-galaxy">Galaxy Map</button>
+                    <button id="nav-computer">Computer</button>
+                    <button id="nav-trade">Trade</button>
+                    <button id="nav-stats">Stats</button>
+                    <button id="nav-settings">Settings</button>
+                    <button id="nav-alpha-tester">🧪 Alpha Test</button>
+                    <button id="logout-btn">Logout</button>
+                    <button id="back-to-arkade-btn" onclick="window.location.href='/arkade/'">🦑 Arkade</button>
+                </div>
+            </div>
+
+            <!-- Game Container -->
+            <div class="game-container">
+                <!-- Sector View -->
+                <div id="sector-view" class="view-panel active">
+                    <div class="panel-header">
+                        <h2>Current Sector <span id="current-sector-id">1</span></h2>
+                    </div>
+                    <div class="panel-content">
+                        <div id="sector-info" class="info-section">
+                            <!-- Sector contents populated by JS -->
+                        </div>
+
+                        <!-- Mining Controls (shown when in asteroid field) -->
+                        <div id="mining-controls" class="action-buttons"
+                            style="display: none; margin: 20px 0; padding: 20px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px;">
+                            <h3 style="color: var(--accent-yellow); margin: 0 0 15px 0;">⛏️ Mining Operations</h3>
+                            <div id="mining-equipment-status" style="margin-bottom: 15px; font-size: 0.95em;">
+                                <!-- Equipment status will be shown here -->
+                            </div>
+                            <button id="mine-asteroids-btn" class="btn btn-primary"
+                                style="padding: 12px 24px; font-size: 1.1em;">
+                                ⛏️ Mine Asteroid Field
+                            </button>
+                        </div>
+
+                        <div id="sector-actions" class="action-section">
+                            <!-- Warp buttons populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ship View -->
+                <div id="ship-view" class="view-panel">
+                    <div class="panel-header">
+                        <h2>Ship Status</h2>
+                    </div>
+                    <div class="panel-content">
+                        <div id="ship-stats" class="info-section">
+                            <!-- Ship stats populated by JS -->
+                        </div>
+                        <div id="ship-cargo" class="info-section">
+                            <h3>Cargo Hold</h3>
+                            <div id="cargo-list">
+                                <!-- Cargo populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Galaxy Map View -->
+                <div id="galaxy-view" class="view-panel">
+                    <div class="panel-header">
+                        <h2>Galaxy Map</h2>
+                    </div>
+                    <div class="panel-content">
+                        <div id="galaxy-map" class="galaxy-container">
+                            <canvas id="galaxy-canvas"></canvas>
+                        </div>
+                        <div class="galaxy-controls">
+                            <button id="galaxy-zoom-in">Zoom In</button>
+                            <button id="galaxy-zoom-out">Zoom Out</button>
+                            <button id="galaxy-reset">Reset View</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Computer View -->
+                <div id="computer-view" class="view-panel">
+                    <div class="panel-header">
+                        <h2>Ship Computer</h2>
+                    </div>
+                    <div class="panel-content">
+                        <div class="comp-tabs">
+                            <button id="comp-nav-navigation" class="comp-tab active">Navigation</button>
+                            <button id="comp-nav-intel" class="comp-tab">Intel</button>
+                            <button id="comp-nav-bookmarks" class="comp-tab">Bookmarks</button>
+                            <button id="comp-nav-fighters" class="comp-tab">Fighters</button>
+                            <button id="comp-nav-colonies" class="comp-tab">Colonies</button>
+                        </div>
+
+                        <!-- Navigation Panel -->
+                        <div id="comp-navigation" class="comp-panel active">
+                            <h3>Navigation Computer</h3>
+                            <div class="nav-route-planner">
+                                <h4>Route Planner</h4>
+                                <label>Destination Sector: <input type="number" id="nav-dest-sector"
+                                        placeholder="Sector ID"></label>
+                                <button id="nav-calculate-route">Calculate Route</button>
+                                <div id="nav-route-display" class="route-display"></div>
+                            </div>
+                            <div class="nav-nearest">
+                                <h4>Nearest Locations</h4>
+                                <button id="nav-find-planet">Find Nearest Planet</button>
+                                <button id="nav-find-station">Find Nearest Station</button>
+                                <button id="nav-find-military">Find Military Port</button>
+                                <button id="nav-find-blackmarket">Find Black Market</button>
+                                <div id="nav-nearest-display" class="nearest-display"></div>
+                            </div>
+                            <div class="nav-trade-finder">
+                                <h4>Trade Route Finder</h4>
+                                <label>Max Jumps: <input type="number" id="nav-trade-jumps" value="10" min="1"
+                                        max="30"></label>
+                                <button id="nav-find-trade">Find Best Trade Route</button>
+                                <div id="nav-trade-display" class="trade-display"></div>
+                            </div>
+                        </div>
+
+                        <!-- Intel Panel -->
+                        <div id="comp-intel" class="comp-panel">
+                            <h3>Sector Intelligence</h3>
+                            <div class="intel-current">
+                                <h4>Current Sector Analysis</h4>
+                                <div id="intel-current-display"></div>
+                            </div>
+                            <div class="intel-galaxy">
+                                <h4>Galaxy Statistics</h4>
+                                <button id="intel-analyze-galaxy">Analyze Galaxy</button>
+                                <div id="intel-galaxy-display"></div>
+                            </div>
+                            <div class="intel-scan-history">
+                                <h4>Recent Scans</h4>
+                                <div id="intel-scan-list"></div>
+                            </div>
+                        </div>
+
+                        <!-- Bookmarks Panel -->
+                        <div id="comp-bookmarks" class="comp-panel">
+                            <h3>Sector Bookmarks</h3>
+                            <div class="bookmark-add">
+                                <h4>Add Bookmark</h4>
+                                <label>Sector ID: <input type="number" id="bookmark-sector"
+                                        placeholder="Sector ID"></label>
+                                <label>Name: <input type="text" id="bookmark-name" placeholder="Bookmark Name"></label>
+                                <label>Notes: <textarea id="bookmark-notes" placeholder="Optional notes"
+                                        rows="2"></textarea></label>
+                                <button id="bookmark-add-btn">Add Bookmark</button>
+                            </div>
+                            <div class="bookmark-list">
+                                <h4>Your Bookmarks</h4>
+                                <div id="bookmark-display"></div>
+                            </div>
+                            <div class="sector-notes">
+                                <h4>Sector Notes</h4>
+                                <div id="notes-display"></div>
+                            </div>
+                        </div>
+
+                        <!-- Fighters Panel -->
+                        <div id="comp-fighters" class="comp-panel">
+                            <h3>Fighter Command</h3>
+                            <div class="fighter-deploy">
+                                <h4>Deploy Fighters</h4>
+                                <p class="info">Cost: 50 credits per fighter | Max 50 per sector</p>
+                                <label>Quantity: <input type="number" id="fighter-quantity" value="10" min="1"
+                                        max="50"></label>
+                                <button id="fighter-deploy-btn">Deploy in Current Sector</button>
+                            </div>
+                            <div class="mine-deploy">
+                                <h4>Deploy Mines</h4>
+                                <p class="info">Cost: 100 credits per mine | Max 20 per sector</p>
+                                <label>Quantity: <input type="number" id="mine-quantity" value="5" min="1"
+                                        max="20"></label>
+                                <button id="mine-deploy-btn">Deploy in Current Sector</button>
+                            </div>
+                            <div class="fighter-summary">
+                                <h4>Your Deployments</h4>
+                                <button id="fighter-refresh">Refresh Status</button>
+                                <div id="fighter-display"></div>
+                            </div>
+                        </div>
+
+                        <!-- Colonies Panel -->
+                        <div id="comp-colonies" class="comp-panel">
+                            <h3>Colony Management</h3>
+                            <div class="colony-create">
+                                <h4>Genesis Torpedo</h4>
+                                <p class="info">Cost: 50,000 credits | Creates a new colony planet</p>
+                                <p class="info">Max 5 colonies per player</p>
+                                <button id="colony-genesis-btn">Launch Genesis in Current Sector</button>
+                            </div>
+                            <div class="colony-list">
+                                <h4>Your Colonies</h4>
+                                <button id="colony-refresh">Refresh Colonies</button>
+                                <button id="colony-collect-all">Collect All Income</button>
+                                <div id="colony-display"></div>
+                            </div>
+                            <div class="colony-stats">
+                                <h4>Colony Statistics</h4>
+                                <div id="colony-stats-display"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trade View -->
+                <div id="trade-view" class="view-panel">
+                    <div class="panel-header">
+                        <h2>Trading</h2>
+                    </div>
+                    <div class="panel-content">
+                        <div id="trade-info" class="info-section">
+                            <!-- Trade info populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats View -->
+                <div id="stats-view" class="view-panel">
+                    <div class="panel-header">
+                        <h2>Statistics</h2>
+                    </div>
+                    <div class="panel-content">
+                        <div id="player-stats" class="info-section">
+                            <!-- Stats populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings View -->
+                <div id="settings-view" class="view-panel">
+                    <div class="panel-header">
+                        <h2>Settings</h2>
+                    </div>
+                    <div class="panel-content settings-grid">
+                        <div class="settings-card">
+                            <h3>Audio Controls</h3>
+                            <div class="setting-row">
+                                <label for="settings-music-enabled">Music Enabled</label>
+                                <input type="checkbox" id="settings-music-enabled" checked>
+                            </div>
+                            <div class="setting-row">
+                                <label for="settings-playlist-mode">Playlist Mode</label>
+                                <input type="checkbox" id="settings-playlist-mode" checked>
+                            </div>
+                            <div class="setting-row">
+                                <label for="settings-volume-master">Music Volume</label>
+                                <input type="range" id="settings-volume-master" min="0" max="100" value="20">
+                                <span class="setting-value" id="settings-volume-master-value">20%</span>
+                            </div>
+                            <div class="setting-row">
+                                <label for="settings-volume-sfx">SFX Volume</label>
+                                <input type="range" id="settings-volume-sfx" min="0" max="100" value="70">
+                                <span class="setting-value" id="settings-volume-sfx-value">70%</span>
+                            </div>
+                            <div class="setting-actions">
+                                <button id="settings-shuffle-playlist">Shuffle Playlist</button>
+                            </div>
+                        </div>
+
+                        <div class="settings-card">
+                            <h3>Music Playlist</h3>
+                            <p class="text-secondary">Toggle which tracks can play during your session.</p>
+                            <div id="settings-playlist-container" class="playlist-list">
+                                <!-- Playlist checkboxes rendered by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message Board View -->
+                <div id="messageboard-view" class="view-panel">
+                    <div class="panel-header">
+                        <h2 id="messageboard-title">Message Board</h2>
+                        <button id="messageboard-back" class="back-button">Back to Sector</button>
+                    </div>
+                    <div class="panel-content">
+                        <!-- Message Board Background -->
+                        <div class="messageboard-background" style="
+                            background: linear-gradient(to bottom, rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.94)), 
+                                        url('assets/images/messageboard.webp') center/cover;
+                            border: 2px solid var(--border-color);
+                            border-radius: 8px;
+                            padding: 20px;
+                            min-height: 650px;
+                        ">
+                            <!-- Stats Section -->
+                            <div id="messageboard-stats" class="mb-stats" style="
+                                display: flex;
+                                gap: 20px;
+                                margin-bottom: 15px;
+                                padding: 10px;
+                                background: rgba(0,0,0,0.3);
+                                border-radius: 4px;
+                            ">
+                                <!-- Stats populated by JS -->
+                            </div>
+
+                            <!-- Controls (filters) - wrapped for hide/show -->
+                            <div id="messageboard-controls" class="mb-filters" style="margin-bottom: 15px;">
+                                <button id="mb-refresh" class="mb-action-btn">🔄 Refresh</button>
+                                <select id="mb-filter-type">
+                                    <option value="">All Messages</option>
+                                    <option value="GENERAL">General</option>
+                                    <option value="TRADE">Trade</option>
+                                    <option value="INTEL">Intel</option>
+                                    <option value="HELP">Help</option>
+                                    <option value="BOUNTY">Bounty</option>
+                                    <option value="CORPORATE">Corporate</option>
+                                    <option value="WARNING">Warning</option>
+                                </select>
+                                <input type="text" id="mb-search" placeholder="Search messages...">
+                                <button id="mb-post-new">Post New Message</button>
+                            </div>
+
+                            <!-- Message List -->
+                            <div id="messageboard-list" class="mb-message-list" style="
+                                max-height: 400px;
+                                overflow-y: auto;
+                                margin-bottom: 15px;
+                            ">
+                                <!-- Messages populated by JS -->
+                            </div>
+
+                            <!-- Message Detail View (hidden by default) -->
+                            <div id="messageboard-detail" style="display: none;">
+                                <!-- Single message detail populated by JS -->
+                            </div>
+
+                            <!-- Post Form -->
+                            <div id="messageboard-post-form" class="mb-post-form" style="display:none;">
+                                <h3>New Message</h3>
+                                <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                                    <select id="mb-post-type" style="padding: 8px;">
+                                        <option value="GENERAL">General</option>
+                                        <option value="TRADE">Trade</option>
+                                        <option value="INTEL">Intel</option>
+                                        <option value="HELP">Help</option>
+                                        <option value="BOUNTY">Bounty</option>
+                                        <option value="CORPORATE">Corporate</option>
+                                        <option value="WARNING">Warning</option>
+                                    </select>
+                                    <input type="text" id="mb-post-subject" placeholder="Subject (max 80 chars)"
+                                        maxlength="80" style="flex: 1; padding: 8px;">
+                                    <span class="char-counter"><span id="mb-subject-count">0</span>/80</span>
+                                </div>
+                                <textarea id="mb-post-body" placeholder="Message body (max 500 chars)" maxlength="500"
+                                    style="width: 100%; min-height: 150px; padding: 10px; resize: vertical;"></textarea>
+                                <p class="char-counter" style="text-align: right; margin: 5px 0;"><span
+                                        id="mb-body-count">0</span>/500</p>
+                                <div style="display: flex; gap: 10px;">
+                                    <button id="mb-submit-post">Post Message</button>
+                                    <button id="mb-cancel-post">Cancel</button>
+                                </div>
+                            </div>
+
+                            <!-- Reply Form -->
+                            <div id="messageboard-reply-form" class="mb-reply-form" style="display:none;">
+                                <h3>Reply to Message</h3>
+                                <textarea id="mb-reply-body" placeholder="Your reply (max 500 chars)" maxlength="500"
+                                    style="width: 100%; min-height: 120px; padding: 10px; resize: vertical;"></textarea>
+                                <p class="char-counter" style="text-align: right; margin: 5px 0;"><span
+                                        id="mb-reply-count">0</span>/500</p>
+                                <div style="display: flex; gap: 10px;">
+                                    <button id="mb-submit-reply">Post Reply</button>
+                                    <button id="mb-cancel-reply">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Message Log -->
+            <div class="message-log">
+                <div class="log-header">
+                    <h3>Ship's Log</h3>
+                    <button id="clear-log">Clear</button>
+                </div>
+                <div id="message-container">
+                    <!-- Messages will appear here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- ADMIN SCREEN -->
+        <!-- ============================================ -->
+        <div id="admin-screen" class="screen">
+            <div class="admin-container">
+                <div class="admin-header">
+                    <h1>Admin Control Panel</h1>
+                    <div class="admin-nav">
+                        <button id="admin-tab-dashboard" class="admin-tab active">Dashboard</button>
+                        <button id="admin-tab-players" class="admin-tab">Players</button>
+                        <button id="admin-tab-galaxy" class="admin-tab">Galaxy</button>
+                        <button id="admin-tab-settings" class="admin-tab">Settings</button>
+                        <button id="admin-logout" class="btn-secondary">Logout</button>
+                    </div>
+                </div>
+
+                <!-- Dashboard Panel -->
+                <div id="admin-panel-dashboard" class="admin-panel active">
+                    <div class="stats-grid" id="admin-dashboard-stats">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Players Panel -->
+                <div id="admin-panel-players" class="admin-panel" style="display:none;">
+                    <div class="player-list-controls">
+                        <input type="text" id="admin-player-search" placeholder="Search players..."
+                            class="admin-search">
+                        <button id="admin-refresh-players" class="btn-primary">Refresh List</button>
+                    </div>
+                    <div class="data-grid-container">
+                        <table id="admin-player-list" class="data-grid">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Pilot Name</th>
+                                    <th>Credits</th>
+                                    <th>Turns</th>
+                                    <th>Sector</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Galaxy Panel -->
+                <div id="admin-panel-galaxy" class="admin-panel" style="display:none;">
+                    <div class="admin-section">
+                        <h2>Galaxy Management</h2>
+                        <div class="control-group">
+                            <label>Galaxy Size:</label>
+                            <input type="number" id="admin-galaxy-size" value="100" min="10" max="1000">
+                            <button id="admin-generate-galaxy" class="btn-danger">Generate New Galaxy</button>
+                        </div>
+                        <p class="warning-text">⚠️ Warning: Generating a new galaxy will reset everyone's position!</p>
+                    </div>
+                    <div class="admin-section">
+                        <h2>Economy</h2>
+                        <button id="admin-refresh-economy" class="btn-primary">Force Economy Refresh</button>
+                    </div>
+                </div>
+
+                <!-- Settings Panel -->
+                <div id="admin-panel-settings" class="admin-panel" style="display:none;">
+                    <div class="admin-section">
+                        <h2>Game Settings</h2>
+                        <div class="control-group">
+                            <label>Turns per Day:</label>
+                            <input type="number" id="admin-turns-per-day" value="50" min="10" max="500">
+                        </div>
+                        <button id="admin-save-settings" class="btn-primary">Save Settings</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Player Edit Modal -->
+            <div id="admin-player-modal" class="modal-overlay">
+                <div class="modal">
+                    <div class="modal-header">
+                        <h2>Edit Player</h2>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="edit-player-username">
+                        <div class="form-group">
+                            <label>Pilot Name</label>
+                            <input type="text" id="edit-player-pilot" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Credits</label>
+                            <input type="number" id="edit-player-credits">
+                        </div>
+                        <div class="form-group">
+                            <label>Turns</label>
+                            <input type="number" id="edit-player-turns">
+                        </div>
+                        <div class="form-group">
+                            <label>Hull</label>
+                            <input type="number" id="edit-player-hull">
+                        </div>
+                        <div class="form-group">
+                            <label>Fuel</label>
+                            <input type="number" id="edit-player-fuel">
+                        </div>
+                        <div class="form-group">
+                            <label>Current Sector</label>
+                            <input type="number" id="edit-player-sector">
+                        </div>
+                        <div class="form-group">
+                            <label>Ship Name</label>
+                            <input type="text" id="edit-player-ship-name" placeholder="e.g., Starhawk">
+                        </div>
+                        <div class="form-group">
+                            <label>Ship Type</label>
+                            <select id="edit-player-ship-type">
+                                <option value="scout">Scout</option>
+                                <option value="trader">Trader</option>
+                                <option value="freighter">Freighter</option>
+                                <option value="corvette">Corvette</option>
+                                <option value="fighter">Fighter</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Ship Variant (1-4)</label>
+                            <input type="number" id="edit-player-ship-variant" min="1" max="10" value="1">
+                            <small>Choose which visual variant (must exist as ship_type_#.webp)</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="admin-cancel-edit" class="btn-secondary">Cancel</button>
+                        <button id="admin-save-player" class="btn-primary">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alpha Tester Panel (Overlay) -->
+        <div id="alpha-tester-panel" class="alpha-panel">
+            <div class="alpha-header">
+                <h2>🧪 Alpha Testing Checklist</h2>
+                <div class="alpha-controls">
+                    <span id="alpha-completion">0% Complete</span>
+                    <button id="alpha-export" class="alpha-btn">📥 Export Results</button>
+                    <button id="alpha-clear" class="alpha-btn">🗑️ Clear All</button>
+                    <button id="alpha-close" class="alpha-btn-close">✕</button>
+                </div>
+            </div>
+            <div class="alpha-content">
+                <div class="alpha-instructions">
+                    <p><strong>Welcome, Alpha Tester!</strong> Test each feature and mark as ✅ Pass, ❌ Fail, or ⏭️
+                        Skip. Add notes for failures.</p>
+                    <p><em>Export results as JSON to share with developers.</em></p>
+                </div>
+                <div id="alpha-test-list" class="alpha-test-list">
+                    <!-- Test categories will be populated here -->
+                </div>
+            </div>
+            <p class="char-counter" style="text-align: right; margin: 5px 0;"><span id="mb-body-count">0</span>/500</p>
+            <div style="display: flex; gap: 10px;">
+                <button id="mb-submit-post">Post Message</button>
+                <button id="mb-cancel-post">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Reply Form -->
+        <div id="messageboard-reply-form" class="mb-reply-form" style="display:none;">
+            <h3>Reply to Message</h3>
+            <textarea id="mb-reply-body" placeholder="Your reply (max 500 chars)" maxlength="500"
+                style="width: 100%; min-height: 120px; padding: 10px; resize: vertical;"></textarea>
+            <p class="char-counter" style="text-align: right; margin: 5px 0;"><span id="mb-reply-count">0</span>/500</p>
+            <div style="display: flex; gap: 10px;">
+                <button id="mb-submit-reply">Post Reply</button>
+                <button id="mb-cancel-reply">Cancel</button>
+            </div>
+        </div>
+    </div>
+    </div>
+    </div>
+    </div>
+
+    <!-- Message Log -->
+    <div class="message-log">
+        <div class="log-header">
+            <h3>Ship's Log</h3>
+            <button id="clear-log">Clear</button>
+        </div>
+        <div id="message-container">
+            <!-- Messages will appear here -->
+        </div>
+    </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- ADMIN SCREEN -->
+    <!-- ============================================ -->
+    <div id="admin-screen" class="screen">
+        <div class="admin-container">
+            <div class="admin-header">
+                <h1>Admin Control Panel</h1>
+                <div class="admin-nav">
+                    <button id="admin-tab-dashboard" class="admin-tab active">Dashboard</button>
+                    <button id="admin-tab-players" class="admin-tab">Players</button>
+                    <button id="admin-tab-galaxy" class="admin-tab">Galaxy</button>
+                    <button id="admin-tab-settings" class="admin-tab">Settings</button>
+                    <button id="admin-logout" class="btn-secondary">Logout</button>
+                </div>
+            </div>
+
+            <!-- Dashboard Panel -->
+            <div id="admin-panel-dashboard" class="admin-panel active">
+                <div class="stats-grid" id="admin-dashboard-stats">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Players Panel -->
+            <div id="admin-panel-players" class="admin-panel" style="display:none;">
+                <div class="player-list-controls">
+                    <input type="text" id="admin-player-search" placeholder="Search players..." class="admin-search">
+                    <button id="admin-refresh-players" class="btn-primary">Refresh List</button>
+                </div>
+                <div class="data-grid-container">
+                    <table id="admin-player-list" class="data-grid">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Pilot Name</th>
+                                <th>Credits</th>
+                                <th>Turns</th>
+                                <th>Sector</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Galaxy Panel -->
+            <div id="admin-panel-galaxy" class="admin-panel" style="display:none;">
+                <div class="admin-section">
+                    <h2>Galaxy Management</h2>
+                    <div class="control-group">
+                        <label>Galaxy Size:</label>
+                        <input type="number" id="admin-galaxy-size" value="100" min="10" max="1000">
+                        <button id="admin-generate-galaxy" class="btn-danger">Generate New Galaxy</button>
+                    </div>
+                    <p class="warning-text">⚠️ Warning: Generating a new galaxy will reset everyone's position!</p>
+                </div>
+                <div class="admin-section">
+                    <h2>Economy</h2>
+                    <button id="admin-refresh-economy" class="btn-primary">Force Economy Refresh</button>
+                </div>
+            </div>
+
+            <!-- Settings Panel -->
+            <div id="admin-panel-settings" class="admin-panel" style="display:none;">
+                <div class="admin-section">
+                    <h2>Game Settings</h2>
+                    <div class="control-group">
+                        <label>Turns per Day:</label>
+                        <input type="number" id="admin-turns-per-day" value="50" min="10" max="500">
+                    </div>
+                    <button id="admin-save-settings" class="btn-primary">Save Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Player Edit Modal -->
+        <div id="admin-player-modal" class="modal-overlay">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2>Edit Player</h2>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit-player-username">
+                    <div class="form-group">
+                        <label>Pilot Name</label>
+                        <input type="text" id="edit-player-pilot" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Credits</label>
+                        <input type="number" id="edit-player-credits">
+                    </div>
+                    <div class="form-group">
+                        <label>Turns</label>
+                        <input type="number" id="edit-player-turns">
+                    </div>
+                    <div class="form-group">
+                        <label>Hull</label>
+                        <input type="number" id="edit-player-hull">
+                    </div>
+                    <div class="form-group">
+                        <label>Fuel</label>
+                        <input type="number" id="edit-player-fuel">
+                    </div>
+                    <div class="form-group">
+                        <label>Current Sector</label>
+                        <input type="number" id="edit-player-sector">
+                    </div>
+                    <div class="form-group">
+                        <label>Ship Name</label>
+                        <input type="text" id="edit-player-ship-name" placeholder="e.g., Starhawk">
+                    </div>
+                    <div class="form-group">
+                        <label>Ship Type</label>
+                        <select id="edit-player-ship-type">
+                            <option value="scout">Scout</option>
+                            <option value="trader">Trader</option>
+                            <option value="freighter">Freighter</option>
+                            <option value="corvette">Corvette</option>
+                            <option value="fighter">Fighter</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Ship Variant (1-4)</label>
+                        <input type="number" id="edit-player-ship-variant" min="1" max="10" value="1">
+                        <small>Choose which visual variant (must exist as ship_type_#.webp)</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="admin-cancel-edit" class="btn-secondary">Cancel</button>
+                    <button id="admin-save-player" class="btn-primary">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alpha Tester Panel (Overlay) -->
+    <div id="alpha-tester-panel" class="alpha-panel">
+        <div class="alpha-header">
+            <h2>🧪 Alpha Testing Checklist</h2>
+            <div class="alpha-controls">
+                <span id="alpha-completion">0% Complete</span>
+                <button id="alpha-export" class="alpha-btn">📥 Export Results</button>
+                <button id="alpha-clear" class="alpha-btn">🗑️ Clear All</button>
+                <button id="alpha-close" class="alpha-btn-close">✕</button>
+            </div>
+        </div>
+        <div class="alpha-content">
+            <div class="alpha-instructions">
+                <p><strong>Welcome, Alpha Tester!</strong> Test each feature and mark as ✅ Pass, ❌ Fail, or ⏭️
+                    Skip. Add notes for failures.</p>
+                <p><em>Export results as JSON to share with developers.</em></p>
+            </div>
+            <div id="alpha-test-list" class="alpha-test-list">
+                <!-- Test categories will be populated here -->
+            </div>
+        </div>
+    </div>
+    </div> <!-- Close cockpit-grid -->
+
+    <!-- Load JavaScript Modules -->
+    <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/particles.js"></script>
+    <script src="../../shared/js/how-to-play.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initHowToPlay('ad-astra', null);
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1523 @@
+/* Ad Astra - UI Component Styles */
+
+/* Galaxy Map Visualization */
+.galaxy-container {
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 20px;
+    flex: 1;
+    min-height: 600px;  /* Increased from 500px */
+    height: 600px;      /* ADDED: Force explicit height */
+    position: relative;
+    overflow: hidden;
+    cursor: grab;
+}
+
+.galaxy-container:active {
+    cursor: grabbing;
+}
+
+/* Base sector node - DEFAULT BLUE (only if no star type) */
+.sector-node {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #4a90e2;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 6px rgba(74, 144, 226, 0.4);
+}
+
+.sector-node:hover {
+    transform: scale(1.5);
+    z-index: 10;
+}
+
+/* Star type variations - MUST come after base to override */
+.sector-node.star-red-giant {
+    width: 18px !important;
+    height: 18px !important;
+    background: #ff4444 !important;
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.6) !important;
+}
+
+.sector-node.star-red-dwarf {
+    width: 10px !important;
+    height: 10px !important;
+    background: #ff8866 !important;
+    box-shadow: 0 0 4px rgba(255, 136, 102, 0.5) !important;
+}
+
+.sector-node.star-yellow {
+    width: 14px !important;
+    height: 14px !important;
+    background: #ffdd44 !important;
+    box-shadow: 0 0 8px rgba(255, 221, 68, 0.5) !important;
+}
+
+.sector-node.star-white-dwarf {
+    width: 8px !important;
+    height: 8px !important;
+    background: #ffffff !important;
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.8) !important;
+}
+
+.sector-node.star-blue-giant {
+    width: 16px !important;
+    height: 16px !important;
+    background: #4488ff !important;
+    box-shadow: 0 0 12px rgba(68, 136, 255, 0.6) !important;
+}
+
+/* Hover effects for star types */
+.sector-node.star-red-giant:hover {
+    box-shadow: 0 0 20px rgba(255, 68, 68, 1) !important;
+}
+
+.sector-node.star-red-dwarf:hover {
+    box-shadow: 0 0 8px rgba(255, 136, 102, 1) !important;
+}
+
+.sector-node.star-yellow:hover {
+    box-shadow: 0 0 16px rgba(255, 221, 68, 1) !important;
+}
+
+.sector-node.star-white-dwarf:hover {
+    box-shadow: 0 0 12px rgba(255, 255, 255, 1) !important;
+}
+
+.sector-node.star-blue-giant:hover {
+    box-shadow: 0 0 24px rgba(68, 136, 255, 1) !important;
+}
+
+/* CURRENT LOCATION - IMPOSSIBLE TO MISS */
+.sector-node.current {
+    width: 50px !important;
+    height: 50px !important;
+    background: radial-gradient(circle, #00ff88 0%, #00dd66 50%, #00aa44 100%) !important;
+    border: 5px solid #ffffff !important;
+    box-shadow:
+        0 0 0 8px rgba(0, 255, 136, 0.3),
+        0 0 40px rgba(0, 255, 136, 1),
+        0 0 80px rgba(0, 255, 136, 0.8),
+        0 0 120px rgba(0, 255, 136, 0.6),
+        inset 0 0 20px rgba(255, 255, 255, 0.5) !important;
+    animation: pulse-current 1s ease-in-out infinite !important;
+    z-index: 30 !important;
+    cursor: default !important;
+}
+
+.sector-node.current::before {
+    content: '📍';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes pulse-current {
+
+    0%,
+    100% {
+        transform: scale(1);
+        box-shadow:
+            0 0 0 8px rgba(0, 255, 136, 0.3),
+            0 0 40px rgba(0, 255, 136, 1),
+            0 0 80px rgba(0, 255, 136, 0.8),
+            0 0 120px rgba(0, 255, 136, 0.6),
+            inset 0 0 20px rgba(255, 255, 255, 0.5);
+    }
+
+    50% {
+        transform: scale(1.2);
+        box-shadow:
+            0 0 0 12px rgba(0, 255, 136, 0.5),
+            0 0 60px rgba(0, 255, 136, 1),
+            0 0 120px rgba(0, 255, 136, 1),
+            0 0 180px rgba(0, 255, 136, 0.8),
+            inset 0 0 30px rgba(255, 255, 255, 0.8);
+    }
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translate(-50%, -50%) translateY(0);
+    }
+
+    50% {
+        transform: translate(-50%, -50%) translateY(-5px);
+    }
+}
+
+/* Planet and station indicators */
+.sector-node.has-planet {
+    border: 2px solid var(--accent-yellow);
+}
+
+.sector-node.has-station {
+    border: 2px solid var(--accent-green);
+}
+
+/* Current location overrides planet/station styling */
+.sector-node.current.has-planet,
+.sector-node.current.has-station {
+    border: 5px solid #ffffff !important;
+}
+
+.warp-line {
+    position: absolute;
+    height: 2px;
+    background: rgba(58, 79, 111, 0.5);
+    transform-origin: left center;
+    pointer-events: none;
+}
+
+/* Ship Stats Display */
+.ship-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.stat-item {
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 15px;
+}
+
+.stat-label {
+    color: var(--text-secondary);
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    color: var(--accent-blue);
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.stat-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    margin-top: 8px;
+    overflow: hidden;
+}
+
+.stat-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-green), var(--accent-blue));
+    transition: width 0.3s ease;
+}
+
+.stat-bar-fill.low {
+    background: linear-gradient(90deg, var(--accent-red), var(--accent-yellow));
+}
+
+/* Cargo Display */
+.cargo-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 8px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.cargo-item-name {
+    color: var(--text-primary);
+    font-weight: bold;
+}
+
+.cargo-item-quantity {
+    color: var(--accent-blue);
+}
+
+.cargo-empty {
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+}
+
+/* Trading Interface */
+.trade-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.commodity-card {
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 15px;
+}
+
+.commodity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.commodity-name {
+    color: var(--accent-green);
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.commodity-price {
+    color: var(--accent-yellow);
+    font-size: 14px;
+}
+
+.commodity-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 15px;
+}
+
+.commodity-controls input {
+    flex: 1;
+    background: var(--bg-medium);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 8px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+}
+
+.commodity-controls button {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.btn-buy {
+    background: var(--accent-green);
+    color: var(--bg-dark);
+}
+
+.btn-buy:hover {
+    background: var(--accent-blue);
+}
+
+.btn-sell {
+    background: var(--accent-yellow);
+    color: var(--bg-dark);
+}
+
+.btn-sell:hover {
+    background: var(--accent-red);
+}
+
+/* Combat Interface */
+.combat-status {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.combatant {
+    background: var(--bg-dark);
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    padding: 20px;
+    text-align: center;
+}
+
+.combatant.player {
+    border-color: var(--accent-green);
+}
+
+.combatant.enemy {
+    border-color: var(--accent-red);
+}
+
+.combatant-name {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.combatant.player .combatant-name {
+    color: var(--accent-green);
+}
+
+.combatant.enemy .combatant-name {
+    color: var(--accent-red);
+}
+
+.combatant-hp {
+    margin-bottom: 10px;
+}
+
+.hp-bar {
+    width: 100%;
+    height: 20px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+.hp-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-green), var(--accent-blue));
+    transition: width 0.5s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.hp-bar-fill.low {
+    background: linear-gradient(90deg, var(--accent-red), var(--accent-yellow));
+}
+
+.combat-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.combat-actions button {
+    padding: 15px;
+    font-size: 16px;
+    background: var(--bg-light);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.combat-actions button:hover:not(:disabled) {
+    background: var(--accent-blue);
+    color: var(--bg-dark);
+    border-color: var(--accent-blue);
+    animation: fadeInSlide 0.3s ease;
+}
+
+@keyframes fadeInSlide {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Sector Info Cards */
+.sector-contents {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.content-card {
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 15px;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.content-card:hover {
+    border-color: var(--accent-blue);
+    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+}
+
+.content-card-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.content-card-title {
+    color: var(--accent-green);
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.content-card-desc {
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+/* Modal/Dialog */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(10, 14, 39, 0.9);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal {
+    background: var(--bg-medium);
+    border: 2px solid var(--accent-blue);
+    border-radius: 8px;
+    padding: 30px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 212, 255, 0.4);
+}
+
+.modal-header {
+    color: var(--accent-blue);
+    font-size: 20px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-body {
+    margin-bottom: 20px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.modal-footer button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+}
+
+.btn-primary {
+    background: var(--accent-blue);
+    color: var(--bg-dark);
+}
+
+.btn-secondary {
+    background: var(--bg-light);
+    color: var(--text-primary);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .top-bar {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .nav-buttons {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .nav-buttons button {
+        margin: 5px;
+    }
+
+    .ship-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .combat-status {
+        grid-template-columns: 1fr;
+    }
+
+    .trade-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Utility Classes */
+.text-center {
+    text-align: center;
+}
+
+.mt-20 {
+    margin-top: 20px;
+}
+
+.mb-20 {
+    margin-bottom: 20px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.glow {
+    animation: glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from {
+        text-shadow: 0 0 5px var(--accent-blue), 0 0 10px var(--accent-blue);
+    }
+
+    to {
+        text-shadow: 0 0 10px var(--accent-blue), 0 0 20px var(--accent-blue), 0 0 30px var(--accent-blue);
+    }
+}
+
+/* Reachability Styles - Fuel Range Zones */
+
+/* Green Zone: Direct jump, enough fuel */
+.sector-node.zone-green {
+    cursor: pointer;
+}
+.sector-node.zone-green:hover {
+    box-shadow: 0 0 20px var(--accent-green), 0 0 30px rgba(74, 222, 128, 0.5);
+}
+
+/* Yellow Zone: Route plannable, within total fuel range */
+.sector-node.zone-yellow {
+    cursor: pointer;
+}
+.sector-node.zone-yellow:hover {
+    box-shadow: 0 0 20px var(--accent-yellow), 0 0 30px rgba(250, 204, 21, 0.5);
+}
+
+/* Red Zone: Beyond fuel range, truly unreachable */
+.sector-node.zone-red {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+.sector-node.zone-red:hover {
+    box-shadow: 0 0 10px rgba(248, 113, 113, 0.3);
+}
+
+/* Legacy classes - keep for compatibility */
+.sector-node.unreachable {
+    opacity: 0.3;
+    background: #555;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.sector-node.reachable:hover {
+    box-shadow: 0 0 20px var(--accent-green);
+}
+
+/* ============================================
+   COMPUTER INTERFACE STYLES
+   ============================================ */
+
+/* Computer Tab Navigation */
+.computer-nav {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    background: var(--bg-dark);
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    flex-wrap: wrap;
+}
+
+.comp-tab {
+    padding: 10px 20px;
+    background: var(--bg-medium);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Unispace', monospace;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.comp-tab:hover {
+    background: var(--bg-light);
+    border-color: var(--accent-blue);
+}
+
+.comp-tab.active {
+    background: var(--accent-blue);
+    color: var(--bg-dark);
+    font-weight: bold;
+    border-color: var(--accent-blue);
+}
+
+/* Computer Panels */
+.comp-panel {
+    display: none;
+    animation: fadeInPanel 0.3s ease-in-out;
+}
+
+.comp-panel.active {
+    display: block;
+}
+
+.comp-panel h3 {
+    color: var(--accent-blue);
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--accent-blue);
+}
+
+.comp-panel h4 {
+    color: var(--accent-green);
+    font-size: 1.1rem;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+/* Navigation Panel */
+.nav-route-planner,
+.nav-nearest,
+.nav-trade-finder {
+    background: var(--bg-dark);
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.nav-route-planner label,
+.nav-trade-finder label {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--text-secondary);
+}
+
+.nav-route-planner input,
+.nav-trade-finder input {
+    width: 200px;
+    margin-left: 10px;
+    padding: 8px;
+    background: var(--bg-medium);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+}
+
+.nav-route-planner button,
+.nav-nearest button,
+.nav-trade-finder button {
+    padding: 10px 20px;
+    margin: 10px 10px 10px 0;
+    background: var(--accent-green);
+    color: var(--bg-dark);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Unispace', monospace;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.nav-route-planner button:hover,
+.nav-nearest button:hover,
+.nav-trade-finder button:hover {
+    background: #00ff88;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 255, 136, 0.3);
+}
+
+.route-display,
+.nearest-display,
+.trade-display {
+    margin-top: 15px;
+    padding: 15px;
+    background: var(--bg-medium);
+    border-radius: 4px;
+    border-left: 3px solid var(--accent-blue);
+    min-height: 50px;
+}
+
+.route-info,
+.location-info,
+.trade-info {
+    margin-bottom: 10px;
+    padding: 10px;
+    background: var(--bg-dark);
+    border-radius: 4px;
+}
+
+.route-info h5,
+.location-info h5,
+.trade-info h5 {
+    color: var(--accent-green);
+    margin-bottom: 8px;
+}
+
+.route-path {
+    font-family: 'Courier New', monospace;
+    color: var(--accent-blue);
+    margin: 5px 0;
+}
+
+/* Intel Panel */
+.intel-current,
+.intel-galaxy,
+.intel-scan-history {
+    background: var(--bg-dark);
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+#intel-current-display,
+#intel-galaxy-display {
+    padding: 15px;
+    background: var(--bg-medium);
+    border-radius: 4px;
+    margin-top: 10px;
+}
+
+.intel-stat {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.intel-stat:last-child {
+    border-bottom: none;
+}
+
+.intel-label {
+    color: var(--text-secondary);
+}
+
+.intel-value {
+    color: var(--accent-green);
+    font-weight: bold;
+}
+
+#intel-scan-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.scan-item {
+    background: var(--bg-medium);
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    border-left: 3px solid var(--accent-blue);
+}
+
+.scan-item:hover {
+    background: var(--bg-light);
+}
+
+/* Bookmarks Panel */
+.bookmark-add,
+.bookmark-list,
+.sector-notes {
+    background: var(--bg-dark);
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.bookmark-add label {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--text-secondary);
+}
+
+.bookmark-add input,
+.bookmark-add textarea {
+    width: 100%;
+    padding: 8px;
+    background: var(--bg-medium);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    margin-top: 5px;
+    box-sizing: border-box;
+}
+
+.bookmark-add textarea {
+    resize: vertical;
+    font-family: 'Courier New', monospace;
+}
+
+#bookmark-display,
+#notes-display {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.bookmark-item,
+.note-item {
+    background: var(--bg-medium);
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    border-left: 3px solid var(--accent-green);
+    position: relative;
+}
+
+.bookmark-item:hover,
+.note-item:hover {
+    background: var(--bg-light);
+}
+
+.bookmark-name {
+    color: var(--accent-green);
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+}
+
+.bookmark-sector {
+    color: var(--accent-blue);
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+}
+
+.bookmark-notes,
+.note-text {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.bookmark-remove,
+.note-remove {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 4px 8px;
+    background: #ff4444;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.bookmark-remove:hover,
+.note-remove:hover {
+    background: #ff6666;
+}
+
+/* Fighters Panel */
+.fighter-deploy,
+.mine-deploy,
+.fighter-summary {
+    background: var(--bg-dark);
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.fighter-deploy .info,
+.mine-deploy .info {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+
+.fighter-deploy label,
+.mine-deploy label {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--text-secondary);
+}
+
+.fighter-deploy input,
+.mine-deploy input {
+    width: 100px;
+    margin-left: 10px;
+    padding: 8px;
+    background: var(--bg-medium);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+}
+
+#fighter-display {
+    margin-top: 15px;
+}
+
+.fighter-location {
+    background: var(--bg-medium);
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    border-left: 3px solid var(--accent-blue);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.fighter-location-info {
+    flex: 1;
+}
+
+.fighter-location-sector {
+    color: var(--accent-blue);
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.fighter-location-counts {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.fighter-location-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.fighter-location-actions button {
+    padding: 6px 12px;
+    background: var(--accent-green);
+    color: var(--bg-dark);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-family: 'Unispace', monospace;
+}
+
+.fighter-location-actions button:hover {
+    background: #00ff88;
+}
+
+/* Colonies Panel */
+.colony-create,
+.colony-list,
+.colony-stats {
+    background: var(--bg-dark);
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.colony-create .info {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+#colony-display {
+    margin-top: 15px;
+}
+
+.colony-item {
+    background: var(--bg-medium);
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    border-left: 4px solid var(--accent-green);
+}
+
+.colony-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.colony-name {
+    color: var(--accent-green);
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.colony-level {
+    color: var(--accent-blue);
+    font-size: 0.9rem;
+    padding: 4px 8px;
+    background: var(--bg-dark);
+    border-radius: 3px;
+}
+
+.colony-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.colony-stat {
+    padding: 8px;
+    background: var(--bg-dark);
+    border-radius: 3px;
+}
+
+.colony-stat-label {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.colony-stat-value {
+    color: var(--accent-green);
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.colony-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+}
+
+.colony-actions button {
+    padding: 8px 16px;
+    background: var(--accent-blue);
+    color: var(--bg-dark);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Unispace', monospace;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.colony-actions button:hover {
+    background: #4a90e2;
+    transform: translateY(-2px);
+}
+
+.colony-actions button.upgrade {
+    background: var(--accent-green);
+}
+
+.colony-actions button.upgrade:hover {
+    background: #00ff88;
+}
+
+.colony-actions button.danger {
+    background: #ff4444;
+}
+
+.colony-actions button.danger:hover {
+    background: #ff6666;
+}
+
+#colony-stats-display {
+    padding: 15px;
+    background: var(--bg-medium);
+    border-radius: 4px;
+}
+
+.colony-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.colony-stats-item {
+    padding: 12px;
+    background: var(--bg-dark);
+    border-radius: 4px;
+    border-left: 3px solid var(--accent-blue);
+}
+
+.colony-stats-item h5 {
+    color: var(--accent-green);
+    margin-bottom: 8px;
+}
+
+.colony-stats-item .value {
+    color: var(--text-color);
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+/* Panel Fade Animation */
+@keyframes fadeInPanel {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Design for Computer */
+@media (max-width: 768px) {
+    .computer-nav {
+        flex-direction: column;
+    }
+
+    .comp-tab {
+        width: 100%;
+    }
+
+    .nav-route-planner input,
+    .nav-trade-finder input {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 5px;
+    }
+
+    .colony-info {
+        grid-template-columns: 1fr;
+    }
+
+    .colony-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .fighter-location {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .fighter-location-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .fighter-location-actions button {
+        width: 100%;
+    }
+}
+
+/* ============================================
+   ACTIVE BUTTON HIGHLIGHTING
+   ============================================ */
+.nav-buttons button.active {
+    background: var(--accent-blue) !important;
+    color: var(--bg-dark) !important;
+    border-color: var(--accent-blue) !important;
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+
+/* ============================================
+   HELP SYSTEM
+   ============================================ */
+.help-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: var(--accent-blue);
+    color: var(--bg-dark);
+    border: 2px solid var(--accent-blue);
+    border-radius: 50%;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
+    transition: all 0.3s ease;
+}
+
+.help-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 212, 255, 0.6);
+}
+
+.help-content {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.help-content h3 {
+    color: var(--accent-blue);
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
+.help-content ul {
+    margin-left: 20px;
+    margin-bottom: 15px;
+}
+
+.help-content li {
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+/* ============================================
+   DISTRESS BEACON & EMERGENCY
+   ============================================ */
+.distress-beacon-button {
+    background: var(--accent-red) !important;
+    border-color: var(--accent-red) !important;
+    animation: pulse-distress 2s ease-in-out infinite;
+}
+
+.distress-beacon-button:hover {
+    background: var(--accent-yellow) !important;
+    border-color: var(--accent-yellow) !important;
+}
+
+@keyframes pulse-distress {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7);
+    }
+
+    50% {
+        box-shadow: 0 0 0 10px rgba(255, 68, 68, 0);
+    }
+}
+
+/* ============================================
+   FUEL INDICATOR (TOP BAR)
+   ============================================ */
+#fuel-display {
+    color: var(--accent-yellow);
+    font-family: 'Unispace', monospace;
+}
+
+#fuel-display.low {
+    color: var(--accent-red);
+    animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+}
+
+/* ============================================
+   ADMIN PANEL STYLES
+   ============================================ */
+
+.admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 20px;
+}
+
+.admin-nav {
+    display: flex;
+    gap: 10px;
+}
+
+.admin-tab {
+    padding: 10px 20px;
+    background: var(--bg-medium);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 4px;
+    font-family: 'Unispace', monospace;
+    transition: all 0.2s;
+}
+
+.admin-tab:hover {
+    background: var(--bg-light);
+    color: var(--text-primary);
+}
+
+.admin-tab.active {
+    background: var(--accent-blue);
+    color: var(--bg-dark);
+    border-color: var(--accent-blue);
+}
+
+.admin-panel {
+    animation: fadeIn 0.3s ease;
+}
+
+.admin-section {
+    background: var(--bg-medium);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.admin-section h2 {
+    color: var(--accent-blue);
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+/* Data Grid / Table */
+.data-grid-container {
+    overflow-x: auto;
+    background: var(--bg-medium);
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.data-grid {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.data-grid th {
+    background: var(--bg-dark);
+    padding: 12px 15px;
+    text-align: left;
+    color: var(--accent-blue);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.data-grid td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.data-grid tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.player-list-controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.admin-search {
+    flex: 1;
+    padding: 10px;
+    background: var(--bg-medium);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 4px;
+    font-family: 'Unispace', monospace;
+}
+
+/* Form Controls */
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.control-group input {
+    padding: 8px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 4px;
+    font-family: 'Unispace', monospace;
+}
+
+.warning-text {
+    color: var(--accent-yellow);
+    font-size: 0.9rem;
+    margin-top: 10px;
+}
+
+.btn-danger {
+    background: var(--accent-red);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Unispace', monospace;
+}
+
+.btn-danger:hover {
+    background: #ff2222;
+}
+
+.btn-sm {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    margin-right: 5px;
+}
+
+/* Modal Form */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 8px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 4px;
+    font-family: 'Unispace', monospace;
+}
+
+.form-group input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

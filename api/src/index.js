@@ -103,16 +103,28 @@ async function generateConnections(env, targetDate) {
   const dateObj = new Date(targetDate);
   const readableDate = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
-  const prompt = `Create a Connections puzzle for ${readableDate}.
+  const prompt = `Create a NYT-level Connections puzzle for ${readableDate}. This must be DIFFICULT and use RED HERRINGS.
 
-RULES:
-- Create exactly 4 categories
-- Each category has exactly 4 words
-- Words should be single words (no phrases)
-- Categories should range from obvious to tricky
-- If near a holiday, include themed categories
+DIFFICULTY TIERS (mandatory):
+1. YELLOW (Easy): Direct synonyms or obvious set membership (e.g., RUSH, HURRY, DASH, SPRINT)
+2. GREEN (Medium): Trivia or "things with X" categories requiring visualization (e.g., PIANO, TOOTH, COMB, SAW = Things with teeth)
+3. BLUE (Hard): Requires specific knowledge or compound word awareness (e.g., ATOM, SECOND, HAIR, BANANA = Things that can be "split")
+4. PURPLE (Fiendish): Wordplay, fill-in-the-blank, or linguistic tricks. NOT about word meaning, but word STRUCTURE (e.g., MOON, LIGHT, STAR, SKY = Words that follow "BLUE ___")
 
-FORMAT (JSON only, no explanation):
+CRITICAL RED HERRING RULES:
+- Include at least 2-3 words that APPEAR to fit multiple categories (this is mandatory)
+- Example: If you have a "Birds" category, include TURKEY in a "Synonyms for Failure" category instead
+- Example: SWALLOW could be a bird OR "tolerate" - use the less obvious meaning
+- Example: JACK could be a name, a card, a tool, or part of "Jack Sparrow"
+- The solver should see 5+ words that SEEM to fit one category, forcing them to find the true grouping
+
+PURPLE CATEGORY PATTERNS (use one):
+- Fill-in-the-blank: Words that precede/follow a hidden word (FIRE, WALL, FLY, PAPER all precede "TRAP")
+- Homophones: EWE, YOU, YEW, U (sound alike)
+- Hidden words: COCKATIEL contains "TEAL", CAMEROON contains "MAROON"
+- Famous ___: JACK (Sparrow, Nicholson, Black, Kennedy)
+
+FORMAT (JSON only):
 {
   "categories": [
     {"name": "CATEGORY_NAME", "words": ["WORD1", "WORD2", "WORD3", "WORD4"], "difficulty": 1},
@@ -122,20 +134,57 @@ FORMAT (JSON only, no explanation):
   ]
 }
 
-Output ONLY valid JSON.`;
+Remember: A good puzzle makes the solver think "Birds!" then realize TURKEY=Flop, SWALLOW=Tolerate, SPARROW=Pirate. Output ONLY valid JSON.`;
 
   let puzzleData = null;
   let theme = 'Daily Puzzle';
 
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const response = await queryGroq(env, prompt, 500);
+      const response = await queryGroq(env, prompt, 800);
       // Extract JSON from response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        puzzleData = JSON.parse(jsonMatch[0]);
-        if (puzzleData.categories && puzzleData.categories.length === 4) {
-          break;
+        let parsed = JSON.parse(jsonMatch[0]);
+        if (parsed.categories && parsed.categories.length === 4) {
+          // First pass: normalize words and names
+          parsed.categories = parsed.categories.map((cat, idx) => ({
+            name: String(cat.name || 'CATEGORY').toUpperCase(),
+            words: (cat.words || []).map(w => String(w).toUpperCase().trim()),
+            difficulty: cat.difficulty || (idx + 1)
+          }));
+
+          // Second pass: fix difficulties to be unique 1-4
+          const claimedDiffs = new Map(); // maps difficulty -> category index that claimed it
+          const availableDiffs = [1, 2, 3, 4];
+
+          // First pass: let each category claim unique difficulties
+          parsed.categories.forEach((cat, idx) => {
+            const d = cat.difficulty;
+            if (d >= 1 && d <= 4 && !claimedDiffs.has(d)) {
+              claimedDiffs.set(d, idx);
+              const pos = availableDiffs.indexOf(d);
+              if (pos !== -1) availableDiffs.splice(pos, 1);
+            }
+          });
+
+          // Second pass: assign unclaimed difficulties
+          parsed.categories.forEach((cat, idx) => {
+            if (claimedDiffs.get(cat.difficulty) !== idx) {
+              // This category didn't get its requested difficulty, assign from available
+              cat.difficulty = availableDiffs.shift() || 1;
+            }
+          });
+
+          // Check all words are valid (non-empty, single words, 16 unique)
+          const allWords = parsed.categories.flatMap(c => c.words);
+          const allHave4Words = parsed.categories.every(c => c.words.length === 4);
+          if (allHave4Words && allWords.length === 16 &&
+              allWords.every(w => w.length > 0 && !w.includes(' ')) &&
+              new Set(allWords).size === 16) {
+            puzzleData = parsed;
+            break;
+          }
         }
       }
     } catch (e) {
@@ -144,13 +193,14 @@ Output ONLY valid JSON.`;
   }
 
   if (!puzzleData) {
-    // Fallback puzzle
+    // Fallback puzzle with proper red herrings
+    // Red herrings: BEAR (animal or tolerate?), TURKEY (bird or flop?), LEMON (fruit or failure?)
     puzzleData = {
       categories: [
-        { name: "COLORS", words: ["RED", "BLUE", "GREEN", "YELLOW"], difficulty: 1 },
-        { name: "PLANETS", words: ["MARS", "VENUS", "SATURN", "JUPITER"], difficulty: 2 },
-        { name: "CARD GAMES", words: ["POKER", "BRIDGE", "HEARTS", "SPADES"], difficulty: 3 },
-        { name: "DOUBLE LETTERS", words: ["BUZZ", "FIZZ", "JAZZ", "FUZZ"], difficulty: 4 }
+        { name: "TOLERATE", words: ["BEAR", "STAND", "STOMACH", "SWALLOW"], difficulty: 1 },
+        { name: "THINGS WITH TEETH", words: ["COMB", "SAW", "ZIPPER", "GEAR"], difficulty: 2 },
+        { name: "MOVIE FLOPS", words: ["TURKEY", "BOMB", "DUD", "LEMON"], difficulty: 3 },
+        { name: "___ TRAP", words: ["MOUSE", "SPEED", "TOURIST", "BOOBY"], difficulty: 4 }
       ]
     };
   }

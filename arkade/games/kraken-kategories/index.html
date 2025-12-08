@@ -367,6 +367,78 @@
                 padding: 20px;
             }
         }
+
+        /* Admin Settings */
+        #admin-btn {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            background: rgba(255, 0, 100, 0.2);
+            border: 1px solid #f05;
+            color: #f05;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            z-index: 100;
+            font-family: inherit;
+        }
+
+        #admin-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .admin-content {
+            background: rgba(20, 30, 60, 0.95);
+            padding: 30px;
+            border-radius: 16px;
+            border: 2px solid #f05;
+            max-width: 90%;
+            width: 400px;
+        }
+
+        .admin-content h2 {
+            color: #f05;
+            margin-bottom: 20px;
+        }
+
+        .admin-content label {
+            display: block;
+            margin: 15px 0 5px;
+            color: #aaa;
+        }
+
+        .admin-content input[type="range"] {
+            width: 100%;
+        }
+
+        .admin-content button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        #horizon-line {
+            position: fixed;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #f05;
+            z-index: 99;
+            pointer-events: none;
+            display: none;
+        }
     </style>
 </head>
 
@@ -376,8 +448,34 @@
     <canvas id="confetti-canvas"></canvas>
     <a id="back-to-arkade" href="/arkade/">< ARKADE</a>
     <button id="music-btn" onclick="toggleMusic()" title="Toggle Music">&#9835;</button>
+    <button id="admin-btn" onclick="openAdmin()">Settings</button>
+    <div id="horizon-line"></div>
     <div id="toast" class="toast">Message</div>
     <div id="loading">LOADING...</div>
+
+    <!-- Admin Modal -->
+    <div id="admin-modal">
+        <div class="admin-content">
+            <h2>Settings</h2>
+            <label>Horizon Line (0-100%): <span id="horizon-value">55</span>%</label>
+            <input type="range" id="horizon-slider" min="0" max="100" value="55" oninput="updateHorizon(this.value)">
+            <p style="color:#666; font-size:0.8rem; margin-top:5px;">Stars will only appear above this line</p>
+
+            <label>Music Volume: <span id="volume-value">15</span>%</label>
+            <input type="range" id="volume-slider" min="0" max="100" value="15" oninput="updateVolume(this.value)">
+
+            <div style="margin-top:20px; padding-top:15px; border-top:1px solid #444;">
+                <label style="color:#f05;">Testing Tools</label>
+                <button onclick="instantSolve()" style="background:#333; color:#0f0; border:1px solid #0f0; width:100%;">Instant Solve</button>
+                <button onclick="resetToday()" style="background:#333; color:#f50; border:1px solid #f50; width:100%; margin-top:10px;">Reset Today's Progress</button>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button onclick="saveAdminSettings()" style="flex:1; background:#0a5; color:#fff; border:none;">Save</button>
+                <button onclick="closeAdmin()" style="flex:1; background:#333; color:#fff; border:1px solid #666;">Cancel</button>
+            </div>
+        </div>
+    </div>
 
     <!-- SETUP SCREEN -->
     <div id="setup-screen" class="glass-panel" style="display:none; margin-top: 80px;">
@@ -437,6 +535,10 @@
         let gameFinished = false;
         let isProcessing = false;
         let lastScreen = "setup";
+
+        // Admin settings
+        let horizonPercent = parseFloat(localStorage.getItem('kategories_horizon') || '55');
+        let adminOpen = false;
 
         // Music system
         const musicTracks = [
@@ -861,10 +963,14 @@
             initStars();
         }
 
+        function getHorizonY() {
+            return height * (horizonPercent / 100);
+        }
+
         class Star {
             constructor() {
                 this.x = Math.random() * width;
-                this.y = Math.random() * height;
+                this.y = Math.random() * getHorizonY(); // Only above horizon
                 this.size = Math.random() * 2;
                 this.baseAlpha = Math.random() * 0.5 + 0.3;
                 this.twinkleOffset = Math.random() * 100;
@@ -918,6 +1024,94 @@
 
         window.addEventListener('resize', resize);
         resize();
+
+        // ===== ADMIN FUNCTIONS =====
+        function openAdmin() {
+            adminOpen = true;
+            document.getElementById('admin-modal').style.display = 'flex';
+            document.getElementById('horizon-slider').value = horizonPercent;
+            document.getElementById('horizon-value').textContent = Math.round(horizonPercent);
+            document.getElementById('volume-slider').value = audio.volume * 100;
+            document.getElementById('volume-value').textContent = Math.round(audio.volume * 100);
+            // Show horizon line for visual feedback
+            const horizonLine = document.getElementById('horizon-line');
+            horizonLine.style.display = 'block';
+            horizonLine.style.top = (horizonPercent) + '%';
+        }
+
+        function closeAdmin() {
+            adminOpen = false;
+            document.getElementById('admin-modal').style.display = 'none';
+            document.getElementById('horizon-line').style.display = 'none';
+        }
+
+        function updateHorizon(val) {
+            horizonPercent = parseFloat(val);
+            document.getElementById('horizon-value').textContent = Math.round(val);
+            const horizonLine = document.getElementById('horizon-line');
+            horizonLine.style.top = val + '%';
+            // Regenerate stars with new horizon
+            initStars();
+        }
+
+        function updateVolume(val) {
+            const volume = val / 100;
+            audio.volume = volume;
+            document.getElementById('volume-value').textContent = Math.round(val);
+        }
+
+        function saveAdminSettings() {
+            localStorage.setItem('kategories_horizon', horizonPercent);
+            localStorage.setItem('kategories_volume', audio.volume);
+            showToast("SETTINGS SAVED");
+            closeAdmin();
+        }
+
+        function instantSolve() {
+            if (gameFinished) {
+                showToast("GAME ALREADY FINISHED");
+                return;
+            }
+            if (!puzzleData || !puzzleData.categories) {
+                showToast("NO PUZZLE LOADED");
+                return;
+            }
+            closeAdmin();
+
+            // Solve all remaining categories
+            const unsolved = puzzleData.categories.filter(cat => !solvedCategories.includes(cat.name));
+            unsolved.forEach(cat => {
+                solvedCategories.push(cat.name);
+                // Remove solved words from active cards
+                activeCards = activeCards.filter(card => !cat.words.includes(card));
+            });
+            renderSolvedCategories();
+            selectedIndices = [];
+            renderCards();
+
+            if (solvedCategories.length === 4) {
+                gameFinished = true;
+                startConfetti();
+                submitScore();
+            }
+        }
+
+        function resetToday() {
+            if (!playerName) {
+                showToast("LOGIN FIRST");
+                return;
+            }
+            localStorage.removeItem(`connections_${getToday()}_${playerName}`);
+            showToast("PROGRESS RESET - RELOADING...");
+            closeAdmin();
+            setTimeout(() => location.reload(), 1000);
+        }
+
+        // Load saved volume
+        const savedVolume = localStorage.getItem('kategories_volume');
+        if (savedVolume) {
+            audio.volume = parseFloat(savedVolume);
+        }
     </script>
 </body>
 

@@ -578,7 +578,7 @@ class Game {
         this.ui.addMessage('⚠️ Entering asteroid field!', 'warning');
         
         // Start minigame
-        this.asteroidMinigame.start(hasMining, (results) => {
+        this.asteroidMinigame.start(hasMining, async (results) => {
             // Process results
             if (results.survived) {
                 this.ui.addMessage('✅ Cleared the asteroid field!', 'success');

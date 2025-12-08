@@ -437,8 +437,8 @@
             initHowToPlay('krakens-tempest', null);
             ArkadeTheme.init({ enableStarfield: true, enableMusic: false });
 
-            // Menu music
-            const menuMusic = new Audio('/assets/music/theme_krakens_tempest.mp3');
+            // Menu music - use window.Audio to avoid conflict with Audio module
+            const menuMusic = new window.Audio('/arkade/audio/theme_krakens_tempest.mp3');
             menuMusic.loop = true;
             menuMusic.volume = 0.15;
 
@@ -450,7 +450,7 @@
             let isPlaying = false;
             musicBtn.onclick = () => {
                 if (isPlaying) { menuMusic.pause(); musicBtn.innerHTML = '🔇'; }
-                else { menuMusic.play(); musicBtn.innerHTML = '🔊'; }
+                else { menuMusic.play().catch(() => {}); musicBtn.innerHTML = '🔊'; }
                 isPlaying = !isPlaying;
             };
         });

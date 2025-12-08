@@ -311,8 +311,8 @@
             // Initialize Arkade Theme (starfield only)
             ArkadeTheme.init({ enableStarfield: true, enableMusic: false });
 
-            // Add simple menu music player
-            const menuMusic = new Audio('/assets/music/theme_space_pirates.mp3');
+            // Add simple menu music player - use window.Audio to avoid conflict with Audio module
+            const menuMusic = new window.Audio('/arkade/audio/theme_space_pirates.mp3');
             menuMusic.loop = true;
             menuMusic.volume = 0.15;
 
@@ -347,7 +347,7 @@
                     musicBtn.innerHTML = '🔇';
                     musicBtn.style.borderColor = 'rgba(0, 255, 255, 0.5)';
                 } else {
-                    menuMusic.play();
+                    menuMusic.play().catch(() => {});
                     musicBtn.innerHTML = '🔊';
                     musicBtn.style.borderColor = '#0ff';
                 }

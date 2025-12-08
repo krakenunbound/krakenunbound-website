@@ -509,8 +509,8 @@
             // Initialize bubbles
             initBubbles();
 
-            // Menu music
-            const menuMusic = new Audio('/assets/music/theme_it_lurks_below.mp3');
+            // Menu music - use window.Audio to avoid conflict with Audio module
+            const menuMusic = new window.Audio('/arkade/audio/theme_it_lurks_below.mp3');
             menuMusic.loop = true;
             menuMusic.volume = 0.15;
 
@@ -522,7 +522,7 @@
             let isPlaying = false;
             musicBtn.onclick = () => {
                 if (isPlaying) { menuMusic.pause(); musicBtn.innerHTML = '🔇'; }
-                else { menuMusic.play(); musicBtn.innerHTML = '🔊'; }
+                else { menuMusic.play().catch(() => {}); musicBtn.innerHTML = '🔊'; }
                 isPlaying = !isPlaying;
             };
         });

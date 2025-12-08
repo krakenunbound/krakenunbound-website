@@ -169,55 +169,9 @@ body {
     }
 }
 
-/* Tentacle animations - FLOWING IN WATER */
+/* Tentacles - animated by JavaScript for S-curve wiggle */
 .tentacle {
-    transform-origin: 50% 0%;
-}
-
-/* Each tentacle flows independently like treading water */
-.t1 { animation: tentacleFlow1 4s ease-in-out infinite; }
-.t2 { animation: tentacleFlow2 3.5s ease-in-out infinite 0.3s; }
-.t3 { animation: tentacleFlow3 5s ease-in-out infinite 0.6s; }
-.t4 { animation: tentacleFlow3 5s ease-in-out infinite 0.9s; }
-.t5 { animation: tentacleFlow2 3.5s ease-in-out infinite 1.2s; }
-.t6 { animation: tentacleFlow1 4s ease-in-out infinite 1.5s; }
-.t-back-1 { animation: tentacleFlowBack 6s ease-in-out infinite; }
-.t-back-2 { animation: tentacleFlowBack 6s ease-in-out infinite 1s; }
-
-/* Outer left tentacle - sweeps wide */
-@keyframes tentacleFlow1 {
-    0% { transform: rotate(0deg) translateX(0); }
-    20% { transform: rotate(-8deg) translateX(-6px); }
-    40% { transform: rotate(-3deg) translateX(-2px); }
-    60% { transform: rotate(5deg) translateX(4px); }
-    80% { transform: rotate(8deg) translateX(6px); }
-    100% { transform: rotate(0deg) translateX(0); }
-}
-
-/* Inner tentacles - gentle drift */
-@keyframes tentacleFlow2 {
-    0% { transform: rotate(0deg) translateX(0); }
-    25% { transform: rotate(6deg) translateX(3px); }
-    50% { transform: rotate(0deg) translateX(0); }
-    75% { transform: rotate(-6deg) translateX(-3px); }
-    100% { transform: rotate(0deg) translateX(0); }
-}
-
-/* Center tentacles - subtle sway */
-@keyframes tentacleFlow3 {
-    0% { transform: rotate(0deg); }
-    33% { transform: rotate(4deg); }
-    66% { transform: rotate(-4deg); }
-    100% { transform: rotate(0deg); }
-}
-
-/* Back tentacles - slow drift */
-@keyframes tentacleFlowBack {
-    0% { transform: rotate(0deg) translateX(0) translateY(0); }
-    25% { transform: rotate(-5deg) translateX(-8px) translateY(-3px); }
-    50% { transform: rotate(0deg) translateX(0) translateY(0); }
-    75% { transform: rotate(5deg) translateX(8px) translateY(-3px); }
-    100% { transform: rotate(0deg) translateX(0) translateY(0); }
+    /* JS handles the path animation */
 }
 
 /* Bioluminescent glow pulse - BRIGHT AND OBVIOUS */

@@ -1132,7 +1132,23 @@ export class UI {
 
     // Show error message
     showError(message) {
-        this.showModal('Error', message);
+        // Check if we're on the auth screen
+        const authScreen = document.getElementById('auth-screen');
+        const authError = document.getElementById('auth-error');
+
+        if (authScreen && authScreen.classList.contains('active') && authError) {
+            // Show error on auth screen
+            authError.textContent = message;
+            authError.style.display = 'block';
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                authError.style.display = 'none';
+            }, 5000);
+        } else {
+            // Use normal modal for in-game errors
+            this.showModal('Error', message);
+        }
     }
 
     // Show success message

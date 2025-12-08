@@ -29,9 +29,10 @@
                                 <stop offset="0%" style="stop-color:#3b9ebe"/>
                                 <stop offset="100%" style="stop-color:#1a4a5a"/>
                             </linearGradient>
-                            <!-- Bioluminescent glow -->
+                            <!-- Bioluminescent glow - BRIGHT -->
                             <radialGradient id="glowSpot" cx="50%" cy="50%" r="50%">
-                                <stop offset="0%" style="stop-color:#7dd3fc;stop-opacity:0.8"/>
+                                <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1"/>
+                                <stop offset="30%" style="stop-color:#7dd3fc;stop-opacity:0.9"/>
                                 <stop offset="100%" style="stop-color:#3b9ebe;stop-opacity:0"/>
                             </radialGradient>
                             <!-- Eye gradient -->
@@ -96,30 +97,41 @@
                             <circle cx="158" cy="175" r="3"/><circle cx="152" cy="195" r="2.5"/><circle cx="160" cy="215" r="2"/>
                         </g>
 
-                        <!-- Bioluminescent spots -->
+                        <!-- Bioluminescent spots - BIGGER AND BRIGHTER -->
                         <g class="bio-glow" filter="url(#glow)">
-                            <circle cx="65" cy="70" r="4" fill="url(#glowSpot)" class="glow-spot g1"/>
-                            <circle cx="135" cy="70" r="4" fill="url(#glowSpot)" class="glow-spot g2"/>
-                            <circle cx="55" cy="95" r="3" fill="url(#glowSpot)" class="glow-spot g3"/>
-                            <circle cx="145" cy="95" r="3" fill="url(#glowSpot)" class="glow-spot g4"/>
-                            <circle cx="100" cy="105" r="3" fill="url(#glowSpot)" class="glow-spot g5"/>
+                            <circle cx="65" cy="70" r="6" fill="url(#glowSpot)" class="glow-spot g1"/>
+                            <circle cx="135" cy="70" r="6" fill="url(#glowSpot)" class="glow-spot g2"/>
+                            <circle cx="55" cy="95" r="5" fill="url(#glowSpot)" class="glow-spot g3"/>
+                            <circle cx="145" cy="95" r="5" fill="url(#glowSpot)" class="glow-spot g4"/>
+                            <circle cx="100" cy="108" r="5" fill="url(#glowSpot)" class="glow-spot g5"/>
+                            <!-- Extra glow spots on tentacles -->
+                            <circle cx="45" cy="160" r="4" fill="url(#glowSpot)" class="glow-spot g1"/>
+                            <circle cx="155" cy="160" r="4" fill="url(#glowSpot)" class="glow-spot g2"/>
+                            <circle cx="75" cy="180" r="3" fill="url(#glowSpot)" class="glow-spot g3"/>
+                            <circle cx="125" cy="180" r="3" fill="url(#glowSpot)" class="glow-spot g4"/>
                         </g>
 
-                        <!-- Eyes -->
+                        <!-- Eyes - BIGGER AND MORE VISIBLE -->
                         <g class="eyes">
                             <!-- Left eye -->
-                            <ellipse cx="75" cy="65" rx="14" ry="16" fill="url(#eyeGradient)" class="eye-socket"/>
-                            <ellipse cx="75" cy="65" rx="10" ry="12" fill="#0f2830" class="eye-outer"/>
-                            <ellipse cx="75" cy="65" rx="6" ry="8" fill="#0a1a20" class="pupil"/>
-                            <ellipse cx="73" cy="62" rx="2" ry="2.5" fill="rgba(125,211,252,0.8)" class="eye-shine"/>
-                            <ellipse cx="78" cy="68" rx="1" ry="1.5" fill="rgba(125,211,252,0.4)" class="eye-shine-2"/>
+                            <ellipse cx="75" cy="65" rx="16" ry="18" fill="#0a2030" class="eye-socket"/>
+                            <ellipse cx="75" cy="65" rx="12" ry="14" fill="#061520" class="eye-outer"/>
+                            <ellipse cx="75" cy="65" rx="7" ry="9" fill="#020a10" class="pupil"/>
+                            <!-- Iris ring -->
+                            <ellipse cx="75" cy="65" rx="9" ry="11" fill="none" stroke="#1a5a7a" stroke-width="2" opacity="0.6"/>
+                            <!-- Eye shine - bright -->
+                            <ellipse cx="71" cy="60" rx="3" ry="3.5" fill="#ffffff" class="eye-shine"/>
+                            <ellipse cx="79" cy="70" rx="1.5" ry="2" fill="rgba(125,211,252,0.6)" class="eye-shine-2"/>
 
                             <!-- Right eye -->
-                            <ellipse cx="125" cy="65" rx="14" ry="16" fill="url(#eyeGradient)" class="eye-socket"/>
-                            <ellipse cx="125" cy="65" rx="10" ry="12" fill="#0f2830" class="eye-outer"/>
-                            <ellipse cx="125" cy="65" rx="6" ry="8" fill="#0a1a20" class="pupil"/>
-                            <ellipse cx="123" cy="62" rx="2" ry="2.5" fill="rgba(125,211,252,0.8)" class="eye-shine"/>
-                            <ellipse cx="128" cy="68" rx="1" ry="1.5" fill="rgba(125,211,252,0.4)" class="eye-shine-2"/>
+                            <ellipse cx="125" cy="65" rx="16" ry="18" fill="#0a2030" class="eye-socket"/>
+                            <ellipse cx="125" cy="65" rx="12" ry="14" fill="#061520" class="eye-outer"/>
+                            <ellipse cx="125" cy="65" rx="7" ry="9" fill="#020a10" class="pupil"/>
+                            <!-- Iris ring -->
+                            <ellipse cx="125" cy="65" rx="9" ry="11" fill="none" stroke="#1a5a7a" stroke-width="2" opacity="0.6"/>
+                            <!-- Eye shine - bright -->
+                            <ellipse cx="121" cy="60" rx="3" ry="3.5" fill="#ffffff" class="eye-shine"/>
+                            <ellipse cx="129" cy="70" rx="1.5" ry="2" fill="rgba(125,211,252,0.6)" class="eye-shine-2"/>
                         </g>
 
                         <!-- Siphon (below eyes, between tentacles) -->

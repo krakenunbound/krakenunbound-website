@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KRAKEN ARKADE</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1 }
+            50% { opacity: 0.7 }
+        }
+
+        @keyframes glow {
+            0%, 100% { filter: drop-shadow(0 0 10px currentColor) }
+            50% { filter: drop-shadow(0 0 25px currentColor) }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) }
+            50% { transform: translateY(-10px) }
+        }
+
+        @keyframes scanline {
+            0% { transform: translateY(-100%) }
+            100% { transform: translateY(100%) }
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 50%, #0a1a2e 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #0ff;
+            text-decoration: none;
+            font-size: 14px;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        h1 {
+            font-size: 64px;
+            background: linear-gradient(135deg, #0ff, #f0f, #ff0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: glow 2s infinite;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 18px;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .game-card {
+            background: rgba(0, 20, 40, 0.8);
+            border: 2px solid #0ff;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 200%;
+            background: linear-gradient(transparent 50%, rgba(0, 0, 0, 0.03) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            animation: scanline 8s linear infinite;
+            opacity: 0.2;
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0, 255, 255, 0.3);
+        }
+
+        .game-card.asteroid-run { border-color: #0ff; }
+        .game-card.asteroid-run:hover { box-shadow: 0 10px 40px rgba(0, 255, 255, 0.4); }
+
+        .game-card.hive-assault { border-color: #a0f; }
+        .game-card.hive-assault:hover { box-shadow: 0 10px 40px rgba(160, 0, 255, 0.4); }
+
+        .game-card.it-lurks-below { border-color: #0cc; }
+        .game-card.it-lurks-below:hover { box-shadow: 0 10px 40px rgba(0, 204, 204, 0.4); }
+
+        .game-card.space-pirates { border-color: #f55; }
+        .game-card.space-pirates:hover { box-shadow: 0 10px 40px rgba(255, 85, 85, 0.4); }
+
+        .game-card.star-kraken { border-color: #0ff; }
+        .game-card.star-kraken:hover { box-shadow: 0 10px 40px rgba(0, 255, 255, 0.4); }
+
+        .game-card.word-kraken { border-color: #0f0; }
+        .game-card.word-kraken:hover { box-shadow: 0 10px 40px rgba(0, 255, 0, 0.4); }
+
+        .game-card.mini-crossword { border-color: #ff0; }
+        .game-card.mini-crossword:hover { box-shadow: 0 10px 40px rgba(255, 255, 0, 0.4); }
+
+        .game-card.krakens-tempest { border-color: #4af; }
+        .game-card.krakens-tempest:hover { box-shadow: 0 10px 40px rgba(68, 170, 255, 0.4); }
+
+        .game-card.abyssal-guess { border-color: #0088ff; }
+        .game-card.abyssal-guess:hover { box-shadow: 0 10px 40px rgba(0, 136, 255, 0.4); }
+
+        .game-card.spelling-kraken { border-color: #f9ca24; }
+        .game-card.spelling-kraken:hover { box-shadow: 0 10px 40px rgba(249, 202, 36, 0.4); }
+
+        .game-card.abyssal-between { border-color: #ff6600; }
+        .game-card.abyssal-between:hover { box-shadow: 0 10px 40px rgba(255, 102, 0, 0.4); }
+
+        .game-card.phrase-kraken { border-color: #aa44ff; }
+        .game-card.phrase-kraken:hover { box-shadow: 0 10px 40px rgba(170, 68, 255, 0.4); }
+
+        .game-card.ad-astra { border-color: #ffd700; }
+        .game-card.ad-astra:hover { box-shadow: 0 10px 40px rgba(255, 215, 0, 0.4); }
+
+        .game-icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .game-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .asteroid-run .game-title { color: #0ff; text-shadow: 0 0 10px #0ff; }
+        .hive-assault .game-title { color: #a0f; text-shadow: 0 0 10px #a0f; }
+        .it-lurks-below .game-title { color: #0cc; text-shadow: 0 0 10px #0cc; }
+        .space-pirates .game-title { color: #f55; text-shadow: 0 0 10px #f55; }
+        .star-kraken .game-title { color: #0ff; text-shadow: 0 0 10px #0ff; }
+        .word-kraken .game-title { color: #0f0; text-shadow: 0 0 10px #0f0; }
+        .mini-crossword .game-title { color: #ff0; text-shadow: 0 0 10px #ff0; }
+        .krakens-tempest .game-title { color: #4af; text-shadow: 0 0 10px #4af; }
+        .abyssal-guess .game-title { color: #0088ff; text-shadow: 0 0 10px #0088ff; }
+        .spelling-kraken .game-title { color: #f9ca24; text-shadow: 0 0 10px #f9ca24; }
+        .abyssal-between .game-title { color: #ff6600; text-shadow: 0 0 10px #ff6600; }
+        .phrase-kraken .game-title { color: #aa44ff; text-shadow: 0 0 10px #aa44ff; }
+        .ad-astra .game-title { color: #ffd700; text-shadow: 0 0 10px #ffd700; }
+
+        .game-subtitle {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .game-status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-ready {
+            background: rgba(0, 255, 0, 0.2);
+            border: 1px solid #0f0;
+            color: #0f0;
+        }
+
+        .status-coming {
+            background: rgba(100, 100, 100, 0.2);
+            border: 1px solid #666;
+            color: #666;
+        }
+
+        .coming-soon {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .coming-soon:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 40px;
+            padding: 20px;
+            background: rgba(0, 20, 40, 0.5);
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            color: #0ff;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 0 10px #0ff;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 36px;
+            }
+            .subtitle {
+                font-size: 12px;
+                letter-spacing: 2px;
+            }
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+            .stats-bar {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <a href="/" class="back-link">< Back to Kraken Unbound</a>
+
+    <div class="container">
+        <header>
+            <h1>KRAKEN ARKADE</h1>
+            <p class="subtitle">Retro Arcade Collection</p>
+        </header>
+
+        <div class="games-grid">
+            <!-- ARCADE GAMES - Pure HTML/JS, Easy to Port -->
+            <div class="game-card asteroid-run" onclick="launchGame('asteroid-run')">
+                <div class="game-icon">☄️</div>
+                <div class="game-title">ASTEROID RUN</div>
+                <div class="game-subtitle">Nebula Escape</div>
+                <span class="game-status status-coming">COMING SOON</span>
+            </div>
+
+            <div class="game-card space-pirates" onclick="launchGame('space-pirates')">
+                <div class="game-icon">🏴‍☠️</div>
+                <div class="game-title">SPACE PIRATES</div>
+                <div class="game-subtitle">Galactic Raid</div>
+                <span class="game-status status-coming">COMING SOON</span>
+            </div>
+
+            <div class="game-card star-kraken" onclick="launchGame('star-kraken')">
+                <div class="game-icon">🚀</div>
+                <div class="game-title">STAR KRAKEN</div>
+                <div class="game-subtitle">Galactic Defender</div>
+                <span class="game-status status-coming">COMING SOON</span>
+            </div>
+
+            <div class="game-card hive-assault" onclick="launchGame('hive-assault')">
+                <div class="game-icon">👽</div>
+                <div class="game-title">HIVE ASSAULT</div>
+                <div class="game-subtitle">Alien Swarm</div>
+                <span class="game-status status-coming">COMING SOON</span>
+            </div>
+
+            <div class="game-card it-lurks-below" onclick="launchGame('it-lurks-below')">
+                <div class="game-icon">🦑</div>
+                <div class="game-title">IT LURKS BELOW</div>
+                <div class="game-subtitle">Deep Sea Terror</div>
+                <span class="game-status status-coming">COMING SOON</span>
+            </div>
+
+            <div class="game-card krakens-tempest" onclick="launchGame('krakens-tempest')">
+                <div class="game-icon">🌀</div>
+                <div class="game-title">KRAKEN'S TEMPEST</div>
+                <div class="game-subtitle">Whirlpool Defense</div>
+                <span class="game-status status-coming">COMING SOON</span>
+            </div>
+
+            <!-- WORD GAMES - May Need Groq API -->
+            <div class="game-card word-kraken coming-soon">
+                <div class="game-icon">📝</div>
+                <div class="game-title">WORD KRAKEN</div>
+                <div class="game-subtitle">Daily Word Puzzle</div>
+                <span class="game-status status-coming">COMING SOON</span>
+            </div>
+
+            <div class="game-card mini-crossword coming-soon">
+                <div class="game-icon">🔗</div>
+                <div class="game-title">KRAKEN KATEGORIES</div>
+                <div class="game-subtitle">Cosmic Connections</div>
+                <span class="game-status status-coming">COMING SOON</span>
+            </div>
+
+            <div class="game-card abyssal-guess coming-soon">
+                <div class="game-icon">🔮</div>
+                <div class="game-title">ABYSSAL GUESS</div>
+                <div class="game-subtitle">Semantic Search</div>
+                <span class="game-status status-coming">COMING SOON</span>
+            </div>
+
+            <div class="game-card spelling-kraken coming-soon">
+                <div class="game-icon">🐝</div>
+                <div class="game-title">SPELLING KRAKEN</div>
+                <div class="game-subtitle">Word Hive</div>
+                <span class="game-status status-coming">COMING SOON</span>
+            </div>
+
+            <div class="game-card abyssal-between coming-soon">
+                <div class="game-icon">🔤</div>
+                <div class="game-title">ABYSSAL BETWEEN</div>
+                <div class="game-subtitle">Alphabetic Hunt</div>
+                <span class="game-status status-coming">COMING SOON</span>
+            </div>
+
+            <div class="game-card phrase-kraken coming-soon">
+                <div class="game-icon">💬</div>
+                <div class="game-title">PHRASE KRAKEN</div>
+                <div class="game-subtitle">Quote Quest</div>
+                <span class="game-status status-coming">COMING SOON</span>
+            </div>
+
+            <!-- COMPLEX GAMES -->
+            <div class="game-card ad-astra coming-soon">
+                <div class="game-icon">✨</div>
+                <div class="game-title">AD ASTRA</div>
+                <div class="game-subtitle">Space Trading Simulation</div>
+                <span class="game-status status-coming">COMING SOON</span>
+            </div>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-label">Games</div>
+                <div class="stat-value" id="gameCount">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Available</div>
+                <div class="stat-value" id="availableCount">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Coming Soon</div>
+                <div class="stat-value" id="comingCount">13</div>
+            </div>
+        </div>
+
+        <footer>
+            <p>KRAKEN ARKADE v2.0 - Web Edition</p>
+        </footer>
+    </div>
+
+    <script>
+        // Game registry - tracks which games are available
+        const games = {
+            'asteroid-run': { ready: false },
+            'space-pirates': { ready: false },
+            'star-kraken': { ready: false },
+            'hive-assault': { ready: false },
+            'it-lurks-below': { ready: false },
+            'krakens-tempest': { ready: false },
+            'word-kraken': { ready: false },
+            'cosmic-connections': { ready: false },
+            'abyssal-guess': { ready: false },
+            'spelling-kraken': { ready: false },
+            'abyssal-between': { ready: false },
+            'phrase-kraken': { ready: false },
+            'ad-astra': { ready: false }
+        };
+
+        function launchGame(gameId) {
+            if (games[gameId] && games[gameId].ready) {
+                window.location.href = `games/${gameId}/`;
+            } else {
+                // Game not ready yet - show coming soon message
+                const card = document.querySelector(`.game-card.${gameId}`);
+                if (card) {
+                    card.style.animation = 'pulse 0.3s ease-in-out 2';
+                    setTimeout(() => {
+                        card.style.animation = '';
+                    }, 600);
+                }
+            }
+        }
+
+        function updateStats() {
+            const total = Object.keys(games).length;
+            const available = Object.values(games).filter(g => g.ready).length;
+            const coming = total - available;
+
+            document.getElementById('gameCount').textContent = total;
+            document.getElementById('availableCount').textContent = available;
+            document.getElementById('comingCount').textContent = coming;
+
+            // Update card states based on readiness
+            for (const [gameId, game] of Object.entries(games)) {
+                const card = document.querySelector(`.game-card.${gameId}`);
+                if (card) {
+                    if (game.ready) {
+                        card.classList.remove('coming-soon');
+                        card.querySelector('.game-status').textContent = 'READY';
+                        card.querySelector('.game-status').classList.remove('status-coming');
+                        card.querySelector('.game-status').classList.add('status-ready');
+                    }
+                }
+            }
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', updateStats);
+    </script>
+</body>
+
+</html>

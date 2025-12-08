@@ -578,7 +578,7 @@ class Game {
         this.ui.addMessage('⚠️ Entering asteroid field!', 'warning');
         
         // Start minigame
-        this.asteroidMinigame.start(hasMining, (results) => {
+        this.asteroidMinigame.start(hasMining, async (results) => {
             // Process results
             if (results.survived) {
                 this.ui.addMessage('✅ Cleared the asteroid field!', 'success');
@@ -799,7 +799,7 @@ class Game {
         sectorInfo.insertBefore(eventDiv, sectorInfo.firstChild);
     }
 
-    selectEventChoice(choiceIndex) {
+    async selectEventChoice(choiceIndex) {
         if (!this.pendingEvent) return;
 
         const result = EventSystem.processChoice(this.pendingEvent, choiceIndex);
@@ -930,7 +930,7 @@ class Game {
         sectorInfo.insertBefore(serviceDiv, sectorInfo.firstChild);
     }
 
-    stationAction(action) {
+    async stationAction(action) {
         if (action === 'trade') {
             // Use the station for trading
             this.currentPlanet = this.currentStation; // Trading uses currentPlanet
@@ -1073,7 +1073,7 @@ class Game {
     startPirateCombat(strength = 1, onComplete = null) {
         console.log(`🏴‍☠️ Starting pirate combat minigame (strength: ${strength})`);
 
-        this.pirateMinigame.start(strength, (results) => {
+        this.pirateMinigame.start(strength, async (results) => {
             console.log('🏴‍☠️ Pirate combat results:', results);
             
             const gameData = this.gameState.gameData;
@@ -1155,7 +1155,7 @@ class Game {
         });
     }
 
-    combatAttack() {
+    async combatAttack() {
         this.audio.playSfx('laser');
         const result = this.combat.playerAttack(this.gameState.gameData.ship);
 
@@ -1189,7 +1189,7 @@ class Game {
         this.updateUI();
     }
 
-    combatFlee() {
+    async combatFlee() {
         const result = this.combat.attemptFlee(this.gameState.gameData.ship);
 
         if (result.escaped) {
@@ -1781,7 +1781,7 @@ class Game {
     }
 
     // Fighter Methods
-    deployFighters() {
+    async deployFighters() {
         const quantity = parseInt(document.getElementById('fighter-quantity').value);
 
         if (!quantity || quantity <= 0) {
@@ -1809,7 +1809,7 @@ class Game {
         }
     }
 
-    deployMines() {
+    async deployMines() {
         const quantity = parseInt(document.getElementById('mine-quantity').value);
 
         if (!quantity || quantity <= 0) {
@@ -1880,7 +1880,7 @@ class Game {
     }
 
     // Colony Methods
-    launchGenesis() {
+    async launchGenesis() {
         const sectorId = this.gameState.gameData.currentSector;
         const owner = this.gameState.currentUser;
         const pilotName = this.gameState.gameData.name;
@@ -1979,7 +1979,7 @@ class Game {
         display.innerHTML = html;
     }
 
-    collectColonyIncome(colonyId) {
+    async collectColonyIncome(colonyId) {
         const owner = this.gameState.currentUser;
         const result = this.colonization.collectIncome(colonyId, owner);
 
@@ -1998,7 +1998,7 @@ class Game {
         }
     }
 
-    collectAllIncome() {
+    async collectAllIncome() {
         const owner = this.gameState.currentUser;
         const result = this.colonization.collectAllIncome(owner);
 
@@ -2017,7 +2017,7 @@ class Game {
         }
     }
 
-    upgradeColony(colonyId, upgradeType) {
+    async upgradeColony(colonyId, upgradeType) {
         const owner = this.gameState.currentUser;
         const credits = this.gameState.gameData.credits;
 

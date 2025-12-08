@@ -1,0 +1,21 @@
+{
+  "name": "ad-astra-sysop-station",
+  "version": "1.0.0",
+  "description": "BBS-style monitoring dashboard for Ad Astra game server",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "keywords": [
+    "electron",
+    "sysop",
+    "monitoring",
+    "bbs"
+  ],
+  "author": "Kraken",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^39.2.3"
+  }
+}

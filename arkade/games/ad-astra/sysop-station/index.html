@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ad Astra Sysop Station</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="ascii-art">
+    ╔══════════════════════════════════════════════════════════════════════════╗
+    ║   █████╗ ██████╗     █████╗ ███████╗████████╗██████╗  █████╗            ║
+    ║  ██╔══██╗██╔══██╗   ██╔══██╗██╔════╝╚══██╔══╝██╔══██╗██╔══██╗           ║
+    ║  ███████║██║  ██║   ███████║███████╗   ██║   ██████╔╝███████║           ║
+    ║  ██╔══██║██║  ██║   ██╔══██║╚════██║   ██║   ██╔══██╗██╔══██║           ║
+    ║  ██║  ██║██████╔╝   ██║  ██║███████║   ██║   ██║  ██║██║  ██║           ║
+    ║  ╚═╝  ╚═╝╚═════╝    ╚═╝  ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝           ║
+    ║                                                                          ║
+    ║                      SYSOP MONITORING STATION                            ║
+    ╚══════════════════════════════════════════════════════════════════════════╝
+            </div>
+            <div class="system-info">
+                <span id="current-time">00:00:00</span> | 
+                <span>System: ONLINE</span> | 
+                <span id="uptime">Uptime: 00:00:00</span>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Left Panel - Server Status & Controls -->
+            <div class="panel server-panel">
+                <div class="panel-header">▼ SERVER STATUS</div>
+                <div class="panel-content">
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <span class="label">Game Server:</span>
+                            <span id="python-status" class="status offline">OFFLINE</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="label">Tunnel:</span>
+                            <span id="tunnel-status" class="status offline">OFFLINE</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="label">Public URL:</span>
+                            <span id="tunnel-url" class="url">N/A</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="label">Local URL:</span>
+                            <span class="url">http://localhost:8000</span>
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <button id="btn-start" class="btn btn-success">► START SERVERS</button>
+                        <button id="btn-stop" class="btn btn-danger">■ STOP SERVERS</button>
+                        <button id="btn-copy-url" class="btn btn-info">📋 COPY URL</button>
+                        <button id="btn-open-game" class="btn btn-info">🌐 OPEN GAME</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Active Players -->
+            <div class="panel players-panel">
+                <div class="panel-header">▼ ACTIVE PLAYERS <span id="player-count">(0)</span></div>
+                <div class="panel-content">
+                    <div id="player-list" class="player-list">
+                        <div class="no-data">No players connected</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Content Area -->
+        <div class="bottom-content">
+            <!-- Activity Log -->
+            <div class="panel log-panel">
+                <div class="panel-header">
+                    ▼ ACTIVITY LOG
+                    <button id="btn-clear-log" class="btn-mini">CLEAR</button>
+                </div>
+                <div class="panel-content">
+                    <div id="log-display" class="log-display">
+                        <div class="log-entry info">
+                            <span class="timestamp">[SYS]</span>
+                            <span class="message">Sysop Station initialized. Waiting for command...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Panel -->
+            <div class="panel stats-panel">
+                <div class="panel-header">▼ STATISTICS</div>
+                <div class="panel-content">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-total-players">0</div>
+                            <div class="stat-label">Total Players</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-active-now">0</div>
+                            <div class="stat-label">Active Now</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-connections">0</div>
+                            <div class="stat-label">Connections</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-uptime">0:00</div>
+                            <div class="stat-label">Uptime</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>

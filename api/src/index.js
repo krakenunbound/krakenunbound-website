@@ -213,6 +213,70 @@ Remember: A good puzzle makes the solver think "Birds!" then realize TURKEY=Flop
   return { date: targetDate, theme, puzzle_data: JSON.stringify(puzzleData) };
 }
 
+async function generateContexto(env, targetDate) {
+  // Check if already exists
+  const existing = await env.DB.prepare('SELECT * FROM daily_contexto WHERE date = ?').bind(targetDate).first();
+  if (existing) return existing;
+
+  // Get past words to avoid repeats
+  const pastWords = await env.DB.prepare('SELECT secret_word FROM daily_contexto').all();
+  const usedWords = new Set(pastWords.results.map(r => r.secret_word));
+
+  const dateObj = new Date(targetDate);
+  const readableDate = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  const prompt = `Current Date: ${readableDate}.
+
+Choose a SECRET WORD for a Contexto/semantic similarity game.
+
+REQUIREMENTS:
+1. Must be a COMMON English NOUN (not a verb, adjective, or proper noun)
+2. Should be concrete (can be visualized) - not abstract concepts
+3. 4-8 letters preferred
+4. Should have MANY related words (for interesting gameplay)
+5. Not too easy (avoid: DOG, CAT, HOUSE) - aim for medium difficulty
+
+GOOD examples: OCEAN, FOREST, CASTLE, VOLCANO, TROPHY, LIBRARY, COMPASS, HARBOR
+BAD examples: LOVE, THING, WAY, TIME (too abstract), CAT, DOG (too easy)
+
+${readableDate.includes('December') ? 'Consider winter/holiday themes!' : ''}
+
+Also provide a one-word THEME/CATEGORY for the word.
+
+FORMAT: THEME|WORD
+Example: NATURE|FOREST
+
+Output ONLY the format string, nothing else.`;
+
+  let secretWord = 'OCEAN';
+  let theme = 'General';
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      const response = await queryGroq(env, prompt);
+      const cleaned = response.toUpperCase().replace(/[^A-Z|]/g, '');
+
+      if (cleaned.includes('|')) {
+        const [candidateTheme, candidateWord] = cleaned.split('|');
+        if (candidateWord && candidateWord.length >= 3 && candidateWord.length <= 10 && !usedWords.has(candidateWord)) {
+          secretWord = candidateWord;
+          theme = candidateTheme || 'General';
+          break;
+        }
+      }
+    } catch (e) {
+      console.error(`Contexto attempt ${attempt + 1} failed:`, e);
+    }
+  }
+
+  // Save to database
+  await env.DB.prepare(
+    'INSERT OR REPLACE INTO daily_contexto (date, secret_word, theme, nearby_words) VALUES (?, ?, ?, ?)'
+  ).bind(targetDate, secretWord, theme, '[]').run();
+
+  return { date: targetDate, secret_word: secretWord, theme };
+}
+
 async function generateSpellingBee(env, targetDate) {
   // Check if already exists
   const existing = await env.DB.prepare('SELECT * FROM daily_spellingbee WHERE date = ?').bind(targetDate).first();
@@ -328,6 +392,12 @@ export default {
         result = await generateSpellingBee(env, date);
       }
 
+      else if (path === '/api/generate/contexto' && request.method === 'POST') {
+        const body = await request.json();
+        const date = body.date || new Date().toISOString().split('T')[0];
+        result = await generateContexto(env, date);
+      }
+
       else if (path === '/api/generate/all' && request.method === 'POST') {
         // Generate all puzzles for a date
         const body = await request.json();
@@ -335,7 +405,8 @@ export default {
         const wordle = await generateWordleWord(env, date);
         const connections = await generateConnections(env, date);
         const spellingbee = await generateSpellingBee(env, date);
-        result = { date, wordle, connections, spellingbee };
+        const contexto = await generateContexto(env, date);
+        result = { date, wordle, connections, spellingbee, contexto };
       }
 
       // ===== DAILY WORDS (Word Kraken / Wordle) =====
@@ -496,8 +567,106 @@ export default {
       // ===== CONTEXTO (Abyssal Guess) =====
       else if (path === '/api/contexto/daily' && request.method === 'GET') {
         const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
-        const row = await env.DB.prepare('SELECT * FROM daily_contexto WHERE date = ?').bind(date).first();
-        result = row || { error: 'No puzzle for this date' };
+        let row = await env.DB.prepare('SELECT * FROM daily_contexto WHERE date = ?').bind(date).first();
+        // Auto-generate if missing and it's today
+        if (!row && date === new Date().toISOString().split('T')[0]) {
+          row = await generateContexto(env, date);
+        }
+        // Return theme only, not the secret word!
+        if (row) {
+          result = { date: row.date, theme: row.theme, hasWord: !!row.secret_word };
+        } else {
+          result = { error: 'No puzzle for this date' };
+        }
+      }
+
+      else if (path === '/api/contexto/guess' && request.method === 'POST') {
+        const body = await request.json();
+        const { word, date } = body;
+        const targetDate = date || new Date().toISOString().split('T')[0];
+        const guessWord = (word || '').toUpperCase().trim();
+
+        if (!guessWord || guessWord.length < 2) {
+          result = { error: 'Invalid word' };
+        } else {
+          // Get the secret word
+          let puzzle = await env.DB.prepare('SELECT * FROM daily_contexto WHERE date = ?').bind(targetDate).first();
+          if (!puzzle) {
+            puzzle = await generateContexto(env, targetDate);
+          }
+
+          const secretWord = puzzle.secret_word;
+
+          // Check for exact match
+          if (guessWord === secretWord) {
+            result = { word: guessWord, rank: 1, score: 100, isWinner: true };
+          } else {
+            // Use AI to rate semantic similarity
+            const similarityPrompt = `Rate the semantic similarity between "${secretWord}" and "${guessWord}" on a scale of 0-100.
+
+Consider:
+- Direct synonyms or very related concepts: 80-99
+- Same category/field: 60-79
+- Loosely related: 40-59
+- Tangentially related: 20-39
+- Unrelated: 0-19
+
+The secret word is: ${secretWord}
+The guessed word is: ${guessWord}
+
+Respond with ONLY a number from 0 to 100. Nothing else.`;
+
+            try {
+              const response = await queryGroq(env, similarityPrompt, 10);
+              const scoreMatch = response.match(/\d+/);
+              let score = scoreMatch ? parseInt(scoreMatch[0]) : 25;
+              score = Math.max(0, Math.min(99, score)); // Clamp 0-99 (100 is reserved for exact match)
+
+              // Convert score to rank (higher score = lower rank = better)
+              // Score 99 -> rank ~2, Score 50 -> rank ~500, Score 0 -> rank ~1000
+              const rank = Math.max(2, Math.round(1000 - (score * 10)));
+
+              result = { word: guessWord, rank, score, isWinner: false };
+            } catch (e) {
+              // Fallback random score if AI fails
+              const randomScore = Math.floor(Math.random() * 50) + 10;
+              result = { word: guessWord, rank: 1000 - randomScore * 10, score: randomScore, isWinner: false, aiError: true };
+            }
+          }
+        }
+      }
+
+      else if (path === '/api/contexto/hint' && request.method === 'GET') {
+        const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
+        const puzzle = await env.DB.prepare('SELECT * FROM daily_contexto WHERE date = ?').bind(date).first();
+
+        if (puzzle) {
+          // Generate a hint without revealing the word
+          const hintPrompt = `The secret word is "${puzzle.secret_word}".
+Give a VAGUE hint that helps narrow down the category without revealing the word.
+Examples of good hints:
+- "Think about things found in nature"
+- "This relates to buildings or structures"
+- "Consider items you might find at a celebration"
+
+Keep it SHORT (under 10 words). Do NOT mention the actual word.`;
+
+          try {
+            const hint = await queryGroq(env, hintPrompt, 50);
+            result = { hint: hint.replace(/"/g, '').trim() };
+          } catch (e) {
+            result = { hint: `Today's theme: ${puzzle.theme}` };
+          }
+        } else {
+          result = { error: 'No puzzle found' };
+        }
+      }
+
+      else if (path === '/api/contexto/reveal' && request.method === 'GET') {
+        // Admin only - reveals the word for testing
+        const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
+        const puzzle = await env.DB.prepare('SELECT * FROM daily_contexto WHERE date = ?').bind(date).first();
+        result = puzzle ? { word: puzzle.secret_word } : { error: 'No puzzle' };
       }
 
       else if (path === '/api/contexto/score' && request.method === 'POST') {
@@ -507,6 +676,14 @@ export default {
           'INSERT OR REPLACE INTO contexto_scores (date, player_name, guesses, solved) VALUES (?, ?, ?, ?)'
         ).bind(date, player_name, guesses, solved ? 1 : 0).run();
         result = { success: true };
+      }
+
+      else if (path === '/api/contexto/scores' && request.method === 'GET') {
+        const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
+        const rows = await env.DB.prepare(
+          'SELECT player_name, guesses, solved FROM contexto_scores WHERE date = ? AND solved = 1 ORDER BY guesses ASC LIMIT 20'
+        ).bind(date).all();
+        result = rows.results;
       }
 
       // ===== ARCADE SCORES =====
@@ -584,6 +761,7 @@ export default {
       await generateWordleWord(env, tomorrowStr);
       await generateConnections(env, tomorrowStr);
       await generateSpellingBee(env, tomorrowStr);
+      await generateContexto(env, tomorrowStr);
       console.log('Puzzles generated successfully!');
     } catch (e) {
       console.error('Puzzle generation failed:', e);

@@ -31,6 +31,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             min-height: 100vh;
             background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 50%, #0a1a2e 100%);
             touch-action: manipulation;
@@ -450,6 +451,94 @@
             z-index: 1000;
         }
 
+        /* Help Button */
+        #help-btn {
+            position: fixed;
+            top: 10px;
+            right: 60px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid #ff00ff;
+            color: #ff00ff;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        #help-btn:hover {
+            background: rgba(255, 0, 255, 0.2);
+            box-shadow: 0 0 10px #ff00ff;
+        }
+
+        /* Help Modal */
+        #help-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2500;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .help-content {
+            background: rgba(20, 30, 60, 0.95);
+            padding: 30px;
+            border-radius: 16px;
+            border: 2px solid #ff00ff;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            width: 100%;
+        }
+
+        .help-content h2 {
+            color: #ff00ff;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .help-content h3 {
+            color: var(--neon);
+            margin: 15px 0 10px;
+        }
+
+        .help-content p, .help-content li {
+            color: #ccc;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .help-content ul {
+            padding-left: 20px;
+        }
+
+        .tile-example {
+            display: inline-flex;
+            width: 35px;
+            height: 35px;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin: 2px;
+            border-radius: 4px;
+        }
+
+        .tile-correct { background: var(--correct); }
+        .tile-present { background: var(--present); }
+        .tile-absent { background: var(--absent); }
+
         /* Admin Settings - hidden, access via ~ key */
 
         #admin-modal {
@@ -515,9 +604,47 @@
     <canvas id="star-canvas"></canvas>
     <canvas id="confetti-canvas"></canvas>
     <div id="horizon-line"></div>
+    <button id="help-btn" onclick="openHelp()" title="How to Play">?</button>
     <button id="music-btn" onclick="toggleMusic()" title="Toggle Music">&#9835;</button>
     <div id="toast-notification">Notification</div>
     <div id="loading">LOADING...</div>
+
+    <!-- Help Modal -->
+    <div id="help-modal">
+        <div class="help-content">
+            <h2>HOW TO PLAY</h2>
+            <h3>Objective</h3>
+            <p>Guess the 5-letter word in 6 tries or fewer.</p>
+
+            <h3>How It Works</h3>
+            <p>After each guess, the tiles change color to show how close you are:</p>
+
+            <div style="margin: 15px 0;">
+                <div><span class="tile-example tile-correct">W</span> = Letter is CORRECT (right spot)</div>
+                <div style="margin-top: 8px;"><span class="tile-example tile-present">O</span> = Letter is in the word (wrong spot)</div>
+                <div style="margin-top: 8px;"><span class="tile-example tile-absent">X</span> = Letter is NOT in the word</div>
+            </div>
+
+            <h3>Tips</h3>
+            <ul>
+                <li>Start with words that have common letters (E, A, R, T, O)</li>
+                <li>Pay attention to the daily theme for hints</li>
+                <li>Use the keyboard colors to track eliminated letters</li>
+            </ul>
+
+            <h3>Example</h3>
+            <p>If the word is "CRANE" and you guess "CRATE":</p>
+            <div style="margin: 10px 0;">
+                <span class="tile-example tile-correct">C</span>
+                <span class="tile-example tile-correct">R</span>
+                <span class="tile-example tile-correct">A</span>
+                <span class="tile-example tile-absent">T</span>
+                <span class="tile-example tile-present">E</span>
+            </div>
+
+            <button class="action-btn" onclick="closeHelp()" style="margin-top: 20px;">GOT IT!</button>
+        </div>
+    </div>
 
     <!-- Admin Modal -->
     <div id="admin-modal">
@@ -1241,6 +1368,15 @@
         const savedVolume = localStorage.getItem('wordkraken_volume');
         if (savedVolume) {
             audio.volume = parseFloat(savedVolume);
+        }
+
+        // Help functions
+        function openHelp() {
+            document.getElementById('help-modal').style.display = 'flex';
+        }
+
+        function closeHelp() {
+            document.getElementById('help-modal').style.display = 'none';
         }
     </script>
 </body>

@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ABYSSAL GUESS</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <style>
+        :root {
+            --text-color: #ffffff;
+            --accent-color: #00ffff;
+            --neon-cyan: #00ffff;
+            --neon-magenta: #ff00ff;
+            --glass-bg: rgba(10, 20, 40, 0.85);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 50%, #0a1a2e 100%);
+            color: var(--text-color);
+            font-family: 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        #wallpaper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -3;
+            object-fit: cover;
+            opacity: 0.4;
+        }
+
+        #star-canvas,
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #star-canvas {
+            z-index: -2;
+        }
+
+        #confetti-canvas {
+            z-index: 100;
+        }
+
+        #music-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            font-size: 18px;
+            cursor: pointer;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        #music-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+        }
+
+        #music-btn.muted {
+            color: #666;
+            border-color: #666;
+        }
+
+        #back-to-arkade {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            color: var(--neon-cyan);
+            text-decoration: none;
+            border: 1px solid var(--neon-cyan);
+            padding: 8px 15px;
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.5);
+            transition: 0.3s;
+            z-index: 1000;
+            font-size: 0.9rem;
+        }
+
+        #back-to-arkade:hover {
+            background: rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            padding: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.15);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 95vw;
+            width: 500px;
+            text-align: center;
+            z-index: 20;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            background: linear-gradient(45deg, var(--neon-cyan), #0099ff);
+            border: none;
+            border-radius: 8px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            font-family: inherit;
+        }
+
+        .action-btn:hover {
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--neon-cyan), #0099ff);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid #444;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            text-align: center;
+            outline: none;
+            font-family: inherit;
+            text-transform: uppercase;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            z-index: 1;
+        }
+
+        .input-area {
+            display: flex;
+            width: 100%;
+            gap: 10px;
+        }
+
+        .input-area input {
+            flex: 1;
+            margin: 0;
+        }
+
+        .guess-btn {
+            padding: 0 20px;
+            background: var(--neon-cyan);
+            border: none;
+            border-radius: 8px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            font-family: inherit;
+        }
+
+        .guess-btn:hover {
+            box-shadow: 0 0 15px var(--neon-cyan);
+        }
+
+        .hint-btn {
+            background: var(--neon-magenta);
+        }
+
+        .hint-btn:hover {
+            box-shadow: 0 0 15px var(--neon-magenta);
+        }
+
+        .guess-list {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 55vh;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .guess-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px 15px;
+            border-radius: 6px;
+            border-left: 4px solid #444;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .guess-word {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .guess-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .guess-rank {
+            font-family: monospace;
+            font-size: 1rem;
+            color: #aaa;
+        }
+
+        .bar-container {
+            width: 80px;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            transition: width 0.5s;
+        }
+
+        .hot {
+            border-left-color: #ff3300;
+            background: rgba(255, 51, 0, 0.1);
+        }
+
+        .hot .bar-fill {
+            background: linear-gradient(90deg, #ff3300, #ff6600);
+        }
+
+        .warm {
+            border-left-color: #ff8800;
+            background: rgba(255, 136, 0, 0.1);
+        }
+
+        .warm .bar-fill {
+            background: linear-gradient(90deg, #ff8800, #ffaa00);
+        }
+
+        .cool {
+            border-left-color: #0088ff;
+            background: rgba(0, 136, 255, 0.1);
+        }
+
+        .cool .bar-fill {
+            background: linear-gradient(90deg, #0066cc, #0088ff);
+        }
+
+        .cold {
+            border-left-color: #0044aa;
+            background: rgba(0, 68, 170, 0.05);
+        }
+
+        .cold .bar-fill {
+            background: linear-gradient(90deg, #002266, #0044aa);
+        }
+
+        .win {
+            border-left-color: #00ff00;
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #00ff00;
+        }
+
+        .win .bar-fill {
+            background: #00ff00;
+        }
+
+        .toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 15px 30px;
+            border-radius: 8px;
+            border: 1px solid var(--neon-cyan);
+            color: #fff;
+            opacity: 0;
+            transition: 0.3s;
+            pointer-events: none;
+            z-index: 200;
+            text-align: center;
+        }
+
+        .toast.show {
+            opacity: 1;
+            top: 100px;
+        }
+
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--neon-cyan);
+            font-size: 1.5rem;
+            z-index: 1000;
+        }
+
+        /* Leaderboard Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1500;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: rgba(20, 30, 60, 0.95);
+            padding: 30px;
+            border-radius: 16px;
+            border: 2px solid var(--neon-cyan);
+            max-width: 90%;
+            width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h2 {
+            color: var(--neon-cyan);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .score-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .score-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        /* Admin Settings - hidden, access via ~ key */
+        #admin-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .admin-content {
+            background: rgba(20, 30, 60, 0.95);
+            padding: 30px;
+            border-radius: 16px;
+            border: 2px solid #f05;
+            max-width: 90%;
+            width: 400px;
+        }
+
+        .admin-content h2 {
+            color: #f05;
+            margin-bottom: 20px;
+        }
+
+        .admin-content label {
+            display: block;
+            margin: 15px 0 5px;
+            color: #aaa;
+        }
+
+        .admin-content input[type="range"] {
+            width: 100%;
+        }
+
+        .admin-content button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        #horizon-line {
+            position: fixed;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #f05;
+            z-index: 99;
+            pointer-events: none;
+            display: none;
+        }
+
+        /* Help Button */
+        #help-btn {
+            position: fixed;
+            top: 10px;
+            right: 60px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--neon-magenta);
+            color: var(--neon-magenta);
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        #help-btn:hover {
+            background: rgba(255, 0, 255, 0.2);
+            box-shadow: 0 0 10px var(--neon-magenta);
+        }
+
+        /* Help Modal */
+        #help-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2500;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .help-content {
+            background: rgba(20, 30, 60, 0.95);
+            padding: 30px;
+            border-radius: 16px;
+            border: 2px solid var(--neon-magenta);
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            width: 100%;
+        }
+
+        .help-content h2 {
+            color: var(--neon-magenta);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .help-content h3 {
+            color: var(--neon-cyan);
+            margin: 15px 0 10px;
+        }
+
+        .help-content p, .help-content li {
+            color: #ccc;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .help-content ul {
+            padding-left: 20px;
+        }
+
+        .help-example {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+
+        .rank-hot { color: #ff3300; }
+        .rank-warm { color: #ff8800; }
+        .rank-cool { color: #0088ff; }
+        .rank-cold { color: #0044aa; }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 10px 15px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            color: var(--neon-cyan);
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: #888;
+        }
+    </style>
+</head>
+
+<body>
+    <img id="wallpaper" src="/arkade/static/wallpaper.png" alt="">
+    <canvas id="star-canvas"></canvas>
+    <canvas id="confetti-canvas"></canvas>
+    <div id="horizon-line"></div>
+    <a id="back-to-arkade" href="/arkade/">< ARKADE</a>
+    <button id="help-btn" onclick="openHelp()" title="How to Play">?</button>
+    <button id="music-btn" onclick="toggleMusic()" title="Toggle Music">&#9835;</button>
+    <div id="toast" class="toast">Message</div>
+
+    <!-- Help Modal -->
+    <div id="help-modal">
+        <div class="help-content">
+            <h2>HOW TO PLAY</h2>
+            <h3>Objective</h3>
+            <p>Find the secret word by guessing words and using semantic similarity as your guide.</p>
+
+            <h3>How It Works</h3>
+            <p>Each guess is ranked by how semantically similar it is to the secret word. The closer your guess is in meaning, the lower (better) your rank!</p>
+
+            <div class="help-example">
+                <span class="rank-hot">#1-100</span> = Very hot! You're close!<br>
+                <span class="rank-warm">#100-300</span> = Warm, on the right track<br>
+                <span class="rank-cool">#300-600</span> = Cool, getting there<br>
+                <span class="rank-cold">#600+</span> = Cold, try a different direction
+            </div>
+
+            <h3>Tips</h3>
+            <ul>
+                <li>Start with broad category words</li>
+                <li>Use the HINT button if stuck</li>
+                <li>Pay attention to the theme</li>
+                <li>Think about synonyms and related concepts</li>
+            </ul>
+
+            <h3>Scoring</h3>
+            <p>Your goal is to find the secret word in as few guesses as possible. Fewer guesses = better score on the leaderboard!</p>
+
+            <button class="action-btn" onclick="closeHelp()" style="margin-top: 20px;">GOT IT!</button>
+        </div>
+    </div>
+    <div id="loading">LOADING...</div>
+
+    <!-- Admin Modal -->
+    <div id="admin-modal">
+        <div class="admin-content">
+            <h2>Settings</h2>
+            <label>Horizon Line (0-100%): <span id="horizon-value">55</span>%</label>
+            <input type="range" id="horizon-slider" min="0" max="100" value="55" oninput="updateHorizon(this.value)">
+            <p style="color:#666; font-size:0.8rem; margin-top:5px;">Stars will only appear above this line</p>
+
+            <label>Music Volume: <span id="volume-value">15</span>%</label>
+            <input type="range" id="volume-slider" min="0" max="100" value="15" oninput="updateVolume(this.value)">
+
+            <div style="margin-top:20px; padding-top:15px; border-top:1px solid #444;">
+                <label style="color:#f05;">Testing Tools</label>
+                <button onclick="instantSolve()" style="background:#333; color:#0f0; border:1px solid #0f0; width:100%;">Instant Solve</button>
+                <button onclick="resetToday()" style="background:#333; color:#f50; border:1px solid #f50; width:100%; margin-top:10px;">Reset Today's Progress</button>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button onclick="saveAdminSettings()" style="flex:1; background:#0a5; color:#fff; border:none;">Save</button>
+                <button onclick="closeAdmin()" style="flex:1; background:#333; color:#fff; border:1px solid #666;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboard-modal" class="modal">
+        <div class="modal-content">
+            <h2>TODAY'S LEADERBOARD</h2>
+            <ul id="score-list" class="score-list"></ul>
+            <button class="action-btn" onclick="closeLeaderboard()">CLOSE</button>
+        </div>
+    </div>
+
+    <!-- Setup Screen -->
+    <div id="setup-screen" class="glass-panel" style="display:none;">
+        <h1>ABYSSAL GUESS</h1>
+        <p style="color: #aaa; margin-bottom: 15px;">Find the secret word by semantic similarity</p>
+        <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+        <button class="action-btn" onclick="handleLogin()">INITIALIZE</button>
+        <button class="action-btn" style="background: #333; color: #fff;" onclick="openLeaderboard()">LEADERBOARD</button>
+        <button class="action-btn" style="background: #500;" onclick="window.location.href='/arkade/'">< BACK TO ARKADE</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div class="game-container" id="game-container">
+        <div class="stats-bar">
+            <div class="stat">
+                <div class="stat-value" id="guess-count">0</div>
+                <div class="stat-label">GUESSES</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="best-rank">-</div>
+                <div class="stat-label">BEST RANK</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="theme-display">?</div>
+                <div class="stat-label">THEME</div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="guess-input" placeholder="ENTER WORD..." onkeydown="if(event.key==='Enter') submitGuess()">
+            <button class="guess-btn" onclick="submitGuess()">SCAN</button>
+            <button class="guess-btn hint-btn" onclick="getHint()">HINT</button>
+        </div>
+
+        <div id="guess-list" class="guess-list"></div>
+
+        <button onclick="openLeaderboard()" style="background:none; border:none; color:#888; margin-top:10px; cursor:pointer;">
+            VIEW LEADERBOARD
+        </button>
+    </div>
+
+    <script>
+        const API_BASE = 'https://kraken-arkade-api.krakenunbound.workers.dev';
+
+        let playerName = "";
+        let guesses = [];
+        let solved = false;
+        let isProcessing = false;
+        let puzzleTheme = "";
+        let lastScreen = "setup";
+
+        // Admin settings
+        let horizonPercent = parseFloat(localStorage.getItem('abyssalguess_horizon') || '55');
+        let adminOpen = false;
+
+        // Music system
+        const musicTracks = [
+            'music/Far and Away.mp3',
+            'music/Journey of Dreams.mp3',
+            'music/Luminous Path.mp3',
+            'music/Midnight Highway.mp3',
+            'music/Moonlit Threads.mp3',
+            'music/Night Passage.mp3',
+            'music/Northern Lights.mp3',
+            'music/Open Skies.mp3'
+        ];
+        let audio = new Audio();
+        let musicMuted = localStorage.getItem('abyssalguess_muted') === 'true';
+        let currentTrack = 0;
+        let musicStarted = false;
+
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function initMusic() {
+            shuffleArray(musicTracks);
+            audio.volume = 0.15;
+            audio.addEventListener('ended', playNextTrack);
+            updateMusicButton();
+
+            const startOnInteraction = () => {
+                startMusic();
+                document.removeEventListener('click', startOnInteraction);
+                document.removeEventListener('keydown', startOnInteraction);
+            };
+            document.addEventListener('click', startOnInteraction);
+            document.addEventListener('keydown', startOnInteraction);
+        }
+
+        function playNextTrack() {
+            currentTrack = (currentTrack + 1) % musicTracks.length;
+            audio.src = musicTracks[currentTrack];
+            if (!musicMuted) audio.play().catch(() => {});
+        }
+
+        function startMusic() {
+            if (musicStarted) return;
+            musicStarted = true;
+            audio.src = musicTracks[currentTrack];
+            if (!musicMuted) {
+                audio.play().catch(() => { musicStarted = false; });
+            }
+        }
+
+        function toggleMusic() {
+            musicMuted = !musicMuted;
+            localStorage.setItem('abyssalguess_muted', musicMuted);
+            updateMusicButton();
+            if (musicMuted) {
+                audio.pause();
+            } else {
+                musicStarted = false;
+                startMusic();
+            }
+        }
+
+        function updateMusicButton() {
+            const btn = document.getElementById('music-btn');
+            if (musicMuted) {
+                btn.classList.add('muted');
+                btn.innerHTML = '&#9834;';
+            } else {
+                btn.classList.remove('muted');
+                btn.innerHTML = '&#9835;';
+            }
+        }
+
+        function getToday() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        // Load/Save game state
+        function saveGameState() {
+            const state = { guesses, solved, playerName };
+            localStorage.setItem(`abyssal_${getToday()}_${playerName}`, JSON.stringify(state));
+        }
+
+        function loadGameState() {
+            const saved = localStorage.getItem(`abyssal_${getToday()}_${playerName}`);
+            if (saved) {
+                try {
+                    const state = JSON.parse(saved);
+                    guesses = state.guesses || [];
+                    solved = state.solved || false;
+                    return true;
+                } catch (e) {}
+            }
+            return false;
+        }
+
+        // Initialize
+        window.onload = async function() {
+            await loadPuzzle();
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('setup-screen').style.display = 'flex';
+
+            // Pre-fill name
+            const n = localStorage.getItem('abyssalguess_user');
+            if (n) {
+                document.getElementById('playerName').value = n;
+            }
+
+            initStars();
+            initMusic();
+            animate();
+        };
+
+        async function loadPuzzle() {
+            try {
+                const res = await fetch(`${API_BASE}/api/contexto/daily?date=${getToday()}`);
+                const data = await res.json();
+                if (data.theme) {
+                    puzzleTheme = data.theme;
+                }
+            } catch (e) {
+                console.error('Failed to load puzzle:', e);
+            }
+        }
+
+        function handleLogin() {
+            const input = document.getElementById('playerName');
+            if (!input.value.trim()) return showToast("IDENTIFICATION REQUIRED");
+            playerName = input.value.trim().toUpperCase();
+            localStorage.setItem('abyssalguess_user', playerName);
+
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('game-container').style.display = 'flex';
+            document.getElementById('theme-display').textContent = puzzleTheme || '?';
+            startMusic();
+
+            // Load saved state
+            if (loadGameState()) {
+                renderGuesses();
+                if (solved) {
+                    showToast("ALREADY SOLVED TODAY!");
+                    document.getElementById('guess-input').disabled = true;
+                } else if (guesses.length > 0) {
+                    showToast(`RESTORED ${guesses.length} GUESSES`);
+                }
+            }
+
+            document.getElementById('guess-input').focus();
+        }
+
+        async function submitGuess() {
+            if (isProcessing || solved) return;
+
+            const input = document.getElementById('guess-input');
+            const word = input.value.trim().toUpperCase();
+            if (!word) return;
+
+            // Check for duplicate
+            if (guesses.some(g => g.word === word)) {
+                showToast("ALREADY SCANNED");
+                input.value = "";
+                return;
+            }
+
+            isProcessing = true;
+            input.disabled = true;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/contexto/guess`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ word, date: getToday() })
+                });
+                const data = await res.json();
+
+                if (data.error) {
+                    showToast(data.error);
+                } else {
+                    guesses.push(data);
+                    guesses.sort((a, b) => a.rank - b.rank); // Sort by rank
+                    renderGuesses();
+                    saveGameState();
+                    input.value = "";
+
+                    if (data.isWinner) {
+                        handleWin();
+                    } else {
+                        // Feedback based on score
+                        const best = Math.min(...guesses.map(g => g.rank));
+                        if (data.rank === best && guesses.length > 1) {
+                            showToast("NEW BEST! Getting closer...");
+                        } else if (data.score >= 70) {
+                            showToast("VERY HOT! Almost there!");
+                        } else if (data.score >= 50) {
+                            showToast("Warm signal detected");
+                        } else if (data.score >= 30) {
+                            showToast("Cool signal...");
+                        } else {
+                            showToast("Cold. Try a different approach.");
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+                showToast("Connection Error");
+            }
+
+            isProcessing = false;
+            input.disabled = false;
+            input.focus();
+        }
+
+        function renderGuesses() {
+            const list = document.getElementById('guess-list');
+            list.innerHTML = "";
+
+            guesses.forEach((g, idx) => {
+                const div = document.createElement('div');
+
+                let tempClass = 'cold';
+                if (g.rank === 1) tempClass = 'win';
+                else if (g.score >= 70) tempClass = 'hot';
+                else if (g.score >= 50) tempClass = 'warm';
+                else if (g.score >= 30) tempClass = 'cool';
+
+                div.className = `guess-item ${tempClass}`;
+                div.innerHTML = `
+                    <span class="guess-word">${g.word}</span>
+                    <div class="guess-info">
+                        <span class="guess-rank">#${g.rank}</span>
+                        <div class="bar-container">
+                            <div class="bar-fill" style="width: ${g.score}%"></div>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+
+            // Update stats
+            document.getElementById('guess-count').textContent = guesses.length;
+            const best = guesses.length > 0 ? Math.min(...guesses.map(g => g.rank)) : '-';
+            document.getElementById('best-rank').textContent = best === 1 ? '1' : best;
+        }
+
+        function handleWin() {
+            solved = true;
+            saveGameState();
+            startConfetti();
+            showToast("SIGNAL ACQUIRED! YOU WIN!");
+            document.getElementById('guess-input').disabled = true;
+            submitScore();
+        }
+
+        async function submitScore() {
+            try {
+                await fetch(`${API_BASE}/api/contexto/score`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        date: getToday(),
+                        player_name: playerName,
+                        guesses: guesses.length,
+                        solved: true
+                    })
+                });
+            } catch (e) {}
+        }
+
+        async function getHint() {
+            if (solved) return;
+            try {
+                const res = await fetch(`${API_BASE}/api/contexto/hint?date=${getToday()}`);
+                const data = await res.json();
+                if (data.hint) {
+                    showToast("HINT: " + data.hint);
+                } else {
+                    showToast("NO HINT AVAILABLE");
+                }
+            } catch (e) {
+                showToast("HINT SYSTEM OFFLINE");
+            }
+        }
+
+        // Leaderboard
+        function openLeaderboard() {
+            lastScreen = document.getElementById('setup-screen').style.display !== 'none' ? 'setup' : 'game';
+            document.getElementById('leaderboard-modal').style.display = 'flex';
+            loadLeaderboard();
+        }
+
+        function closeLeaderboard() {
+            document.getElementById('leaderboard-modal').style.display = 'none';
+        }
+
+        async function loadLeaderboard() {
+            try {
+                const res = await fetch(`${API_BASE}/api/contexto/scores?date=${getToday()}`);
+                const data = await res.json();
+                const list = document.getElementById('score-list');
+                list.innerHTML = "";
+
+                if (data.length === 0) {
+                    const li = document.createElement('li');
+                    li.textContent = "No scores yet today!";
+                    li.style.justifyContent = 'center';
+                    list.appendChild(li);
+                } else {
+                    data.forEach((entry, idx) => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<span>${idx + 1}. ${entry.player_name}</span> <span>${entry.guesses} guesses</span>`;
+                        list.appendChild(li);
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to load leaderboard:', e);
+            }
+        }
+
+        // Star animation
+        const canvas = document.getElementById('star-canvas'), ctx = canvas.getContext('2d');
+        const confettiCanvas = document.getElementById('confetti-canvas'), cCtx = confettiCanvas.getContext('2d');
+        let width, height, stars = [], particles = [];
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            confettiCanvas.width = width;
+            confettiCanvas.height = height;
+            initStars();
+        }
+
+        function getHorizonY() {
+            return height * (horizonPercent / 100);
+        }
+
+        class Star {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * getHorizonY();
+                this.size = Math.random() * 2;
+                this.baseAlpha = Math.random() * 0.5 + 0.3;
+                this.twinkleOffset = Math.random() * 100;
+            }
+            draw() {
+                const alpha = this.baseAlpha + Math.sin(Date.now() * 0.002 + this.twinkleOffset) * 0.2;
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0, alpha)})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < 150; i++) stars.push(new Star());
+        }
+
+        function startConfetti() {
+            for (let i = 0; i < 150; i++) {
+                particles.push({
+                    x: width / 2, y: height / 2,
+                    vx: (Math.random() - 0.5) * 20,
+                    vy: (Math.random() - 0.5) * 20 - 5,
+                    color: ['#00ffff', '#ff00ff', '#00ff00', '#ffff00'][Math.floor(Math.random() * 4)],
+                    size: Math.random() * 8 + 4,
+                    life: 1.0
+                });
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            stars.forEach(star => star.draw());
+
+            cCtx.clearRect(0, 0, width, height);
+            particles = particles.filter(p => p.life > 0);
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.3;
+                p.life -= 0.01;
+                cCtx.fillStyle = p.color;
+                cCtx.globalAlpha = p.life;
+                cCtx.fillRect(p.x, p.y, p.size, p.size);
+            });
+            cCtx.globalAlpha = 1;
+
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Secret admin menu - press ~ to open
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '`' || e.key === '~') {
+                e.preventDefault();
+                if (adminOpen) {
+                    closeAdmin();
+                } else {
+                    openAdmin();
+                }
+            }
+        });
+
+        // ===== ADMIN FUNCTIONS =====
+        function openAdmin() {
+            adminOpen = true;
+            document.getElementById('admin-modal').style.display = 'flex';
+            document.getElementById('horizon-slider').value = horizonPercent;
+            document.getElementById('horizon-value').textContent = Math.round(horizonPercent);
+            document.getElementById('volume-slider').value = audio.volume * 100;
+            document.getElementById('volume-value').textContent = Math.round(audio.volume * 100);
+            const horizonLine = document.getElementById('horizon-line');
+            horizonLine.style.display = 'block';
+            horizonLine.style.top = (horizonPercent) + '%';
+        }
+
+        function closeAdmin() {
+            adminOpen = false;
+            document.getElementById('admin-modal').style.display = 'none';
+            document.getElementById('horizon-line').style.display = 'none';
+        }
+
+        function updateHorizon(val) {
+            horizonPercent = parseFloat(val);
+            document.getElementById('horizon-value').textContent = Math.round(val);
+            const horizonLine = document.getElementById('horizon-line');
+            horizonLine.style.top = val + '%';
+            initStars();
+        }
+
+        function updateVolume(val) {
+            const volume = val / 100;
+            audio.volume = volume;
+            document.getElementById('volume-value').textContent = Math.round(val);
+        }
+
+        function saveAdminSettings() {
+            localStorage.setItem('abyssalguess_horizon', horizonPercent);
+            localStorage.setItem('abyssalguess_volume', audio.volume);
+            showToast("SETTINGS SAVED");
+            closeAdmin();
+        }
+
+        async function instantSolve() {
+            if (solved) {
+                showToast("ALREADY SOLVED");
+                return;
+            }
+            closeAdmin();
+
+            try {
+                const res = await fetch(`${API_BASE}/api/contexto/reveal?date=${getToday()}`);
+                const data = await res.json();
+                if (data.word) {
+                    document.getElementById('guess-input').value = data.word;
+                    submitGuess();
+                }
+            } catch (e) {
+                showToast("REVEAL FAILED");
+            }
+        }
+
+        function resetToday() {
+            if (!playerName) {
+                showToast("LOGIN FIRST");
+                return;
+            }
+            localStorage.removeItem(`abyssal_${getToday()}_${playerName}`);
+            showToast("PROGRESS RESET - RELOADING...");
+            closeAdmin();
+            setTimeout(() => location.reload(), 1000);
+        }
+
+        // Load saved volume
+        const savedVolume = localStorage.getItem('abyssalguess_volume');
+        if (savedVolume) {
+            audio.volume = parseFloat(savedVolume);
+        }
+
+        // Help functions
+        function openHelp() {
+            document.getElementById('help-modal').style.display = 'flex';
+        }
+
+        function closeHelp() {
+            document.getElementById('help-modal').style.display = 'none';
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hive Assault - Kraken Arkade</title>
+    <link rel="stylesheet" href="../../shared/css/arkade-theme.css">
+    <script src="../../shared/js/arkade-theme.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            position: relative;
+            border: 3px solid #a0f;
+            box-shadow: 0 0 30px #a0f, inset 0 0 30px rgba(160, 0, 255, 0.1);
+        }
+
+        #gameCanvas {
+            display: block;
+            background: radial-gradient(ellipse at left, #0a0015 0%, #000005 50%, #000 100%);
+        }
+
+        /* UI Overlay */
+        .ui-panel {
+            position: absolute;
+            padding: 8px 15px;
+            background: rgba(10, 0, 20, 0.8);
+            border: 1px solid #a0f;
+            color: #0ff;
+            font-size: 14px;
+            text-shadow: 0 0 10px #0ff;
+            z-index: 10;
+        }
+
+        #scorePanel {
+            top: 10px;
+            left: 10px;
+        }
+
+        #levelPanel {
+            top: 10px;
+            right: 10px;
+        }
+
+        #healthPanel {
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            text-align: center;
+        }
+
+        #healthBar {
+            width: 100%;
+            height: 8px;
+            background: #222;
+            border: 1px solid #a0f;
+            margin-top: 5px;
+        }
+
+        #healthFill {
+            height: 100%;
+            background: linear-gradient(90deg, #0f8, #0ff);
+            transition: width 0.2s;
+        }
+
+        /* Powerup indicators */
+        #powerupPanel {
+            position: absolute;
+            top: 45px;
+            left: 10px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .powerup-icon {
+            width: 30px;
+            height: 30px;
+            border: 2px solid #333;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            opacity: 0.3;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .powerup-icon.active {
+            opacity: 1;
+            border-color: #0ff;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        /* Screens */
+        .game-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(5, 0, 15, 0.95);
+            color: #0ff;
+            z-index: 50;
+        }
+
+        .game-screen.hidden {
+            display: none;
+        }
+
+        .game-screen h1 {
+            font-size: 48px;
+            color: #f0a;
+            text-shadow: 0 0 20px #a0f, 0 0 40px #f0a;
+            margin-bottom: 20px;
+        }
+
+        .game-screen h2 {
+            font-size: 28px;
+            color: #0ff;
+            margin-bottom: 15px;
+        }
+
+        .game-screen p {
+            font-size: 16px;
+            margin: 8px 0;
+            color: #aaf;
+        }
+
+        .menu-btn {
+            margin: 10px;
+            padding: 12px 30px;
+            font-size: 18px;
+            font-family: 'Courier New', monospace;
+            background: transparent;
+            border: 2px solid #a0f;
+            color: #f0a;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .menu-btn:hover {
+            background: #a0f;
+            color: #000;
+            box-shadow: 0 0 20px #a0f;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 40px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .controls-grid span:first-child {
+            color: #f0a;
+        }
+
+        /* Secret Menu */
+        #secretMenu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10, 0, 20, 0.95);
+            border: 2px solid #f0a;
+            padding: 20px;
+            z-index: 100;
+            min-width: 300px;
+        }
+
+        #secretMenu.hidden {
+            display: none;
+        }
+
+        #secretMenu h3 {
+            color: #f0a;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        #secretMenu label {
+            display: block;
+            margin: 10px 0;
+            color: #0ff;
+        }
+
+        #secretMenu select,
+        #secretMenu button {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            background: #111;
+            border: 1px solid #a0f;
+            color: #0ff;
+            font-family: 'Courier New', monospace;
+        }
+
+        #secretMenu button {
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        #secretMenu button:hover {
+            background: #a0f;
+            color: #000;
+        }
+
+        /* Boss health bar */
+        #bossHealthContainer {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            text-align: center;
+            z-index: 15;
+        }
+
+        #bossHealthContainer.hidden {
+            display: none;
+        }
+
+        #bossName {
+            color: #f0a;
+            font-size: 18px;
+            text-shadow: 0 0 10px #f0a;
+            margin-bottom: 5px;
+        }
+
+        #bossHealthBar {
+            width: 100%;
+            height: 12px;
+            background: #222;
+            border: 2px solid #f0a;
+        }
+
+        #bossHealthFill {
+            height: 100%;
+            background: linear-gradient(90deg, #f00, #f0a);
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="900" height="600"></canvas>
+
+        <!-- UI Panels -->
+        <div id="scorePanel" class="ui-panel">
+            SCORE: <span id="scoreValue">0</span>
+        </div>
+
+        <div id="levelPanel" class="ui-panel">
+            SECTOR <span id="levelValue">1</span>/10
+        </div>
+
+        <div id="powerupPanel">
+            <div class="powerup-icon" id="pw-shield" title="Shield">🛡️</div>
+            <div class="powerup-icon" id="pw-rapid" title="Rapid Fire">⚡</div>
+            <div class="powerup-icon" id="pw-triple" title="Triple Shot">🔱</div>
+            <div class="powerup-icon" id="pw-magnet" title="Magnet">🧲</div>
+            <div class="powerup-icon" id="pw-bomb" title="Bombs">💣<span id="bombCount">0</span></div>
+        </div>
+
+        <div id="healthPanel" class="ui-panel">
+            HULL INTEGRITY
+            <div id="healthBar">
+                <div id="healthFill"></div>
+            </div>
+        </div>
+
+        <!-- Boss Health -->
+        <div id="bossHealthContainer" class="hidden">
+            <div id="bossName">THE SWARM QUEEN</div>
+            <div id="bossHealthBar">
+                <div id="bossHealthFill"></div>
+            </div>
+        </div>
+
+        <!-- Start Screen -->
+        <div id="startScreen" class="game-screen">
+            <h1>👽 HIVE ASSAULT 👽</h1>
+            <h2>Alien Swarm</h2>
+            <p>The alien hives are spawning across the sector.</p>
+            <p>Destroy them before they overwhelm our defenses!</p>
+
+            <div class="controls-grid">
+                <span>WASD / Arrows</span><span>Move</span>
+                <span>SPACE</span><span>Fire</span>
+                <span>B</span><span>Deploy Bomb</span>
+                <span>ESC</span><span>Pause</span>
+                <span>Q</span><span>Quit to Menu</span>
+            </div>
+
+            <button class="menu-btn" onclick="Game.start()">START MISSION</button>
+            <button class="menu-btn" onclick="Game.quit()">RETURN TO ARKADE</button>
+        </div>
+
+        <!-- Pause Screen -->
+        <div id="pauseScreen" class="game-screen hidden">
+            <h1>⏸️ PAUSED</h1>
+            <button class="menu-btn" onclick="Game.resume()">RESUME</button>
+            <button class="menu-btn" onclick="Game.quit()">QUIT TO ARKADE</button>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameOverScreen" class="game-screen hidden">
+            <h1>💀 MISSION FAILED</h1>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <p>Sector Reached: <span id="finalLevel">1</span></p>
+            <button class="menu-btn" onclick="Game.restart()">TRY AGAIN</button>
+            <button class="menu-btn" onclick="Game.quit()">QUIT TO ARKADE</button>
+        </div>
+
+        <!-- Victory Screen -->
+        <div id="victoryScreen" class="game-screen hidden">
+            <h1 style="color: #0f8;">🏆 VICTORY! 🏆</h1>
+            <h2>The Hive has been destroyed!</h2>
+            <p>Final Score: <span id="victoryScore">0</span></p>
+            <button class="menu-btn" onclick="Game.restart()">PLAY AGAIN</button>
+            <button class="menu-btn" onclick="Game.quit()">RETURN TO ARKADE</button>
+        </div>
+
+        <!-- Secret Menu -->
+        <div id="secretMenu" class="hidden">
+            <h3>🔧 DEBUG MENU</h3>
+            <label>
+                <input type="checkbox" id="godMode"> God Mode
+            </label>
+            <label>
+                Warp to Sector:
+                <select id="warpLevel">
+                    <option value="1">Sector 1</option>
+                    <option value="2">Sector 2</option>
+                    <option value="3">Sector 3</option>
+                    <option value="4">Sector 4</option>
+                    <option value="5">Sector 5</option>
+                    <option value="6">Sector 6</option>
+                    <option value="7">Sector 7</option>
+                    <option value="8">Sector 8</option>
+                    <option value="9">Sector 9</option>
+                    <option value="10">Sector 10 (BOSS)</option>
+                </select>
+            </label>
+            <button onclick="Game.warpToLevel()">WARP</button>
+            <button onclick="Game.spawnTestPowerup()">SPAWN POWERUP</button>
+            <button onclick="Game.spawnTestEnemy()">SPAWN ENEMY</button>
+            <button onclick="Game.toggleSecretMenu()">CLOSE</button>
+        </div>
+    </div>
+
+    <script src="../../shared/js/audio.js"></script>
+    <script src="../../shared/js/input.js"></script>
+    <script src="../../shared/js/particles.js"></script>
+    <script src="game.js"></script>
+    <script src="../../shared/js/how-to-play.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initHowToPlay('hive-assault', null);
+            ArkadeTheme.init({ enableStarfield: true, enableMusic: false });
+
+            // Menu music
+            const menuMusic = new Audio('/assets/music/theme_hive_assault1.mp3');
+            menuMusic.loop = true;
+            menuMusic.volume = 0.15;
+
+            const musicBtn = document.createElement('button');
+            musicBtn.innerHTML = '🔇';
+            musicBtn.style.cssText = 'position:fixed;top:15px;right:15px;z-index:9999;width:44px;height:44px;border-radius:50%;border:2px solid rgba(0,255,255,0.5);background:rgba(0,0,0,0.7);color:#0ff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;';
+            document.body.appendChild(musicBtn);
+
+            let isPlaying = false;
+            musicBtn.onclick = () => {
+                if (isPlaying) { menuMusic.pause(); musicBtn.innerHTML = '🔇'; }
+                else { menuMusic.play(); musicBtn.innerHTML = '🔊'; }
+                isPlaying = !isPlaying;
+            };
+        });
+    </script>
+</body>
+
+</html>

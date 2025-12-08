@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kraken's Tempest - Kraken Arkade</title>
+    <link rel="stylesheet" href="../../shared/css/arkade-theme.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <script src="../../shared/js/arkade-theme.js"></script>
+    <style>
+        /* Game-specific overrides */
+        body {
+            background: #0a0a12;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(ellipse at 50% 100%, rgba(123, 44, 191, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 20% 80%, rgba(0, 245, 255, 0.08) 0%, transparent 40%),
+                radial-gradient(ellipse at 80% 80%, rgba(57, 255, 20, 0.06) 0%, transparent 40%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .game-container {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        #gameCanvas {
+            display: block;
+            border: 2px solid #7b2cbf;
+            border-radius: 8px;
+            box-shadow:
+                0 0 20px rgba(123, 44, 191, 0.5),
+                0 0 40px rgba(123, 44, 191, 0.3),
+                0 0 60px rgba(123, 44, 191, 0.2),
+                inset 0 0 60px rgba(0, 0, 0, 0.8);
+        }
+
+        /* HUD */
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 40px;
+            font-family: 'Orbitron', monospace;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .hud-panel {
+            background: linear-gradient(180deg, rgba(13, 27, 42, 0.9) 0%, rgba(10, 10, 18, 0.95) 100%);
+            border: 1px solid #00ffff;
+            border-radius: 4px;
+            padding: 10px 20px;
+            box-shadow:
+                0 0 10px rgba(0, 245, 255, 0.3),
+                inset 0 0 20px rgba(0, 245, 255, 0.1);
+            text-align: center;
+        }
+
+        .hud-label {
+            font-size: 10px;
+            color: #00ffff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.8;
+        }
+
+        .hud-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        /* Screens */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            pointer-events: auto;
+        }
+
+        .screen.hidden {
+            display: none;
+        }
+
+        /* Title Screen */
+        #menuScreen h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 56px;
+            font-weight: 900;
+            color: #00ffff;
+            text-shadow:
+                0 0 20px #00ffff,
+                0 0 40px #00ffff,
+                0 0 60px #7b2cbf,
+                0 0 80px #7b2cbf;
+            letter-spacing: 6px;
+            margin-bottom: 10px;
+            animation: titlePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes titlePulse {
+
+            0%,
+            100% {
+                text-shadow:
+                    0 0 20px #00ffff,
+                    0 0 40px #00ffff,
+                    0 0 60px #7b2cbf,
+                    0 0 80px #7b2cbf;
+            }
+
+            50% {
+                text-shadow:
+                    0 0 30px #00ffff,
+                    0 0 60px #00ffff,
+                    0 0 90px #7b2cbf,
+                    0 0 120px #7b2cbf;
+            }
+        }
+
+        #menuScreen .subtitle {
+            font-family: 'Exo 2', sans-serif;
+            font-size: 18px;
+            font-weight: 300;
+            color: #7b2cbf;
+            letter-spacing: 12px;
+            text-transform: uppercase;
+            animation: subtitleFade 3s ease-in-out infinite;
+            margin-bottom: 40px;
+        }
+
+        @keyframes subtitleFade {
+
+            0%,
+            100% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .menu-controls {
+            font-family: 'Exo 2', sans-serif;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 2px;
+            margin-bottom: 40px;
+            text-align: center;
+            line-height: 2;
+        }
+
+        .menu-controls span {
+            color: #00ffff;
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        .arcade-btn {
+            font-family: 'Orbitron', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            padding: 15px 40px;
+            margin: 10px;
+            background: linear-gradient(180deg, rgba(0, 255, 255, 0.2) 0%, rgba(0, 255, 255, 0.05) 100%);
+            border: 2px solid #00ffff;
+            border-radius: 4px;
+            color: #00ffff;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+
+        .arcade-btn:hover {
+            background: linear-gradient(180deg, rgba(0, 255, 255, 0.4) 0%, rgba(0, 255, 255, 0.15) 100%);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.5);
+            transform: scale(1.05);
+        }
+
+        .arcade-btn.secondary {
+            background: linear-gradient(180deg, rgba(123, 44, 191, 0.2) 0%, rgba(123, 44, 191, 0.05) 100%);
+            border-color: #7b2cbf;
+            color: #7b2cbf;
+            box-shadow: 0 0 15px rgba(123, 44, 191, 0.3);
+        }
+
+        .arcade-btn.secondary:hover {
+            background: linear-gradient(180deg, rgba(123, 44, 191, 0.4) 0%, rgba(123, 44, 191, 0.15) 100%);
+            box-shadow: 0 0 25px rgba(123, 44, 191, 0.5);
+        }
+
+        /* Game Over / Pause Screens */
+        #gameoverScreen h2,
+        #pauseScreen h2 {
+            font-family: 'Orbitron', monospace;
+            font-size: 48px;
+            font-weight: 900;
+            color: #ff006e;
+            text-shadow:
+                0 0 20px #ff006e,
+                0 0 40px #ff006e;
+            letter-spacing: 6px;
+            margin-bottom: 20px;
+        }
+
+        #pauseScreen h2 {
+            color: #00ffff;
+            text-shadow:
+                0 0 20px #00ffff,
+                0 0 40px #00ffff;
+        }
+
+        .final-score {
+            font-family: 'Orbitron', monospace;
+            font-size: 24px;
+            color: #ffd700;
+            text-shadow: 0 0 15px #ffd700;
+            margin-bottom: 30px;
+        }
+
+        /* Wave Announcement */
+        #waveAnnounce {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Orbitron', monospace;
+            font-size: 36px;
+            font-weight: 700;
+            color: #00ffff;
+            text-shadow:
+                0 0 20px #00ffff,
+                0 0 40px #7b2cbf;
+            letter-spacing: 6px;
+            z-index: 15;
+            pointer-events: none;
+            animation: waveIn 2s ease-out forwards;
+        }
+
+        @keyframes waveIn {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(2);
+            }
+
+            20% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            80% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+
+        /* Secret Menu */
+        .secret-menu {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            background: rgba(10, 10, 18, 0.95);
+            border: 1px solid #7b2cbf;
+            border-radius: 8px;
+            padding: 20px;
+            z-index: 100;
+            font-family: 'Exo 2', sans-serif;
+            color: #fff;
+            min-width: 200px;
+        }
+
+        .secret-menu.hidden {
+            display: none;
+        }
+
+        .secret-menu h3 {
+            font-family: 'Orbitron', monospace;
+            color: #7b2cbf;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .secret-menu label {
+            display: block;
+            margin: 10px 0;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .secret-menu select {
+            background: #1a1a2e;
+            border: 1px solid #7b2cbf;
+            color: #fff;
+            padding: 5px;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+
+        .secret-menu button {
+            display: block;
+            width: 100%;
+            margin-top: 10px;
+            padding: 8px;
+            background: rgba(123, 44, 191, 0.3);
+            border: 1px solid #7b2cbf;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .secret-menu button:hover {
+            background: rgba(123, 44, 191, 0.5);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="game-container">
+        <canvas id="gameCanvas" width="900" height="900"></canvas>
+
+        <!-- HUD -->
+        <div id="hud">
+            <div class="hud-panel">
+                <div class="hud-label">Score</div>
+                <div class="hud-value" id="score">0</div>
+            </div>
+            <div class="hud-panel">
+                <div class="hud-label">Wave</div>
+                <div class="hud-value" id="wave">1</div>
+            </div>
+            <div class="hud-panel">
+                <div class="hud-label">Lives</div>
+                <div class="hud-value" id="lives">3</div>
+            </div>
+        </div>
+
+        <!-- Menu Screen -->
+        <div id="menuScreen" class="screen">
+            <h1>KRAKEN'S TEMPEST</h1>
+            <p class="subtitle">From the Abyss</p>
+            <div class="menu-controls">
+                <span>← →</span> MOVE AROUND THE RIM<br>
+                <span>SPACE</span> FIRE INTO THE DEPTHS<br>
+                <span>ESC</span> PAUSE &nbsp;&nbsp; <span>Q</span> QUIT
+            </div>
+            <button class="arcade-btn" onclick="Game.start()">START GAME</button>
+            <button class="arcade-btn secondary" onclick="Game.quit()">BACK TO ARKADE</button>
+        </div>
+
+        <!-- Pause Screen -->
+        <div id="pauseScreen" class="screen hidden">
+            <h2>PAUSED</h2>
+            <button class="arcade-btn" onclick="Game.resume()">RESUME</button>
+            <button class="arcade-btn secondary" onclick="Game.quit()">QUIT TO ARKADE</button>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameoverScreen" class="screen hidden">
+            <h2>CONSUMED BY THE DEEP</h2>
+            <p class="final-score">FINAL SCORE: <span id="finalScore">0</span></p>
+            <button class="arcade-btn" onclick="Game.restart()">RISE AGAIN</button>
+            <button class="arcade-btn secondary" onclick="Game.quit()">QUIT TO ARKADE</button>
+        </div>
+
+        <!-- Wave Announcement -->
+        <div id="waveAnnounce"></div>
+
+        <!-- Secret Menu -->
+        <div id="secretMenu" class="secret-menu hidden">
+            <h3>🔧 DEBUG MENU</h3>
+            <label>
+                <input type="checkbox" onchange="Game.toggleGodMode()"> God Mode
+            </label>
+            <label>
+                Warp to Wave:
+                <select onchange="Game.warpToLevel(this.value)">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                    <option value="20">20</option>
+                </select>
+            </label>
+            <button onclick="Game.spawnTestEnemy()">Spawn Random Enemy</button>
+            <button onclick="Game.toggleSecretMenu()">Close</button>
+        </div>
+    </div>
+
+    <!-- REQUIRED: Load shared modules BEFORE game.js -->
+    <script src="../../shared/js/audio.js"></script>
+    <script src="../../shared/js/input.js"></script>
+    <script src="../../shared/js/particles.js"></script>
+    <script src="../../shared/js/collision.js"></script>
+    <script src="game.js"></script>
+    <script src="../../shared/js/how-to-play.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initHowToPlay('krakens-tempest', null);
+            ArkadeTheme.init({ enableStarfield: true, enableMusic: false });
+
+            // Menu music
+            const menuMusic = new Audio('/assets/music/theme_krakens_tempest.mp3');
+            menuMusic.loop = true;
+            menuMusic.volume = 0.15;
+
+            const musicBtn = document.createElement('button');
+            musicBtn.innerHTML = '🔇';
+            musicBtn.style.cssText = 'position:fixed;top:15px;right:15px;z-index:9999;width:44px;height:44px;border-radius:50%;border:2px solid rgba(0,255,255,0.5);background:rgba(0,0,0,0.7);color:#0ff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;';
+            document.body.appendChild(musicBtn);
+
+            let isPlaying = false;
+            musicBtn.onclick = () => {
+                if (isPlaying) { menuMusic.pause(); musicBtn.innerHTML = '🔇'; }
+                else { menuMusic.play(); musicBtn.innerHTML = '🔊'; }
+                isPlaying = !isPlaying;
+            };
+        });
+    </script>
+</body>
+
+</html>

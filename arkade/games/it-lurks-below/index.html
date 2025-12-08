@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>It Lurks Below - Kraken ArKade</title>
+    <link rel="stylesheet" href="../../shared/css/arkade-theme.css">
+    <script src="../../shared/js/arkade-theme.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0a0a1a 0%, #0a1a2e 50%, #001a1a 100%);
+        }
+
+        #gameContainer {
+            position: relative;
+            border: 3px solid #00ffff;
+            border-radius: 8px;
+            box-shadow: 0 0 30px #00ffff44, 0 0 60px #00ff0022;
+        }
+
+        #gameCanvas {
+            display: block;
+            background: #000810;
+        }
+
+        /* UI Overlay */
+        #uiLayer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            pointer-events: none;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .ui-panel {
+            background: rgba(0, 20, 40, 0.8);
+            border: 1px solid rgba(0, 200, 255, 0.4);
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+
+        .ui-label {
+            font-size: 10px;
+            color: #0af;
+            opacity: 0.8;
+        }
+
+        .ui-value {
+            font-size: 18px;
+            color: #0ff;
+            text-shadow: 0 0 10px #0ff;
+        }
+
+        /* Air/Oxygen Bar */
+        #airContainer {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            width: 200px;
+        }
+
+        #airLabel {
+            font-size: 10px;
+            color: #0af;
+            margin-bottom: 3px;
+        }
+
+        #airBarBg {
+            width: 100%;
+            height: 12px;
+            background: rgba(0, 20, 40, 0.8);
+            border: 1px solid #0af;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        #airFill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #0af, #0ff);
+            transition: width 0.2s;
+        }
+
+        #airFill.low {
+            background: linear-gradient(90deg, #f80, #f00);
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* Hull/Health Bar */
+        #hullContainer {
+            position: absolute;
+            bottom: 15px;
+            left: 230px;
+            width: 150px;
+        }
+
+        #hullBarBg {
+            width: 100%;
+            height: 12px;
+            background: rgba(0, 20, 40, 0.8);
+            border: 1px solid #0f8;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        #hullFill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #0f8, #0fa);
+            transition: width 0.2s;
+        }
+
+        /* Torpedo Counter */
+        #torpedoContainer {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+        }
+
+        #torpedoBar {
+            display: flex;
+            gap: 4px;
+        }
+
+        .torpedo-icon {
+            width: 24px;
+            height: 10px;
+            background: linear-gradient(90deg, #f80, #ff0);
+            border-radius: 5px;
+            box-shadow: 0 0 6px #f80;
+        }
+
+        .torpedo-icon.empty {
+            background: #333;
+            box-shadow: none;
+        }
+
+        /* Depth Meter */
+        #depthMeter {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 200px;
+            background: rgba(0, 20, 40, 0.8);
+            border: 1px solid #0af;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #depthFill {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: linear-gradient(to top, #0af, #06a);
+            transition: height 0.3s;
+        }
+
+        /* Sector/Level Display */
+        #sectorDisplay {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            color: #0ff;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        /* Checkpoint Flash */
+        #checkpointFlash {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.3) 0%, transparent 70%);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        /* Game Screens */
+        .game-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 10, 20, 0.9);
+            z-index: 50;
+            pointer-events: auto;
+        }
+
+        .game-screen.hidden {
+            display: none;
+        }
+
+        .game-screen h1 {
+            font-size: 48px;
+            color: #0ff;
+            text-shadow: 0 0 20px #0ff, 0 0 40px #08f;
+            margin-bottom: 20px;
+        }
+
+        .game-screen h2 {
+            font-size: 24px;
+            color: #0af;
+            margin-bottom: 30px;
+        }
+
+        .menu-btn {
+            background: linear-gradient(180deg, #006080 0%, #004060 100%);
+            border: 2px solid #0ff;
+            color: #0ff;
+            padding: 12px 30px;
+            font-family: 'Orbitron', monospace;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            pointer-events: auto;
+        }
+
+        .menu-btn:hover {
+            background: linear-gradient(180deg, #0080a0 0%, #006080 100%);
+            box-shadow: 0 0 20px #0ff;
+            transform: scale(1.05);
+        }
+
+        .controls-hint {
+            display: grid;
+            grid-template-columns: auto auto;
+            gap: 5px 20px;
+            font-size: 12px;
+            color: #0af;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .controls-hint span:nth-child(odd) {
+            color: #0ff;
+            text-align: right;
+        }
+
+        /* Secret Menu */
+        #secretMenu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 20, 40, 0.95);
+            border: 2px solid #f0a;
+            padding: 20px;
+            border-radius: 8px;
+            z-index: 100;
+            min-width: 250px;
+        }
+
+        #secretMenu h3 {
+            color: #f0a;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        #secretMenu label {
+            display: block;
+            color: #0ff;
+            margin: 10px 0;
+        }
+
+        #secretMenu select,
+        #secretMenu button {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            background: #001020;
+            border: 1px solid #0af;
+            color: #0ff;
+            font-family: inherit;
+        }
+
+        .stat-row {
+            color: #0af;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="900" height="600"></canvas>
+
+        <!-- UI Overlay -->
+        <div id="uiLayer">
+            <div class="ui-panel">
+                <div class="ui-label">SCORE</div>
+                <div class="ui-value" id="scoreValue">0</div>
+            </div>
+            <div class="ui-panel" style="text-align: center;">
+                <div class="ui-label">DEPTH</div>
+                <div class="ui-value" id="depthValue">0m</div>
+            </div>
+            <div class="ui-panel" style="text-align: right;">
+                <div class="ui-label">SECTOR</div>
+                <div class="ui-value" id="sectorValue">OPEN OCEAN</div>
+            </div>
+        </div>
+
+        <!-- Air Bar -->
+        <div id="airContainer">
+            <div id="airLabel">◈ OXYGEN</div>
+            <div id="airBarBg">
+                <div id="airFill"></div>
+            </div>
+        </div>
+
+        <!-- Hull Bar -->
+        <div id="hullContainer">
+            <div id="airLabel">◈ HULL</div>
+            <div id="hullBarBg">
+                <div id="hullFill"></div>
+            </div>
+        </div>
+
+        <!-- Torpedoes -->
+        <div id="torpedoContainer">
+            <div class="ui-label">TORPEDOES</div>
+            <div id="torpedoBar">
+                <div class="torpedo-icon"></div>
+                <div class="torpedo-icon"></div>
+                <div class="torpedo-icon"></div>
+            </div>
+        </div>
+
+        <!-- Depth Meter -->
+        <div id="depthMeter">
+            <div id="depthFill" style="height: 10%"></div>
+        </div>
+
+        <!-- Checkpoint Flash -->
+        <div id="checkpointFlash"></div>
+
+        <!-- Start Screen -->
+        <div id="startScreen" class="game-screen">
+            <h1>🌊 IT LURKS BELOW</h1>
+            <h2>Deep Sea Terror</h2>
+
+            <div class="controls-hint">
+                <span>↑↓←→</span><span>Navigate</span>
+                <span>SPACE</span><span>Fire</span>
+                <span>CTRL</span><span>Torpedo</span>
+                <span>→ HOLD</span><span>Speed Boost</span>
+                <span>ESC</span><span>Pause</span>
+                <span>Q</span><span>Quit</span>
+            </div>
+
+            <button class="menu-btn" onclick="Game.start()">DIVE IN</button>
+            <button class="menu-btn" onclick="Game.quit()">RETURN TO ARKADE</button>
+        </div>
+
+        <!-- Pause Screen -->
+        <div id="pauseScreen" class="game-screen hidden">
+            <h1>⏸️ PAUSED</h1>
+            <button class="menu-btn" onclick="Game.resume()">RESUME</button>
+            <button class="menu-btn" onclick="Game.quit()">QUIT TO ARKADE</button>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameOverScreen" class="game-screen hidden">
+            <h1>💀 LOST AT SEA</h1>
+            <p class="stat-row">Final Score: <span id="finalScore">0</span></p>
+            <p class="stat-row">Depth Reached: <span id="finalDepth">0m</span></p>
+            <p class="stat-row">Checkpoints: <span id="finalCheckpoints">0</span></p>
+            <button class="menu-btn" onclick="Game.restart()">TRY AGAIN</button>
+            <button class="menu-btn" onclick="Game.quit()">QUIT TO ARKADE</button>
+        </div>
+
+        <!-- Victory Screen -->
+        <div id="victoryScreen" class="game-screen hidden">
+            <h1>🏆 KRAKEN DEFEATED!</h1>
+            <p class="stat-row">Final Score: <span id="victoryScore">0</span></p>
+            <p class="stat-row">You reached the deepest depths!</p>
+            <button class="menu-btn" onclick="Game.restart()">PLAY AGAIN</button>
+            <button class="menu-btn" onclick="Game.quit()">RETURN TO ARKADE</button>
+        </div>
+
+        <!-- Secret Menu -->
+        <div id="secretMenu" class="hidden">
+            <h3>🔧 DEBUG MENU</h3>
+            <label>
+                <input type="checkbox" id="godMode"> God Mode
+            </label>
+            <label>
+                <input type="checkbox" id="infiniteAir"> Infinite Air
+            </label>
+            <label>
+                Warp to Sector:
+                <select id="warpLevel">
+                    <option value="0">Open Ocean</option>
+                    <option value="1">The Deep</option>
+                    <option value="2">Cave Entrance</option>
+                    <option value="3">The Descent</option>
+                    <option value="4">The Abyss</option>
+                    <option value="5">Kraken's Lair</option>
+                </select>
+            </label>
+            <button onclick="Game.warpToLevel()">WARP</button>
+            <button onclick="Game.spawnTestEnemy()">Spawn Enemy</button>
+            <button onclick="Game.toggleSecretMenu()">CLOSE</button>
+        </div>
+    </div>
+
+    <script src="../../shared/js/audio.js"></script>
+    <script src="../../shared/js/input.js"></script>
+    <script src="../../shared/js/particles.js"></script>
+    <script src="game.js"></script>
+    <script src="../../shared/js/how-to-play.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initHowToPlay('it-lurks-below', null);
+            ArkadeTheme.init({ enableStarfield: true, enableMusic: false });
+
+            // Menu music
+            const menuMusic = new Audio('/assets/music/theme_it_lurks_below.mp3');
+            menuMusic.loop = true;
+            menuMusic.volume = 0.15;
+
+            const musicBtn = document.createElement('button');
+            musicBtn.innerHTML = '🔇';
+            musicBtn.style.cssText = 'position:fixed;top:15px;right:15px;z-index:9999;width:44px;height:44px;border-radius:50%;border:2px solid rgba(0,255,255,0.5);background:rgba(0,0,0,0.7);color:#0ff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;';
+            document.body.appendChild(musicBtn);
+
+            let isPlaying = false;
+            musicBtn.onclick = () => {
+                if (isPlaying) { menuMusic.pause(); musicBtn.innerHTML = '🔇'; }
+                else { menuMusic.play(); musicBtn.innerHTML = '🔊'; }
+                isPlaying = !isPlaying;
+            };
+        });
+    </script>
+</body>
+
+</html>

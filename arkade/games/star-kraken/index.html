@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦑 STAR KRAKEN - Galactic Defender 🦑</title>
+    <link rel="stylesheet" href="../../shared/css/arkade-theme.css">
+    <script src="../../shared/js/arkade-theme.js"></script>
+    <style>
+        :root {
+            --kraken-cyan: #00ffff;
+            --kraken-magenta: #ff00ff;
+            --kraken-orange: #ff8800;
+            --kraken-red: #ff3344;
+            --kraken-green: #00ff88;
+        }
+
+        body {
+            background: #000;
+        }
+
+        #gameContainer {
+            width: 900px;
+            height: 700px;
+            position: relative;
+            margin: 20px auto;
+        }
+
+        #gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border: 2px solid var(--kraken-cyan);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3), inset 0 0 60px rgba(0, 255, 255, 0.1);
+        }
+
+        /* Cockpit HUD Overlay */
+        #cockpitHUD {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Top HUD Bar */
+        #topHUD {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .hud-panel {
+            background: rgba(0, 20, 40, 0.8);
+            border: 1px solid var(--kraken-cyan);
+            padding: 8px 15px;
+            border-radius: 4px;
+        }
+
+        .hud-label {
+            color: #888;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .hud-value {
+            color: var(--kraken-cyan);
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 0 10px var(--kraken-cyan);
+        }
+
+        #sectorDisplay {
+            text-align: center;
+        }
+
+        #sectorName {
+            color: #ff0;
+            font-size: 14px;
+            text-shadow: 0 0 10px #ff0;
+        }
+
+        /* Bottom HUD */
+        #bottomHUD {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        /* Shield/Energy Display */
+        .system-panel {
+            background: rgba(0, 20, 40, 0.8);
+            border: 1px solid var(--kraken-cyan);
+            padding: 10px;
+            border-radius: 4px;
+            min-width: 150px;
+        }
+
+        .system-bar {
+            height: 12px;
+            background: #222;
+            border-radius: 2px;
+            margin: 3px 0;
+            overflow: hidden;
+        }
+
+        .system-fill {
+            height: 100%;
+            transition: width 0.2s ease;
+        }
+
+        #shieldFill {
+            background: linear-gradient(90deg, #0088ff, #00ffff);
+        }
+
+        #energyFill {
+            background: linear-gradient(90deg, #ff8800, #ffff00);
+        }
+
+        #hullFill {
+            background: linear-gradient(90deg, #00aa44, #00ff88);
+        }
+
+        /* Targeting Display */
+        #targetPanel {
+            text-align: center;
+            min-width: 200px;
+        }
+
+        #targetInfo {
+            color: var(--kraken-red);
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        #lockIndicator {
+            color: var(--kraken-red);
+            font-size: 18px;
+            animation: blink 0.5s infinite;
+            opacity: 0;
+        }
+
+        #lockIndicator.active {
+            opacity: 1;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        /* Radar Display */
+        #radarPanel {
+            width: 140px;
+            height: 140px;
+            background: rgba(0, 20, 40, 0.9);
+            border: 2px solid var(--kraken-cyan);
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #radarCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* Powerup Display - Bottom of screen */
+        #powerupBar {
+            position: absolute;
+            bottom: 75px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .powerup-slot {
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 20, 40, 0.8);
+            border: 1px solid #444;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            position: relative;
+            opacity: 0.4;
+        }
+
+        .powerup-slot.active {
+            border-color: var(--kraken-cyan);
+            opacity: 1;
+            box-shadow: 0 0 10px var(--kraken-cyan);
+        }
+
+        .powerup-timer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: var(--kraken-cyan);
+            width: 0%;
+        }
+
+        /* Combo Display */
+        #comboDisplay {
+            position: absolute;
+            left: 50%;
+            top: 80px;
+            transform: translateX(-50%);
+            font-size: 24px;
+            color: var(--kraken-magenta);
+            text-shadow: 0 0 20px var(--kraken-magenta);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        #comboDisplay.active {
+            opacity: 1;
+        }
+
+        /* Boss Health */
+        #bossHealthContainer {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #bossHealthContainer.visible {
+            opacity: 1;
+        }
+
+        #bossName {
+            color: var(--kraken-red);
+            font-size: 16px;
+            text-align: center;
+            text-shadow: 0 0 10px var(--kraken-red);
+            margin-bottom: 5px;
+        }
+
+        .boss-health-bar {
+            height: 20px;
+            background: #222;
+            border: 2px solid var(--kraken-red);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        #bossHealthFill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff4444);
+            width: 100%;
+            transition: width 0.2s;
+        }
+
+        /* Alert Indicator */
+        #alertIndicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 28px;
+            color: var(--kraken-red);
+            text-shadow: 0 0 30px var(--kraken-red);
+            animation: alertPulse 0.5s infinite;
+            display: none;
+        }
+
+        @keyframes alertPulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+        }
+
+        /* Screens */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 10, 20, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            pointer-events: auto;
+        }
+
+        .screen h1 {
+            font-size: 48px;
+            background: linear-gradient(135deg, var(--kraken-cyan), var(--kraken-magenta));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            text-shadow: none;
+        }
+
+        .screen h2 {
+            color: #888;
+            font-size: 18px;
+            margin-bottom: 30px;
+            letter-spacing: 3px;
+        }
+
+        .btn {
+            background: transparent;
+            border: 2px solid var(--kraken-cyan);
+            color: var(--kraken-cyan);
+            padding: 15px 40px;
+            font-size: 18px;
+            font-family: inherit;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.2s;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background: var(--kraken-cyan);
+            color: #000;
+            box-shadow: 0 0 30px var(--kraken-cyan);
+        }
+
+        .btn.danger {
+            border-color: var(--kraken-red);
+            color: var(--kraken-red);
+        }
+
+        .btn.danger:hover {
+            background: var(--kraken-red);
+        }
+
+        .btn.success {
+            border-color: var(--kraken-green);
+            color: var(--kraken-green);
+        }
+
+        .btn.success:hover {
+            background: var(--kraken-green);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+            max-width: 500px;
+        }
+
+        .control-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .key-badge {
+            background: var(--kraken-cyan);
+            color: #000;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-box {
+            background: rgba(0, 50, 80, 0.5);
+            border: 1px solid var(--kraken-cyan);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .stat-box .label {
+            color: #888;
+            font-size: 12px;
+        }
+
+        .stat-box .value {
+            color: var(--kraken-cyan);
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .stat-box .value.gold {
+            color: #ffdd00;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Settings Panel */
+        #settingsScreen h3 {
+            color: var(--kraken-cyan);
+            margin: 10px 0;
+        }
+
+        input[type="range"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 150px;
+            height: 8px;
+            background: #333;
+            border-radius: 4px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--kraken-cyan);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* Galactic Map */
+        #mapOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 5, 15, 0.95);
+            display: none;
+            z-index: 50;
+        }
+
+        #mapOverlay.visible {
+            display: block;
+        }
+
+        #mapCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="900" height="700"></canvas>
+
+        <!-- Cockpit HUD -->
+        <div id="cockpitHUD">
+            <!-- Top HUD -->
+            <div id="topHUD">
+                <div class="hud-panel">
+                    <div class="hud-label">Score</div>
+                    <div class="hud-value" id="scoreDisplay">0</div>
+                </div>
+                <div class="hud-panel" id="sectorDisplay">
+                    <div id="sectorName">SECTOR 1 - FRONTIER SPACE</div>
+                    <div class="hud-label">WAVE <span id="waveDisplay">1</span> / <span id="totalWaves">5</span></div>
+                </div>
+                <div class="hud-panel">
+                    <div class="hud-label">Credits</div>
+                    <div class="hud-value" id="creditsDisplay">0</div>
+                </div>
+            </div>
+
+            <!-- Bottom HUD -->
+            <div id="bottomHUD">
+                <!-- Left - Systems -->
+                <div class="system-panel">
+                    <div class="hud-label">Shields</div>
+                    <div class="system-bar">
+                        <div class="system-fill" id="shieldFill" style="width:100%"></div>
+                    </div>
+                    <div class="hud-label">Energy</div>
+                    <div class="system-bar">
+                        <div class="system-fill" id="energyFill" style="width:100%"></div>
+                    </div>
+                    <div class="hud-label">Hull</div>
+                    <div class="system-bar">
+                        <div class="system-fill" id="hullFill" style="width:100%"></div>
+                    </div>
+                </div>
+
+                <!-- Center - Target -->
+                <div class="hud-panel" id="targetPanel">
+                    <div id="lockIndicator">◎ LOCKED ◎</div>
+                    <div id="targetInfo">NO TARGET</div>
+                    <div style="margin-top:8px; color:#666; font-size:10px;">
+                        [M] MAP • [SPACE] FIRE • [TAB] MISSILES
+                    </div>
+                </div>
+
+                <!-- Right - Radar -->
+                <div id="radarPanel">
+                    <canvas id="radarCanvas" width="140" height="140"></canvas>
+                </div>
+            </div>
+
+            <!-- Powerups -->
+            <div id="powerupBar">
+                <div class="powerup-slot" id="slot-shield"><span>🛡️</span>
+                    <div class="powerup-timer"></div>
+                </div>
+                <div class="powerup-slot" id="slot-rapid"><span>⚡</span>
+                    <div class="powerup-timer"></div>
+                </div>
+                <div class="powerup-slot" id="slot-spread"><span>🔱</span>
+                    <div class="powerup-timer"></div>
+                </div>
+                <div class="powerup-slot" id="slot-missiles"><span>🚀</span>
+                    <div class="powerup-timer"></div>
+                </div>
+            </div>
+
+            <!-- Combo -->
+            <div id="comboDisplay">COMBO x1</div>
+
+            <!-- Boss Health -->
+            <div id="bossHealthContainer">
+                <div id="bossName">ENEMY COMMANDER</div>
+                <div class="boss-health-bar">
+                    <div id="bossHealthFill"></div>
+                </div>
+            </div>
+
+            <!-- Alert -->
+            <div id="alertIndicator">⚠️ WARNING ⚠️</div>
+        </div>
+
+        <!-- Galactic Map Overlay -->
+        <div id="mapOverlay">
+            <canvas id="mapCanvas" width="900" height="700"></canvas>
+        </div>
+
+        <!-- START SCREEN -->
+        <div class="screen" id="startScreen">
+            <h1>🦑 STAR KRAKEN 🦑</h1>
+            <h2>GALACTIC DEFENDER</h2>
+
+            <p style="max-width:500px; text-align:center; color:#888; margin-bottom:20px;">
+                The Kraken Empire threatens the galaxy. As the last defender, engage enemy fighters
+                in first-person combat across 10 sectors. Destroy hostiles, collect salvage, and
+                defeat the bosses to save the cosmos!
+            </p>
+
+            <div class="controls-grid">
+                <div class="control-item"><span class="key-badge">← →</span> Aim Reticle</div>
+                <div class="control-item"><span class="key-badge">↑ ↓</span> Adjust Throttle</div>
+                <div class="control-item"><span class="key-badge">SPACE</span> Fire Lasers</div>
+                <div class="control-item"><span class="key-badge">TAB</span> Fire Missiles</div>
+                <div class="control-item"><span class="key-badge">M</span> Galactic Map</div>
+                <div class="control-item"><span class="key-badge">ESC</span> Pause</div>
+                <div class="control-item"><span class="key-badge">Q</span> Quit</div>
+
+            </div>
+
+            <button class="btn" id="startBtn">LAUNCH MISSION</button>
+        </div>
+
+        <!-- PAUSE SCREEN -->
+        <div class="screen hidden" id="pauseScreen">
+            <h1>⏸️ PAUSED</h1>
+            <h2>Mission Suspended</h2>
+            <button class="btn" id="resumeBtn">RESUME</button>
+            <button class="btn danger" id="quitBtn" style="margin-top:10px;">QUIT TO MENU</button>
+        </div>
+
+        <!-- LEVEL COMPLETE SCREEN -->
+        <div class="screen hidden" id="levelScreen">
+            <h1>✨ SECTOR CLEARED ✨</h1>
+            <h2 id="sectorClearedName">Frontier Space Secured!</h2>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="label">Score</div>
+                    <div class="value" id="levelScore">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Credits</div>
+                    <div class="value gold" id="levelCredits">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Accuracy</div>
+                    <div class="value" id="levelAccuracy">0%</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Max Combo</div>
+                    <div class="value" id="levelCombo">0</div>
+                </div>
+            </div>
+
+            <button class="btn success" id="nextLevelBtn">NEXT SECTOR →</button>
+        </div>
+
+        <!-- GAME OVER SCREEN -->
+        <div class="screen hidden" id="gameOverScreen">
+            <h1>💥 SHIP DESTROYED 💥</h1>
+            <h2>Lost in Sector <span id="deathSector">1</span></h2>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="label">Final Score</div>
+                    <div class="value" id="finalScore">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Credits Lost</div>
+                    <div class="value gold" id="lostCredits">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Enemies Destroyed</div>
+                    <div class="value" id="finalKills">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Time Survived</div>
+                    <div class="value" id="finalTime">0:00</div>
+                </div>
+            </div>
+
+            <button class="btn danger" id="retryBtn">RETRY MISSION</button>
+        </div>
+
+        <!-- VICTORY SCREEN -->
+        <div class="screen hidden" id="victoryScreen">
+            <h1>🏆 GALAXY SAVED 🏆</h1>
+            <h2>The Kraken Empire Has Fallen!</h2>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="label">Total Score</div>
+                    <div class="value" id="victoryScore">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Credits Earned</div>
+                    <div class="value gold" id="victoryCredits">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Bosses Defeated</div>
+                    <div class="value" id="victoryBosses">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Total Time</div>
+                    <div class="value" id="victoryTime">0:00</div>
+                </div>
+            </div>
+
+            <button class="btn success" id="victoryBtn">PLAY AGAIN</button>
+        </div>
+
+        <!-- SETTINGS SCREEN -->
+        <div class="screen hidden" id="settingsScreen">
+            <h1>🦑 SETTINGS 🦑</h1>
+
+            <div style="display:flex; gap:40px; margin:20px 0;">
+                <div>
+                    <h3>Audio</h3>
+                    <div style="margin:10px 0; display:flex; align-items:center; gap:10px;">
+                        <span style="color:#888; width:80px;">Master</span>
+                        <input type="range" id="masterVolume" min="0" max="100" value="60">
+                        <span id="masterVolLabel" style="width:40px;">60%</span>
+                    </div>
+                    <div style="margin:10px 0; display:flex; align-items:center; gap:10px;">
+                        <span style="color:#888; width:80px;">Music</span>
+                        <input type="range" id="musicVolume" min="0" max="100" value="30">
+                        <span id="musicVolLabel" style="width:40px;">30%</span>
+                    </div>
+                    <div style="margin:10px 0; display:flex; align-items:center; gap:10px;">
+                        <span style="color:#888; width:80px;">SFX</span>
+                        <input type="range" id="sfxVolume" min="0" max="100" value="50">
+                        <span id="sfxVolLabel" style="width:40px;">50%</span>
+                    </div>
+                    <div style="margin:10px 0; display:flex; align-items:center; gap:10px;">
+                        <span style="color:#888; width:80px;">Voice</span>
+                        <input type="range" id="voiceVolume" min="0" max="100" value="50">
+                        <span id="voiceVolLabel" style="width:40px;">50%</span>
+                    </div>
+                </div>
+
+                <div>
+                    <h3>Debug (Dev)</h3>
+                    <div style="margin:10px 0;">
+                        <label style="color:#888; cursor:pointer;">
+                            <input type="checkbox" id="godModeToggle"> God Mode
+                        </label>
+                    </div>
+                    <div style="margin:10px 0;">
+                        <label style="color:#888; cursor:pointer;">
+                            <input type="checkbox" id="infiniteMissiles"> Infinite Missiles
+                        </label>
+                    </div>
+                    <div id="warpButtons" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:15px;"></div>
+                </div>
+            </div>
+
+            <button class="btn" id="settingsCloseBtn">CLOSE</button>
+        </div>
+    </div>
+
+    <!-- Load shared modules -->
+    <script src="../../shared/js/input.js"></script>
+    <script src="../../shared/js/particles.js"></script>
+    <script src="../../shared/js/renderer.js"></script>
+    <script src="../../shared/js/collision.js"></script>
+    <script src="../../shared/js/ui.js"></script>
+    <script src="../../shared/js/audio.js"></script>
+    <script src="../../shared/js/engine.js"></script>
+
+    <!-- Game logic -->
+    <script src="game.js"></script>
+    <script src="../../shared/js/how-to-play.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initHowToPlay('star-kraken', null);
+            ArkadeTheme.init({ enableStarfield: true, enableMusic: false });
+
+            // Menu music
+            const menuMusic = new Audio('/assets/music/theme_star_kraken.mp3');
+            menuMusic.loop = true;
+            menuMusic.volume = 0.15;
+
+            const musicBtn = document.createElement('button');
+            musicBtn.innerHTML = '🔇';
+            musicBtn.style.cssText = 'position:fixed;top:15px;right:15px;z-index:9999;width:44px;height:44px;border-radius:50%;border:2px solid rgba(0,255,255,0.5);background:rgba(0,0,0,0.7);color:#0ff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;';
+            document.body.appendChild(musicBtn);
+
+            let isPlaying = false;
+            musicBtn.onclick = () => {
+                if (isPlaying) { menuMusic.pause(); musicBtn.innerHTML = '🔇'; }
+                else { menuMusic.play(); musicBtn.innerHTML = '🔊'; }
+                isPlaying = !isPlaying;
+            };
+        });
+    </script>
+</body>
+
+</html>

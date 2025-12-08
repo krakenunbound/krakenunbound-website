@@ -1,0 +1,477 @@
+/* ============================================================================
+   KRAKEN ARKADE - SHARED THEME CSS
+   Unified dark/cyber theme for all games
+   ============================================================================ */
+
+/* ==================== CSS VARIABLES (Per-Game Theming) ==================== */
+:root {
+    /* Default theme (Asteroid Run) */
+    --primary: #0ff;
+    --accent: #f0f;
+    --glow: #ff0;
+    --danger: #f44;
+    --success: #0f0;
+    --warning: #f80;
+    
+    /* Backgrounds */
+    --bg-dark: #050510;
+    --bg-panel: rgba(0, 20, 40, 0.8);
+    --bg-overlay: rgba(0, 0, 0, 0.95);
+    
+    /* Text */
+    --text-primary: #fff;
+    --text-secondary: #888;
+    --text-muted: #666;
+}
+
+/* Game-specific theme overrides */
+.theme-asteroid-run {
+    --primary: #0ff;
+    --accent: #f0f;
+    --glow: #ff0;
+}
+
+.theme-hive-assault {
+    --primary: #a0f;
+    --accent: #f0a;
+    --glow: #0f8;
+}
+
+.theme-it-lurks-below {
+    --primary: #0cc;
+    --accent: #08f;
+    --glow: #f80;
+}
+
+.theme-space-pirates {
+    --primary: #0ff;
+    --accent: #f55;
+    --glow: #f0f;
+}
+
+/* ==================== ANIMATIONS ==================== */
+@keyframes pulse { 
+    0%, 100% { opacity: 1; } 
+    50% { opacity: 0.7; } 
+}
+
+@keyframes glow { 
+    0%, 100% { filter: drop-shadow(0 0 10px currentColor); } 
+    50% { filter: drop-shadow(0 0 20px currentColor); } 
+}
+
+@keyframes scanline { 
+    0% { transform: translateY(-100%); } 
+    100% { transform: translateY(100%); } 
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ==================== BASE RESET ==================== */
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+}
+
+body {
+    background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 50%, #0a1a2e 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    overflow: hidden;
+    user-select: none;
+}
+
+/* ==================== GAME CONTAINER ==================== */
+#gameContainer {
+    position: relative;
+    border: 3px solid var(--primary);
+    border-radius: 8px;
+    box-shadow: 
+        0 0 30px color-mix(in srgb, var(--primary) 30%, transparent),
+        0 0 60px color-mix(in srgb, var(--accent) 15%, transparent),
+        inset 0 0 30px color-mix(in srgb, var(--primary) 5%, transparent);
+    overflow: hidden;
+}
+
+/* Scanline effect */
+#gameContainer::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 200%;
+    background: linear-gradient(transparent 50%, rgba(0,0,0,0.03) 50%);
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 100;
+    animation: scanline 8s linear infinite;
+    opacity: 0.3;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* ==================== UI PANELS ==================== */
+#ui {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    z-index: 10;
+    pointer-events: none;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
+}
+
+.ui-panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--primary);
+    border-radius: 8px;
+    padding: 10px 15px;
+    box-shadow: 0 0 15px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+.stat-label { 
+    color: var(--text-secondary); 
+    font-size: 10px; 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+}
+
+.stat-value { 
+    color: var(--primary); 
+    font-size: 18px; 
+    font-weight: bold; 
+    text-shadow: 0 0 10px var(--primary); 
+}
+
+.stat-value.danger { 
+    color: var(--danger); 
+    text-shadow: 0 0 10px var(--danger); 
+    animation: pulse 0.5s infinite; 
+}
+
+/* ==================== HEALTH BAR ==================== */
+#healthBar {
+    position: absolute;
+    top: 70px;
+    right: 20px;
+    width: 150px;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.health-bg {
+    background: rgba(0,0,0,0.5);
+    border: 1px solid var(--danger);
+    border-radius: 4px;
+    height: 12px;
+    overflow: hidden;
+}
+
+.health-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #f44, #ff0, #0f0);
+    background-size: 300% 100%;
+    transition: width 0.3s, background-position 0.3s;
+    box-shadow: 0 0 10px currentColor;
+}
+
+/* ==================== DISTANCE/PROGRESS BAR ==================== */
+#distanceBar {
+    position: absolute;
+    left: 10px;
+    top: 100px;
+    bottom: 100px;
+    width: 8px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid var(--primary);
+    border-radius: 4px;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.distance-fill {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: linear-gradient(to top, var(--primary), var(--success));
+    border-radius: 3px;
+    transition: height 0.3s;
+}
+
+.distance-marker {
+    position: absolute;
+    right: 15px;
+    font-size: 10px;
+    color: var(--text-secondary);
+    transform: translateY(50%);
+}
+
+.boss-marker {
+    position: absolute;
+    right: 15px;
+    font-size: 14px;
+    color: var(--danger);
+    transform: translateY(50%);
+}
+
+/* ==================== BOSS HEALTH ==================== */
+#bossHealthContainer {
+    position: absolute;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    z-index: 20;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s;
+}
+
+#bossHealthContainer.visible { opacity: 1; }
+
+.boss-name {
+    color: var(--danger);
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-shadow: 0 0 10px var(--danger);
+}
+
+.boss-health-bg {
+    background: rgba(0,0,0,0.7);
+    border: 2px solid var(--danger);
+    border-radius: 4px;
+    height: 20px;
+    overflow: hidden;
+}
+
+.boss-health-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #f44, #f80);
+    transition: width 0.2s;
+}
+
+/* ==================== POWERUP BAR ==================== */
+#powerupBar {
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.powerup-slot {
+    width: 50px;
+    height: 50px;
+    background: var(--bg-panel);
+    border: 2px solid #555;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.powerup-slot.active { 
+    border-color: var(--success); 
+    box-shadow: 0 0 15px color-mix(in srgb, var(--success) 40%, transparent); 
+}
+
+.powerup-icon { font-size: 24px; }
+
+.powerup-timer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: var(--success);
+    transition: width 0.1s linear;
+}
+
+/* ==================== SCREENS (Overlays) ==================== */
+.screen {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: var(--bg-overlay);
+    z-index: 50;
+    padding: 30px;
+    text-align: center;
+}
+
+.screen h1 {
+    font-size: 48px;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, var(--primary), var(--accent), var(--glow));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: glow 2s infinite;
+}
+
+.screen h2 {
+    font-size: 20px;
+    color: var(--text-secondary);
+    margin-bottom: 30px;
+    font-weight: normal;
+}
+
+.level-complete-title { color: var(--success) !important; }
+.game-over-title { color: var(--danger) !important; }
+
+/* ==================== CONTROLS DISPLAY ==================== */
+.controls-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px 40px;
+    margin: 20px 0;
+    text-align: left;
+}
+
+.control-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #aaa;
+    font-size: 14px;
+}
+
+.key-badge {
+    background: linear-gradient(135deg, #333, #222);
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-family: monospace;
+    color: #fff;
+    min-width: 50px;
+    text-align: center;
+}
+
+/* ==================== POWERUP LEGEND ==================== */
+.powerup-legend {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 20px 0;
+    padding: 15px;
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    border-radius: 8px;
+    border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+.powerup-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #aaa;
+}
+
+.powerup-info span:first-child { font-size: 20px; }
+
+/* ==================== BUTTONS ==================== */
+.btn {
+    margin-top: 30px;
+    padding: 15px 50px;
+    font-size: 18px;
+    font-weight: bold;
+    background: transparent;
+    border: 2px solid var(--primary);
+    border-radius: 8px;
+    color: var(--primary);
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.btn:hover {
+    background: var(--primary);
+    color: #000;
+    box-shadow: 0 0 30px var(--primary);
+    transform: scale(1.05);
+}
+
+.btn.danger { border-color: var(--danger); color: var(--danger); }
+.btn.danger:hover { background: var(--danger); box-shadow: 0 0 30px var(--danger); }
+
+.btn.success { border-color: var(--success); color: var(--success); }
+.btn.success:hover { background: var(--success); box-shadow: 0 0 30px var(--success); }
+
+/* ==================== STATS GRID ==================== */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin: 20px 0;
+    width: 100%;
+    max-width: 400px;
+}
+
+.stat-box {
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.stat-box .label { 
+    color: var(--text-secondary); 
+    font-size: 12px; 
+    text-transform: uppercase; 
+}
+
+.stat-box .value { 
+    color: var(--primary); 
+    font-size: 24px; 
+    font-weight: bold; 
+    margin-top: 5px; 
+}
+
+.stat-box .value.gold { color: #fd0; }
+
+/* ==================== UTILITY CLASSES ==================== */
+.hidden { display: none !important; }
+.visible { display: flex !important; }
+
+/* Combo display */
+#comboDisplay {
+    color: var(--accent);
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+#comboDisplay.active { opacity: 1; }

@@ -292,47 +292,47 @@
         </header>
 
         <div class="games-grid">
-            <!-- ARCADE GAMES - Pure HTML/JS, Easy to Port -->
+            <!-- ARCADE GAMES -->
             <div class="game-card asteroid-run" onclick="launchGame('asteroid-run')">
                 <div class="game-icon">☄️</div>
                 <div class="game-title">ASTEROID RUN</div>
                 <div class="game-subtitle">Nebula Escape</div>
-                <span class="game-status status-coming">COMING SOON</span>
+                <span class="game-status status-ready">READY</span>
             </div>
 
             <div class="game-card space-pirates" onclick="launchGame('space-pirates')">
                 <div class="game-icon">🏴‍☠️</div>
                 <div class="game-title">SPACE PIRATES</div>
                 <div class="game-subtitle">Galactic Raid</div>
-                <span class="game-status status-coming">COMING SOON</span>
+                <span class="game-status status-ready">READY</span>
             </div>
 
             <div class="game-card star-kraken" onclick="launchGame('star-kraken')">
                 <div class="game-icon">🚀</div>
                 <div class="game-title">STAR KRAKEN</div>
                 <div class="game-subtitle">Galactic Defender</div>
-                <span class="game-status status-coming">COMING SOON</span>
+                <span class="game-status status-ready">READY</span>
             </div>
 
             <div class="game-card hive-assault" onclick="launchGame('hive-assault')">
                 <div class="game-icon">👽</div>
                 <div class="game-title">HIVE ASSAULT</div>
                 <div class="game-subtitle">Alien Swarm</div>
-                <span class="game-status status-coming">COMING SOON</span>
+                <span class="game-status status-ready">READY</span>
             </div>
 
             <div class="game-card it-lurks-below" onclick="launchGame('it-lurks-below')">
                 <div class="game-icon">🦑</div>
                 <div class="game-title">IT LURKS BELOW</div>
                 <div class="game-subtitle">Deep Sea Terror</div>
-                <span class="game-status status-coming">COMING SOON</span>
+                <span class="game-status status-ready">READY</span>
             </div>
 
             <div class="game-card krakens-tempest" onclick="launchGame('krakens-tempest')">
                 <div class="game-icon">🌀</div>
                 <div class="game-title">KRAKEN'S TEMPEST</div>
                 <div class="game-subtitle">Whirlpool Defense</div>
-                <span class="game-status status-coming">COMING SOON</span>
+                <span class="game-status status-ready">READY</span>
             </div>
 
             <!-- WORD GAMES - May Need Groq API -->
@@ -350,32 +350,32 @@
                 <span class="game-status status-ready">READY</span>
             </div>
 
-            <div class="game-card abyssal-guess coming-soon">
+            <div class="game-card abyssal-guess" onclick="launchGame('abyssal-guess')">
                 <div class="game-icon">🔮</div>
                 <div class="game-title">ABYSSAL GUESS</div>
                 <div class="game-subtitle">Semantic Search</div>
-                <span class="game-status status-coming">COMING SOON</span>
+                <span class="game-status status-ready">READY</span>
             </div>
 
-            <div class="game-card spelling-kraken coming-soon">
+            <div class="game-card spelling-kraken" onclick="launchGame('spelling-kraken')">
                 <div class="game-icon">🐝</div>
                 <div class="game-title">SPELLING KRAKEN</div>
                 <div class="game-subtitle">Word Hive</div>
-                <span class="game-status status-coming">COMING SOON</span>
+                <span class="game-status status-ready">READY</span>
             </div>
 
-            <div class="game-card abyssal-between coming-soon">
+            <div class="game-card abyssal-between" onclick="launchGame('abyssal-between')">
                 <div class="game-icon">🔤</div>
                 <div class="game-title">ABYSSAL BETWEEN</div>
                 <div class="game-subtitle">Alphabetic Hunt</div>
-                <span class="game-status status-coming">COMING SOON</span>
+                <span class="game-status status-ready">READY</span>
             </div>
 
-            <div class="game-card phrase-kraken coming-soon">
+            <div class="game-card phrase-kraken" onclick="launchGame('phrase-kraken')">
                 <div class="game-icon">💬</div>
                 <div class="game-title">PHRASE KRAKEN</div>
                 <div class="game-subtitle">Quote Quest</div>
-                <span class="game-status status-coming">COMING SOON</span>
+                <span class="game-status status-ready">READY</span>
             </div>
 
             <!-- COMPLEX GAMES -->
@@ -410,18 +410,18 @@
     <script>
         // Game registry - tracks which games are available
         const games = {
-            'asteroid-run': { ready: false },
-            'space-pirates': { ready: false },
-            'star-kraken': { ready: false },
-            'hive-assault': { ready: false },
-            'it-lurks-below': { ready: false },
-            'krakens-tempest': { ready: false },
+            'asteroid-run': { ready: true },
+            'space-pirates': { ready: true },
+            'star-kraken': { ready: true },
+            'hive-assault': { ready: true },
+            'it-lurks-below': { ready: true },
+            'krakens-tempest': { ready: true },
             'word-kraken': { ready: true },
             'kraken-kategories': { ready: true },
-            'abyssal-guess': { ready: false },
-            'spelling-kraken': { ready: false },
-            'abyssal-between': { ready: false },
-            'phrase-kraken': { ready: false },
+            'abyssal-guess': { ready: true },
+            'spelling-kraken': { ready: true },
+            'abyssal-between': { ready: true },
+            'phrase-kraken': { ready: true },
             'ad-astra': { ready: false }
         };
 

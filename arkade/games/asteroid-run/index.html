@@ -3,430 +3,377 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>🚀 Asteroid Run - Kraken Arkade 🦑</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asteroid Run - Kraken Arkade</title>
+    <link rel="stylesheet" href="../../shared/css/arkade-theme.css">
     <script src="../../shared/js/arkade-theme.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-            touch-action: none;
-        }
-
+        /* Game-specific color overrides - Cyan/Blue theme */
         :root {
-            --neon-cyan: #00ffff;
-            --neon-magenta: #ff00ff;
-            --panel-bg: rgba(10, 20, 40, 0.85);
+            --primary: #0ff;
+            --secondary: #f0f;
+            --accent: #ff0;
+            --glow: #0ff;
         }
 
-        body {
-            background: #000;
-            color: #fff;
-            font-family: 'Orbitron', monospace;
-            overflow: hidden;
-            width: 100vw;
-            height: 100vh;
+        #gameContainer {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px var(--primary), inset 0 0 20px rgba(0, 255, 255, 0.1);
         }
 
-        #gameCanvas {
+        /* Boss health bar */
+        .boss-health-fill {
+            background: linear-gradient(90deg, #0ff 0%, #f0f 100%) !important;
+        }
+
+        #mineralsDisplay {
+            color: #ff0;
+        }
+
+        #livesDisplay {
+            font-size: 16px;
+            margin-top: 5px;
+        }
+
+        /* Move health bar to bottom left */
+        #healthBar {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            bottom: 60px;
+            left: 20px;
+            top: auto;
+            right: auto;
+            width: 200px;
         }
 
-        .back-btn {
+        /* Bomb display above health */
+        #bombDisplay {
             position: absolute;
-            top: 15px;
-            left: 15px;
-            color: var(--neon-cyan);
-            text-decoration: none;
-            border: 1px solid var(--neon-cyan);
-            padding: 8px 16px;
-            border-radius: 4px;
-            background: rgba(0, 0, 0, 0.6);
-            transition: 0.3s;
-            z-index: 1000;
-            font-family: 'Orbitron', monospace;
-            font-size: 12px;
-        }
-
-        .back-btn:hover {
-            background: rgba(0, 255, 255, 0.2);
-            box-shadow: 0 0 15px var(--neon-cyan);
-        }
-
-        #hud {
-            position: absolute;
-            top: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 30px;
-            z-index: 100;
-            font-size: 14px;
-            text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
-        }
-
-        .hud-item {
-            background: var(--panel-bg);
-            padding: 10px 20px;
-            border-radius: 8px;
-            border: 1px solid rgba(0, 255, 255, 0.3);
-        }
-
-        .hud-label {
-            color: #888;
-            font-size: 10px;
-        }
-
-        .hud-value {
-            color: var(--neon-cyan);
+            bottom: 115px;
+            left: 20px;
+            color: #f80;
             font-size: 18px;
-            font-weight: bold;
-        }
-
-        #startScreen,
-        #gameOverScreen,
-        #pauseScreen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 200;
-        }
-
-        #startScreen h1,
-        #gameOverScreen h1,
-        #pauseScreen h1 {
-            font-size: 48px;
-            margin-bottom: 20px;
-            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: none;
-        }
-
-        .menu-btn {
-            margin: 10px;
-            padding: 15px 40px;
-            font-size: 18px;
-            font-family: 'Orbitron', monospace;
-            background: linear-gradient(45deg, var(--neon-cyan), #0099ff);
-            border: none;
-            border-radius: 8px;
-            color: #000;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .menu-btn:hover {
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
-            transform: scale(1.05);
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        #pauseScreen {
-            background: rgba(0, 0, 0, 0.9);
-        }
-
-        .controls-info {
-            margin-top: 30px;
-            text-align: center;
-            color: #888;
-            font-size: 12px;
-        }
-
-        .controls-info p {
-            margin: 5px 0;
-        }
-
-        #mobileControls {
-            position: absolute;
-            bottom: 20px;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: space-between;
-            padding: 0 20px;
-            z-index: 100;
-        }
-
-        .touch-btn {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            background: rgba(0, 255, 255, 0.2);
-            border: 2px solid var(--neon-cyan);
-            color: var(--neon-cyan);
-            font-size: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .touch-group {
-            display: flex;
-            gap: 15px;
-        }
-
-        #settingsModal {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--panel-bg);
-            padding: 30px;
-            border-radius: 16px;
-            border: 2px solid var(--neon-cyan);
-            z-index: 1000;
-            min-width: 400px;
-        }
-
-        #settingsModal h2 {
-            color: var(--neon-cyan);
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        #settingsModal h3 {
-            color: var(--neon-cyan);
-            margin: 15px 0 10px;
-            font-size: 14px;
-        }
-
-        .setting-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 10px 0;
-        }
-
-        .setting-row label {
-            color: #aaa;
-            font-size: 12px;
-        }
-
-        .setting-row input[type="range"] {
-            width: 150px;
-        }
-
-        .setting-row span {
-            color: var(--neon-cyan);
-            min-width: 40px;
-            text-align: right;
-            font-size: 12px;
-        }
-
-        .modal-btn-row {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .modal-btn {
-            padding: 10px 25px;
-            font-family: 'Orbitron', monospace;
-            font-size: 12px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        .modal-btn.primary {
-            background: linear-gradient(45deg, var(--neon-cyan), #0099ff);
-            border: none;
-            color: #000;
-        }
-
-        .modal-btn.secondary {
-            background: transparent;
-            border: 1px solid var(--neon-cyan);
-            color: var(--neon-cyan);
-        }
-
-        #settingsOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 999;
-        }
-
-        .settings-btn {
-            position: absolute;
-            top: 15px;
-            right: 70px;
-            color: var(--neon-cyan);
-            text-decoration: none;
-            border: 1px solid var(--neon-cyan);
-            padding: 8px 16px;
-            border-radius: 4px;
-            background: rgba(0, 0, 0, 0.6);
-            transition: 0.3s;
-            z-index: 1000;
-            font-family: 'Orbitron', monospace;
-            font-size: 12px;
-            cursor: pointer;
-        }
-
-        .settings-btn:hover {
-            background: rgba(0, 255, 255, 0.2);
-            box-shadow: 0 0 15px var(--neon-cyan);
-        }
-
-        #wallpaper {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-size: cover;
-            background-position: center;
-            opacity: 0.5;
-            z-index: -3;
-            background-image: url('../../static/desktop.png');
-            background-color: #0a0a1a;
-        }
-
-        @media (orientation: portrait) {
-            #wallpaper {
-                background-image: url('../../static/mobile.png');
-            }
+            z-index: 10;
         }
     </style>
 </head>
 
 <body>
-    <div id="wallpaper"></div>
-    <a href="/arkade/" class="back-btn">← ARKADE</a>
-    <button class="settings-btn" onclick="openSettings()">⚙️ SETTINGS</button>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
 
-    <div id="hud" class="hidden">
-        <div class="hud-item">
-            <div class="hud-label">SECTOR</div>
-            <div class="hud-value" id="sectorDisplay">1</div>
+        <!-- Top UI Bar -->
+        <div id="ui">
+            <div class="ui-panel">
+                <div class="stat-label">Score</div>
+                <div class="stat-value" id="scoreDisplay">0</div>
+            </div>
+            <div class="ui-panel" id="centerPanel">
+                <div id="levelDisplay">SECTOR 1 - OUTER RIM</div>
+                <div id="comboDisplay"></div>
+            </div>
+            <div class="ui-panel">
+                <div class="stat-label">Minerals</div>
+                <div class="stat-value" id="mineralsDisplay">0</div>
+            </div>
         </div>
-        <div class="hud-item">
-            <div class="hud-label">SCORE</div>
-            <div class="hud-value" id="scoreDisplay">0</div>
+
+        <!-- Health Bar -->
+        <div id="healthBar">
+            <div class="stat-label" style="color:#0ff; margin-bottom:3px;">HULL INTEGRITY</div>
+            <div class="health-bg">
+                <div class="health-fill" id="healthFill" style="width:100%"></div>
+            </div>
+            <div id="livesDisplay">❤️❤️❤️</div>
         </div>
-        <div class="hud-item">
-            <div class="hud-label">LIVES</div>
-            <div class="hud-value" id="livesDisplay">3</div>
+
+        <!-- Distance Progress Bar -->
+        <div id="distanceBar">
+            <div class="distance-fill" id="distanceFill" style="height:0%"></div>
+            <div class="distance-marker" style="bottom:0">START</div>
+            <div class="distance-marker" style="top:0">BOSS</div>
+        </div>
+
+        <!-- Boss Health -->
+        <div id="bossHealthContainer" class="hidden">
+            <div class="boss-name" id="bossName">ROCK TITAN</div>
+            <div class="boss-health-bg">
+                <div class="boss-health-fill" id="bossHealthFill" style="width:100%"></div>
+            </div>
+        </div>
+
+        <!-- Powerup Bar -->
+        <div id="powerupBar">
+            <div class="powerup-slot" id="slot-shield"><span class="powerup-icon">🛡️</span>
+                <div class="powerup-timer"></div>
+            </div>
+            <div class="powerup-slot" id="slot-rapid"><span class="powerup-icon">⚡</span>
+                <div class="powerup-timer"></div>
+            </div>
+            <div class="powerup-slot" id="slot-triple"><span class="powerup-icon">🔱</span>
+                <div class="powerup-timer"></div>
+            </div>
+            <div class="powerup-slot" id="slot-magnet"><span class="powerup-icon">🧲</span>
+                <div class="powerup-timer"></div>
+            </div>
+        </div>
+
+        <!-- Bomb Display -->
+        <div id="bombDisplay">💣 x1</div>
+
+        <!-- START SCREEN -->
+        <div class="screen" id="startScreen">
+            <h1>🚀 ASTEROID RUN 🚀</h1>
+            <h2>Nebula Escape</h2>
+
+            <div class="controls-grid">
+                <div class="control-item"><span class="key-badge">← →</span> Move Ship</div>
+                <div class="control-item"><span class="key-badge">↑ ↓</span> Speed Up/Down</div>
+                <div class="control-item"><span class="key-badge">SPACE</span> Fire Lasers</div>
+                <div class="control-item"><span class="key-badge">B</span> Deploy Bomb</div>
+                <div class="control-item"><span class="key-badge">ESC</span> Pause</div>
+                <div class="control-item"><span class="key-badge">Q</span> Quit</div>
+            </div>
+
+            <div class="powerup-legend">
+                <div class="powerup-info"><span>🛡️</span> Shield</div>
+                <div class="powerup-info"><span>⚡</span> Rapid Fire</div>
+                <div class="powerup-info"><span>🔱</span> Triple Shot</div>
+                <div class="powerup-info"><span>🧲</span> Loot Magnet</div>
+                <div class="powerup-info"><span>💚</span> Repair Hull</div>
+                <div class="powerup-info"><span>💣</span> Screen Bomb</div>
+            </div>
+
+            <button class="btn" id="startBtn">LAUNCH MISSION</button>
+        </div>
+
+        <!-- PAUSE SCREEN -->
+        <div class="screen hidden" id="pauseScreen">
+            <h1>⏸️ PAUSED</h1>
+            <h2>Mission Suspended</h2>
+            <button class="btn" id="resumeBtn">RESUME</button>
+            <button class="btn danger" id="quitBtn" style="margin-top:15px">QUIT TO MENU (Q)</button>
+        </div>
+
+        <!-- GAME OVER SCREEN -->
+        <div class="screen hidden" id="gameOverScreen">
+            <h1 class="game-over-title">💥 GAME OVER 💥</h1>
+            <div id="gameOverStats" style="color:#aaa; margin:20px 0;">
+                <p>Sector Reached: <span id="deathSector">1</span></p>
+                <p>Final Score: <span id="finalScore">0</span></p>
+                <p>Minerals Collected: <span id="lostMinerals">0</span></p>
+                <p>Distance: <span id="finalDistance">0 km</span></p>
+                <p>Kills: <span id="finalKills">0</span></p>
+            </div>
+            <button class="btn" id="retryBtn">TRY AGAIN</button>
+        </div>
+
+        <!-- VICTORY SCREEN -->
+        <div class="screen hidden" id="victoryScreen">
+            <h1>🏆 VICTORY! 🏆</h1>
+            <h2>You Escaped the Nebula!</h2>
+            <div id="victoryStats" style="color:#aaa; margin:20px 0;">
+                <p>Final Score: <span id="victoryScore">0</span></p>
+                <p>Minerals: <span id="victoryMinerals">0</span></p>
+                <p>Time: <span id="victoryTime">0:00</span></p>
+                <p>Bosses Defeated: <span id="victoryBosses">0</span></p>
+            </div>
+            <button class="btn" id="victoryBtn">PLAY AGAIN</button>
+        </div>
+
+        <!-- LEVEL COMPLETE SCREEN -->
+        <div class="screen hidden" id="levelScreen">
+            <h1 class="level-complete-title">⭐ SECTOR CLEARED! ⭐</h1>
+            <h2 id="sectorClearedName"></h2>
+            <div id="levelStats" style="color:#aaa; margin:20px 0;">
+                <p>Score: <span id="levelScore">0</span></p>
+                <p>Minerals: <span id="levelMinerals">0</span></p>
+                <p>Accuracy: <span id="levelAccuracy">0%</span></p>
+                <p>Max Combo: <span id="levelCombo">0</span></p>
+            </div>
+            <button class="btn" id="nextLevelBtn">NEXT SECTOR</button>
+        </div>
+
+        <!-- KRAKEN SETTINGS -->
+        <div class="screen hidden" id="settingsScreen">
+            <h1>🦑 KRAKEN SETTINGS 🦑</h1>
+            <h2>Audio Configuration</h2>
+
+            <div style="width:100%; max-width:500px; margin:20px auto; display:flex; gap:30px;">
+                <div style="flex:1;">
+                    <h3 style="color:#0ff; margin-bottom:15px; font-size:14px;">AUDIO CHANNELS</h3>
+
+                    <div style="margin-bottom:15px;">
+                        <label
+                            style="display:flex; justify-content:space-between; color:#0ff; margin-bottom:5px; font-size:12px;">
+                            <span>🎵 Music</span><span id="musicVolLabel">20%</span>
+                        </label>
+                        <input type="range" id="musicVolume" min="0" max="100" value="20" style="width:100%;">
+                    </div>
+
+                    <div style="margin-bottom:15px;">
+                        <label
+                            style="display:flex; justify-content:space-between; color:#f0f; margin-bottom:5px; font-size:12px;">
+                            <span>💥 SFX</span><span id="sfxVolLabel">20%</span>
+                        </label>
+                        <input type="range" id="sfxVolume" min="0" max="100" value="20" style="width:100%;">
+                    </div>
+
+                    <div style="margin-bottom:15px;">
+                        <label
+                            style="display:flex; justify-content:space-between; color:#ff0; margin-bottom:5px; font-size:12px;">
+                            <span>🗣️ Voice</span><span id="voiceVolLabel">40%</span>
+                        </label>
+                        <input type="range" id="voiceVolume" min="0" max="100" value="40" style="width:100%;">
+                    </div>
+
+                    <div style="margin-bottom:15px;">
+                        <label
+                            style="display:flex; justify-content:space-between; color:#4f4; margin-bottom:5px; font-size:12px;">
+                            <span>🔊 Synth</span><span id="synthVolLabel">50%</span>
+                        </label>
+                        <input type="range" id="synthVolume" min="0" max="100" value="50" style="width:100%;">
+                    </div>
+
+                    <div style="margin-bottom:15px;">
+                        <label
+                            style="display:flex; justify-content:space-between; color:#fff; margin-bottom:5px; font-size:12px;">
+                            <span>🔊 Master</span><span id="masterVolLabel">60%</span>
+                        </label>
+                        <input type="range" id="masterVolume" min="0" max="100" value="60" style="width:100%;">
+                    </div>
+                </div>
+
+                <div style="flex:1;">
+                    <h3 style="color:#f80; margin-bottom:15px; font-size:14px;">SYNTH SOUNDS</h3>
+
+                    <div style="margin-bottom:15px;">
+                        <label
+                            style="display:flex; justify-content:space-between; color:#4f4; margin-bottom:5px; font-size:12px;">
+                            <span>💎 Collect</span><span id="collectVolLabel">100%</span>
+                        </label>
+                        <input type="range" id="collectVolume" min="0" max="100" value="100" style="width:100%;">
+                    </div>
+
+                    <div style="margin-bottom:15px;">
+                        <label
+                            style="display:flex; justify-content:space-between; color:#f84; margin-bottom:5px; font-size:12px;">
+                            <span>💢 Hit</span><span id="hitVolLabel">100%</span>
+                        </label>
+                        <input type="range" id="hitVolume" min="0" max="100" value="100" style="width:100%;">
+                    </div>
+
+                    <div style="margin-bottom:15px;">
+                        <label
+                            style="display:flex; justify-content:space-between; color:#f44; margin-bottom:5px; font-size:12px;">
+                            <span>💥 Explode</span><span id="explodeVolLabel">100%</span>
+                        </label>
+                        <input type="range" id="explodeVolume" min="0" max="100" value="100" style="width:100%;">
+                    </div>
+
+                    <div style="margin-bottom:15px;">
+                        <label
+                            style="display:flex; justify-content:space-between; color:#4ff; margin-bottom:5px; font-size:12px;">
+                            <span>⬆️ Powerup</span><span id="powerupVolLabel">100%</span>
+                        </label>
+                        <input type="range" id="powerupVolume" min="0" max="100" value="100" style="width:100%;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Debug/Warp Section -->
+            <div id="debugSection"
+                style="width:100%; max-width:500px; margin:20px auto; border-top:1px solid #444; padding-top:15px;">
+                <h3 style="color:#f00; margin-bottom:15px; font-size:14px;">🔧 DEBUG / WARP</h3>
+
+                <div style="display:flex; gap:20px; align-items:center; margin-bottom:15px;">
+                    <label style="color:#f88; font-size:12px;">
+                        <input type="checkbox" id="godModeToggle" style="margin-right:8px;">
+                        👼 GOD MODE
+                    </label>
+                    <label style="color:#ff8; font-size:12px;">
+                        <input type="checkbox" id="infiniteBombsToggle" style="margin-right:8px;">
+                        💣 Infinite Bombs
+                    </label>
+                </div>
+
+                <div style="margin-bottom:10px;">
+                    <label style="color:#aaa; font-size:12px; display:block; margin-bottom:8px;">⚡ WARP TO SECTOR:</label>
+                    <div id="warpButtons" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
+                </div>
+            </div>
+
+            <button class="btn" id="settingsCloseBtn">CLOSE (K)</button>
         </div>
     </div>
 
-    <canvas id="gameCanvas"></canvas>
-
-    <div id="startScreen">
-        <h1>🚀 ASTEROID RUN</h1>
-        <p style="color: #888; margin-bottom: 30px;">Navigate through the asteroid field!</p>
-        <button class="menu-btn" onclick="startGame()">START GAME</button>
-        <div class="controls-info">
-            <p>🖱️ MOUSE/TOUCH: Move ship</p>
-            <p>⌨️ ARROWS/WASD: Move ship</p>
-            <p>📱 TOUCH: Tap left/right to move</p>
-        </div>
-    </div>
-
-    <div id="gameOverScreen" class="hidden">
-        <h1>💥 GAME OVER</h1>
-        <p style="margin: 20px 0; font-size: 24px;">Final Score: <span id="finalScore"
-                style="color: var(--neon-cyan);">0</span></p>
-        <p style="margin-bottom: 30px; color: #888;">Sector Reached: <span id="finalSector">1</span></p>
-        <button class="menu-btn" onclick="restartGame()">TRY AGAIN</button>
-        <button class="menu-btn"
-            style="background: transparent; border: 2px solid var(--neon-cyan); color: var(--neon-cyan);"
-            onclick="goToMenu()">MAIN MENU</button>
-    </div>
-
-    <div id="pauseScreen" class="hidden">
-        <h1>⏸️ PAUSED</h1>
-        <button class="menu-btn" onclick="resumeGame()">RESUME</button>
-        <button class="menu-btn"
-            style="background: transparent; border: 2px solid var(--neon-cyan); color: var(--neon-cyan);"
-            onclick="goToMenu()">QUIT</button>
-    </div>
-
-    <div id="mobileControls" class="hidden">
-        <div class="touch-group">
-            <button class="touch-btn" id="leftBtn">◀</button>
-        </div>
-        <div class="touch-group">
-            <button class="touch-btn" id="rightBtn">▶</button>
-        </div>
-    </div>
-
-    <div id="settingsOverlay" class="hidden" onclick="closeSettings()"></div>
-    <div id="settingsModal" class="hidden">
-        <h2>⚙️ Audio Settings</h2>
-        <h3>🔊 VOLUME CONTROLS</h3>
-        <div class="setting-row">
-            <label>Master Volume</label>
-            <input type="range" id="masterVol" min="0" max="100" value="80">
-            <span id="masterVolLabel">80%</span>
-        </div>
-        <div class="setting-row">
-            <label>Music Volume</label>
-            <input type="range" id="musicVol" min="0" max="100" value="60">
-            <span id="musicVolLabel">60%</span>
-        </div>
-        <div class="setting-row">
-            <label>SFX Volume</label>
-            <input type="range" id="sfxVol" min="0" max="100" value="80">
-            <span id="sfxVolLabel">80%</span>
-        </div>
-        <div class="modal-btn-row">
-            <button class="modal-btn primary" onclick="saveSettings()">SAVE</button>
-            <button class="modal-btn secondary" onclick="closeSettings()">CANCEL</button>
-        </div>
-    </div>
-
-    <!-- Shared modules -->
+    <!-- Shared Modules -->
     <script src="../../shared/js/engine.js"></script>
     <script src="../../shared/js/input.js"></script>
+    <script src="../../shared/js/audio.js"></script>
     <script src="../../shared/js/particles.js"></script>
     <script src="../../shared/js/collision.js"></script>
-    <script src="../../shared/js/audio.js"></script>
+    <script src="../../shared/js/renderer.js"></script>
+    <script src="../../shared/js/entities.js"></script>
+    <script src="../../shared/js/ui.js"></script>
+
+    <!-- Game-specific code -->
     <script src="game.js"></script>
     <script src="../../shared/js/how-to-play.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             initHowToPlay('asteroid-run', null);
+
+            // Initialize Arkade Theme (starfield only)
             ArkadeTheme.init({ enableStarfield: true, enableMusic: false });
 
-            // Menu music - use window.Audio to avoid conflict with Audio module
+            // Add simple menu music player - use window.Audio to avoid conflict
             const menuMusic = new window.Audio('/arkade/audio/theme_asteroid_run.mp3');
             menuMusic.loop = true;
             menuMusic.volume = 0.15;
 
+            // Create music toggle button
             const musicBtn = document.createElement('button');
+            musicBtn.id = 'menu-music-btn';
             musicBtn.innerHTML = '🔇';
-            musicBtn.style.cssText = 'position:fixed;top:15px;right:15px;z-index:9999;width:44px;height:44px;border-radius:50%;border:2px solid rgba(0,255,255,0.5);background:rgba(0,0,0,0.7);color:#0ff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;';
+            musicBtn.title = 'Toggle Menu Music';
+            musicBtn.style.cssText = `
+                position: fixed;
+                top: 15px;
+                right: 15px;
+                z-index: 9999;
+                width: 44px;
+                height: 44px;
+                border-radius: 50%;
+                border: 2px solid rgba(0, 255, 255, 0.5);
+                background: rgba(0, 0, 0, 0.7);
+                color: #0ff;
+                font-size: 20px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
             document.body.appendChild(musicBtn);
 
             let isPlaying = false;
-            musicBtn.onclick = () => {
-                if (isPlaying) { menuMusic.pause(); musicBtn.innerHTML = '🔇'; }
-                else { menuMusic.play().catch(() => {}); musicBtn.innerHTML = '🔊'; }
+            musicBtn.addEventListener('click', () => {
+                if (isPlaying) {
+                    menuMusic.pause();
+                    musicBtn.innerHTML = '🔇';
+                    musicBtn.style.borderColor = 'rgba(0, 255, 255, 0.5)';
+                } else {
+                    menuMusic.play().catch(() => {});
+                    musicBtn.innerHTML = '🔊';
+                    musicBtn.style.borderColor = '#0ff';
+                }
                 isPlaying = !isPlaying;
-            };
+            });
+
+            // Stop menu music when game starts
+            window.addEventListener('startGame', () => {
+                menuMusic.pause();
+                musicBtn.style.display = 'none';
+            });
         });
     </script>
 </body>

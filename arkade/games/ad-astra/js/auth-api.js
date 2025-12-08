@@ -1,12 +1,11 @@
 // Ad Astra - Authentication System (Server-Based)
-// Uses Cloudflare Workers API for persistent account storage
+// Uses Flask API backend for persistent account storage
 
 export class AuthSystem {
     constructor() {
         this.currentUser = null;
         this.token = null;
-        // Use Cloudflare Workers API - same domain serves both static files and API
-        this.apiUrl = 'https://kraken-arkade-api.krakenunbound.workers.dev/api/adastra';
+        this.apiUrl = '/api/adastra';
         
         // Load token from localStorage (only for session persistence)
         this.token = localStorage.getItem('authToken');

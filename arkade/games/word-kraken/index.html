@@ -531,7 +531,7 @@
 
         function initMusic() {
             shuffleArray(musicTracks);
-            audio.volume = 0.3;
+            audio.volume = 0.15;
             audio.addEventListener('ended', playNextTrack);
             updateMusicButton();
         }
@@ -546,7 +546,12 @@
             if (musicStarted) return;
             musicStarted = true;
             audio.src = musicTracks[currentTrack];
-            if (!musicMuted) audio.play().catch(() => {});
+            if (!musicMuted) {
+                audio.play().catch(() => {
+                    // Browser blocked autoplay, will retry on next user interaction
+                    musicStarted = false;
+                });
+            }
         }
 
         function toggleMusic() {
@@ -556,6 +561,7 @@
             if (musicMuted) {
                 audio.pause();
             } else {
+                musicStarted = false; // Reset so startMusic will work
                 startMusic();
             }
         }

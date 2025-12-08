@@ -36,6 +36,45 @@
             touch-action: manipulation;
         }
 
+        #wallpaper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -3;
+            object-fit: cover;
+            opacity: 0.4;
+        }
+
+        #music-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--neon);
+            color: var(--neon);
+            font-size: 18px;
+            cursor: pointer;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        #music-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+        }
+
+        #music-btn.muted {
+            color: #666;
+            border-color: #666;
+        }
+
         #star-canvas {
             position: fixed;
             top: 0;
@@ -414,8 +453,10 @@
 </head>
 
 <body>
+    <img id="wallpaper" src="/arkade/static/wallpaper.png" alt="">
     <canvas id="star-canvas"></canvas>
     <canvas id="confetti-canvas"></canvas>
+    <button id="music-btn" onclick="toggleMusic()" title="Toggle Music">&#9835;</button>
     <div id="toast-notification">Notification</div>
     <div id="loading">LOADING...</div>
 
@@ -464,6 +505,72 @@
         const keys = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
         let lastScreen = "setup";
 
+        // Music system
+        const musicTracks = [
+            'music/Far and Away.mp3',
+            'music/Journey of Dreams.mp3',
+            'music/Luminous Path.mp3',
+            'music/Midnight Highway.mp3',
+            'music/Moonlit Threads.mp3',
+            'music/Night Passage.mp3',
+            'music/Northern Lights.mp3',
+            'music/Open Skies.mp3'
+        ];
+        let audio = new Audio();
+        let musicMuted = localStorage.getItem('wordkraken_muted') === 'true';
+        let currentTrack = 0;
+        let musicStarted = false;
+
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function initMusic() {
+            shuffleArray(musicTracks);
+            audio.volume = 0.3;
+            audio.addEventListener('ended', playNextTrack);
+            updateMusicButton();
+        }
+
+        function playNextTrack() {
+            currentTrack = (currentTrack + 1) % musicTracks.length;
+            audio.src = musicTracks[currentTrack];
+            if (!musicMuted) audio.play().catch(() => {});
+        }
+
+        function startMusic() {
+            if (musicStarted) return;
+            musicStarted = true;
+            audio.src = musicTracks[currentTrack];
+            if (!musicMuted) audio.play().catch(() => {});
+        }
+
+        function toggleMusic() {
+            musicMuted = !musicMuted;
+            localStorage.setItem('wordkraken_muted', musicMuted);
+            updateMusicButton();
+            if (musicMuted) {
+                audio.pause();
+            } else {
+                startMusic();
+            }
+        }
+
+        function updateMusicButton() {
+            const btn = document.getElementById('music-btn');
+            if (musicMuted) {
+                btn.classList.add('muted');
+                btn.innerHTML = '&#9834;'; // muted note
+            } else {
+                btn.classList.remove('muted');
+                btn.innerHTML = '&#9835;'; // playing note
+            }
+        }
+
         function showToast(msg, isError = false) {
             const t = document.getElementById("toast-notification");
             t.textContent = msg;
@@ -491,6 +598,7 @@
             }
 
             initStars();
+            initMusic();
             animate();
         };
 
@@ -519,6 +627,7 @@
             playerName = i.value.trim().toUpperCase();
             localStorage.setItem('wordkraken_user', playerName);
             document.getElementById('setup').style.display = 'none';
+            startMusic(); // Start music on user interaction (browser policy)
             startGame();
         }
 

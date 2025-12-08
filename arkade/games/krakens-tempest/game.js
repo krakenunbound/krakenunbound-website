@@ -1576,7 +1576,7 @@ const Game = {
     
     quit() {
         Audio.stopMusic();
-        window.location.href = '../../KrakenArKade.html';
+        window.location.href = '/arkade/';
     },
     
     toggleSecretMenu() {

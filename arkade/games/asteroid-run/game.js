@@ -1262,7 +1262,7 @@ Input.onQuit = () => {
     
     // From start screen -> go to launcher
     if (state === 'init' || state === 'start') {
-        window.location.href = '/KrakenArKade.html';
+        window.location.href = '/arkade/';
         return;
     }
     

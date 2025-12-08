@@ -2222,7 +2222,7 @@ Input.onPause = function() {
 
 Input.onQuit = function() {
     if (Engine.state === 'start') {
-        window.location.href = '/KrakenArKade.html';
+        window.location.href = '/arkade/';
     } else if (Engine.state === 'paused' || Engine.state === 'levelComplete' || 
                Engine.state === 'gameOver' || Engine.state === 'victory') {
         Engine.setState('start');

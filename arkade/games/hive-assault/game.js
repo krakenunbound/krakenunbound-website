@@ -1553,7 +1553,7 @@ const Game = {
     },
     
     quit() {
-        window.location.href = '/';
+        window.location.href = '/arkade/';
     },
     
     toggleSecretMenu() {

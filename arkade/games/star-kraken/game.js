@@ -1347,7 +1347,7 @@ Input.bindings.fire = ['Space']; Input.bindings.missile = ['Tab']; Input.binding
 Input.onPause = togglePause;
 Input.onQuit = function() {
     if (Engine.state === 'start') {
-        window.location.href = '/KrakenArKade.html';
+        window.location.href = '/arkade/';
     } else if (Engine.state === 'paused' || Engine.state === 'levelComplete' || Engine.state === 'gameOver' || Engine.state === 'victory') {
         Engine.setState('start');
         UI.hideAllScreens();
@@ -1389,7 +1389,7 @@ Engine.setState('start'); Engine.start();
 // Backup Q key listener for returning to Arkade from start screen
 document.addEventListener('keydown', (e) => {
     if (e.code === 'KeyQ' && Engine.state === 'start') {
-        window.location.href = '/KrakenArKade.html';
+        window.location.href = '/arkade/';
     }
 });
 

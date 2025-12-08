@@ -607,12 +607,10 @@
             document.getElementById('loading').style.display = 'none';
             document.getElementById('ui-layer').style.display = 'flex';
 
+            // Pre-fill name if returning player
             const n = localStorage.getItem('wordkraken_user');
             if (n) {
-                // Auto-login returning players
-                playerName = n.toUpperCase();
-                document.getElementById('setup').style.display = 'none';
-                startGame();
+                document.getElementById('name-input').value = n;
             }
 
             initStars();

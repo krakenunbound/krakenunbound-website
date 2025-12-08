@@ -534,6 +534,15 @@
             audio.volume = 0.15;
             audio.addEventListener('ended', playNextTrack);
             updateMusicButton();
+
+            // Start music on first user interaction (browser autoplay policy)
+            const startOnInteraction = () => {
+                startMusic();
+                document.removeEventListener('click', startOnInteraction);
+                document.removeEventListener('keydown', startOnInteraction);
+            };
+            document.addEventListener('click', startOnInteraction);
+            document.addEventListener('keydown', startOnInteraction);
         }
 
         function playNextTrack() {

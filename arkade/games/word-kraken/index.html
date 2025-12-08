@@ -450,21 +450,7 @@
             z-index: 1000;
         }
 
-        /* Admin Settings */
-        #admin-btn {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            padding: 5px 10px;
-            background: rgba(255, 0, 100, 0.2);
-            border: 1px solid #f05;
-            color: #f05;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.7rem;
-            z-index: 100;
-            font-family: inherit;
-        }
+        /* Admin Settings - hidden, access via ~ key */
 
         #admin-modal {
             display: none;
@@ -530,7 +516,6 @@
     <canvas id="confetti-canvas"></canvas>
     <div id="horizon-line"></div>
     <button id="music-btn" onclick="toggleMusic()" title="Toggle Music">&#9835;</button>
-    <button id="admin-btn" onclick="openAdmin()">Settings</button>
     <div id="toast-notification">Notification</div>
     <div id="loading">LOADING...</div>
 
@@ -1164,6 +1149,18 @@
 
         window.addEventListener('resize', resize);
         resize();
+
+        // Secret admin menu - press ~ to open
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '`' || e.key === '~') {
+                e.preventDefault();
+                if (adminOpen) {
+                    closeAdmin();
+                } else {
+                    openAdmin();
+                }
+            }
+        });
 
         // ===== ADMIN FUNCTIONS =====
         function openAdmin() {

@@ -31,9 +31,9 @@ const Audio = {
     
     // Asset paths
     paths: {
-        music: '/assets/music/',
-        voices: '/assets/voices/',
-        sfx: '/assets/effects/'
+        music: '/arkade/audio/',
+        voices: '/arkade/audio/voices/',
+        sfx: '/arkade/audio/effects/'
     },
     
     // Music track names

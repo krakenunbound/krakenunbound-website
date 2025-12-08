@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SPELLING KRAKEN</title>
+    <style>
+        :root {
+            --bg-color: #050510;
+            --text-color: #ffffff;
+            --neon: #f9ca24;
+            --neon-cyan: #00ffff;
+            --neon-magenta: #ff00ff;
+            --glass-bg: rgba(10, 20, 40, 0.85);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+        #wallpaper {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('/arkade/assets/desktop.png') center/cover;
+            opacity: 0.4; z-index: -3;
+        }
+        @media (orientation: portrait) {
+            #wallpaper { background-image: url('/arkade/assets/mobile.png'); }
+        }
+        #star-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -2; }
+        #horizon-line { position: fixed; left: 0; width: 100%; height: 2px; background: red; display: none; z-index: 999; }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(249, 202, 36, 0.3);
+            padding: 25px;
+            box-shadow: 0 0 30px rgba(249, 202, 36, 0.15);
+            max-width: 95vw;
+            width: 450px;
+            text-align: center;
+        }
+        .action-btn {
+            width: 100%; padding: 14px; margin-top: 10px;
+            background: linear-gradient(45deg, var(--neon), #ff8800);
+            border: none; border-radius: 8px;
+            color: #000; font-weight: bold; font-size: 1rem;
+            cursor: pointer; transition: 0.3s;
+        }
+        .action-btn:hover { box-shadow: 0 0 20px rgba(249, 202, 36, 0.5); transform: scale(1.02); }
+        input[type="text"] {
+            width: 100%; padding: 14px; margin: 10px 0;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid #444; border-radius: 8px;
+            color: white; text-align: center; font-size: 1.1rem;
+        }
+        input[type="text"]:focus { border-color: var(--neon); outline: none; }
+
+        /* Hexagon layout */
+        .hex-container { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 20px 0; }
+        .hex-row { display: flex; gap: 8px; }
+        .hex-cell {
+            width: 52px; height: 52px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem; font-weight: bold;
+            cursor: pointer; border-radius: 8px;
+            background: rgba(60, 60, 80, 0.8);
+            border: 2px solid #555;
+            transition: all 0.2s;
+        }
+        .hex-cell:hover { transform: scale(1.1); border-color: var(--neon); }
+        .hex-cell.center {
+            background: linear-gradient(135deg, var(--neon), #ff8800);
+            color: #000; border-color: var(--neon);
+            box-shadow: 0 0 15px rgba(249, 202, 36, 0.5);
+        }
+
+        .word-display {
+            height: 50px; margin: 15px 0;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #444; border-radius: 8px;
+            font-size: 1.5rem; font-weight: bold; letter-spacing: 3px;
+        }
+        .controls { display: flex; gap: 8px; margin-top: 10px; }
+        .controls button {
+            flex: 1; padding: 12px;
+            border: none; border-radius: 8px;
+            font-weight: bold; font-size: 1rem;
+            cursor: pointer; transition: 0.2s;
+        }
+        .controls button:hover { transform: scale(1.05); }
+        #delete-btn { background: #ff4444; color: #fff; }
+        #shuffle-btn { background: #666; color: #fff; }
+        #submit-btn { background: var(--neon); color: #000; }
+
+        .score-bar { display: flex; justify-content: space-around; margin-bottom: 15px; }
+        .score-item { text-align: center; }
+        .score-label { font-size: 0.7rem; color: #888; text-transform: uppercase; }
+        .score-value { font-size: 1.3rem; font-weight: bold; color: var(--neon); }
+
+        .rank-bar { width: 100%; height: 8px; background: #333; border-radius: 4px; margin: 10px 0; overflow: hidden; }
+        .rank-fill { height: 100%; background: linear-gradient(90deg, #666, var(--neon), var(--neon-magenta)); transition: width 0.5s; }
+        .rank-label { font-size: 0.9rem; color: var(--neon); margin-bottom: 5px; }
+
+        .found-words {
+            max-height: 120px; overflow-y: auto;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px; padding: 10px; margin-top: 15px;
+        }
+        .found-words h4 { font-size: 0.8rem; color: var(--neon); margin-bottom: 8px; }
+        .words-list { display: flex; flex-wrap: wrap; gap: 5px; }
+        .found-word {
+            background: rgba(249, 202, 36, 0.2);
+            border: 1px solid var(--neon);
+            padding: 3px 8px; border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        .found-word.pangram {
+            background: linear-gradient(135deg, var(--neon-magenta), var(--neon-cyan));
+            color: #000; font-weight: bold; border: none;
+        }
+
+        .toast {
+            position: fixed; top: 100px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px 30px; border-radius: 8px;
+            border: 1px solid var(--neon);
+            opacity: 0; transition: 0.3s; pointer-events: none; z-index: 100;
+        }
+        .toast.show { opacity: 1; top: 120px; }
+        .toast.error { border-color: #ff4444; }
+        .toast.pangram { background: linear-gradient(135deg, var(--neon-magenta), var(--neon-cyan)); color: #000; font-weight: bold; }
+
+        #back-to-arkade {
+            position: fixed; top: 10px; left: 10px;
+            color: var(--neon-cyan); text-decoration: none;
+            border: 1px solid var(--neon-cyan);
+            padding: 8px 12px; border-radius: 8px;
+            background: rgba(0, 0, 0, 0.6); font-size: 0.9rem;
+        }
+        #help-btn, #music-btn {
+            position: fixed; top: 10px; width: 40px; height: 40px;
+            border-radius: 50%; background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--neon-magenta); color: var(--neon-magenta);
+            font-size: 1.2rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #help-btn { right: 60px; }
+        #music-btn { right: 10px; }
+
+        #help-modal, #admin-modal, #leaderboard-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .help-content, .admin-content, .modal-content {
+            background: var(--glass-bg);
+            border: 1px solid var(--neon); border-radius: 16px;
+            padding: 25px; max-width: 400px; width: 90%;
+            max-height: 80vh; overflow-y: auto;
+        }
+        .admin-content label { display: block; margin-top: 15px; color: #888; font-size: 0.9rem; }
+        .admin-content input[type="range"] { width: 100%; margin-top: 5px; }
+
+        #loading {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color);
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.5rem; color: var(--neon); z-index: 2000;
+        }
+
+        @media (max-width: 500px) {
+            .hex-cell { width: 44px; height: 44px; font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+    <div id="wallpaper"></div>
+    <canvas id="star-canvas"></canvas>
+    <div id="horizon-line"></div>
+    <a id="back-to-arkade" href="/arkade/">< ARKADE</a>
+    <button id="help-btn" onclick="openHelp()" title="How to Play">?</button>
+    <button id="music-btn" onclick="toggleMusic()" title="Toggle Music">&#9835;</button>
+    <div id="toast" class="toast">Message</div>
+
+    <!-- Help Modal -->
+    <div id="help-modal">
+        <div class="help-content" style="position: relative;">
+            <button onclick="closeHelp()" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 24px; cursor: pointer;">&times;</button>
+            <h2 style="margin-top: 10px;">HOW TO PLAY</h2>
+            <p style="font-size: 1.1rem; margin-bottom: 20px; text-align: center;">Create words using the <span style="color: var(--neon); font-weight: bold;">honeycomb letters</span>.</p>
+
+            <div style="margin: 20px 0; border-top: 1px solid #444; border-bottom: 1px solid #444; padding: 15px 0;">
+                <p style="margin-bottom: 10px;"><strong>Rules</strong></p>
+                <ul style="margin: 10px 0 15px 20px; text-align: left;">
+                    <li>Words must be 4+ letters long</li>
+                    <li>Words must include the <strong style="color: var(--neon);">center letter</strong></li>
+                    <li>Letters can be used more than once</li>
+                    <li><strong style="color: var(--neon-magenta);">Pangrams</strong> use all 7 letters!</li>
+                </ul>
+            </div>
+
+            <p><strong>Scoring:</strong></p>
+            <p style="font-size: 0.9rem; color: #aaa;">4-letter words = 1 point<br>Longer words = 1 point per letter<br>Pangrams = +7 bonus points!</p>
+
+            <p style="text-align: center; color: #888; font-size: 0.9rem; margin-top: 15px;">A new puzzle appears each day!</p>
+        </div>
+    </div>
+    <div id="loading">LOADING...</div>
+
+    <!-- Admin Modal -->
+    <div id="admin-modal">
+        <div class="admin-content">
+            <h2 style="border-bottom: 1px solid #444; padding-bottom: 10px;">System Config</h2>
+            <label>Horizon: <span id="horizon-value">55</span>%</label>
+            <input type="range" id="horizon-slider" min="0" max="100" value="55" oninput="updateHorizon(this.value)">
+            <label>Volume: <span id="volume-value">15</span>%</label>
+            <input type="range" id="volume-slider" min="0" max="100" value="15" oninput="updateVolume(this.value)">
+            <button onclick="saveAdminSettings()" style="background:#0a5; color:#fff; border:none; width:100%; margin-top:15px; padding:12px;">Save Settings</button>
+            <div style="margin-top:20px; padding-top:15px; border-top:1px solid #444;">
+                <button onclick="regeneratePuzzle()" style="background:#b85; color:#fff; border:none; width:100%; padding:12px;">Regenerate Puzzle</button>
+            </div>
+            <button onclick="closeAdmin()" style="background:#333; color:#fff; border:1px solid #666; width:100%; margin-top:15px; padding:12px;">Close</button>
+        </div>
+    </div>
+
+    <!-- Setup Screen -->
+    <div id="setup-screen" class="glass-panel" style="display:none;">
+        <h2 style="margin-bottom: 10px; color: var(--neon);">SPELLING KRAKEN</h2>
+        <p style="color: #aaa; margin-bottom: 20px;">Create words from the honeycomb</p>
+        <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+        <button class="action-btn" onclick="startGame()">PLAY</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="glass-panel" style="display:none;">
+        <div class="score-bar">
+            <div class="score-item"><div class="score-label">POINTS</div><div class="score-value" id="points-display">0</div></div>
+            <div class="score-item"><div class="score-label">WORDS</div><div class="score-value" id="words-display">0</div></div>
+            <div class="score-item"><div class="score-label">MAX</div><div class="score-value" id="max-display">0</div></div>
+        </div>
+        <div class="rank-label" id="rank-label">BEGINNER</div>
+        <div class="rank-bar"><div class="rank-fill" id="rank-fill" style="width: 0%;"></div></div>
+
+        <div class="hex-container" id="hex-container"></div>
+
+        <div class="word-display" id="word-display"></div>
+
+        <div class="controls">
+            <button id="delete-btn" onclick="deleteLetter()">DEL</button>
+            <button id="shuffle-btn" onclick="shuffleLetters()">MIX</button>
+            <button id="submit-btn" onclick="submitWord()">OK</button>
+        </div>
+
+        <div class="found-words">
+            <h4>FOUND WORDS (<span id="found-count">0</span>)</h4>
+            <div class="words-list" id="words-list"></div>
+        </div>
+
+        <button class="action-btn" onclick="openLeaderboard()" style="background:#333; color:white; margin-top:15px;">VIEW LEADERBOARD</button>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboard-modal">
+        <div class="modal-content">
+            <h2 style="color: var(--neon); margin-bottom: 15px;">TODAY'S LEADERBOARD</h2>
+            <ul id="score-list" style="list-style: none; padding: 0;"></ul>
+            <button class="action-btn" onclick="closeLeaderboard()" style="margin-top: 15px;">CLOSE</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://kraken-arkade-api.krakenunbound.workers.dev';
+        let playerName = '';
+        let puzzleData = null;
+        let currentWord = '';
+        let foundWords = [];
+        let points = 0;
+        let maxPoints = 0;
+        let centerLetter = '';
+        let outerLetters = [];
+        let adminOpen = false;
+        let horizonPercent = 55;
+
+        const RANKS = [
+            { name: "BEGINNER", threshold: 0 },
+            { name: "GOOD START", threshold: 2 },
+            { name: "MOVING UP", threshold: 5 },
+            { name: "GOOD", threshold: 8 },
+            { name: "SOLID", threshold: 15 },
+            { name: "NICE", threshold: 25 },
+            { name: "GREAT", threshold: 40 },
+            { name: "AMAZING", threshold: 50 },
+            { name: "GENIUS", threshold: 70 },
+            { name: "QUEEN KRAKEN", threshold: 100 }
+        ];
+
+        const audio = new Audio('/arkade/assets/music/lofi-ambient.mp3');
+        audio.loop = true;
+        audio.volume = 0.15;
+
+        function getToday() { return new Date().toISOString().split('T')[0]; }
+
+        window.onload = async function() {
+            initStars();
+            loadSettings();
+            const savedName = localStorage.getItem('kraken_user');
+            if (savedName) document.getElementById('playerName').value = savedName;
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('setup-screen').style.display = 'flex';
+        };
+
+        async function startGame() {
+            const input = document.getElementById('playerName');
+            if (!input.value.trim()) return showToast('Enter your name!', true);
+            playerName = input.value.trim().toUpperCase();
+            localStorage.setItem('kraken_user', playerName);
+
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'flex';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/spellingbee/daily`);
+                puzzleData = await res.json();
+
+                centerLetter = puzzleData.center_letter;
+                outerLetters = puzzleData.outer_letters.split('');
+                maxPoints = puzzleData.max_points || 100;
+                document.getElementById('max-display').textContent = maxPoints;
+
+                // Load saved state
+                const saved = localStorage.getItem(`spellingkraken_${getToday()}`);
+                if (saved) {
+                    const state = JSON.parse(saved);
+                    foundWords = state.foundWords || [];
+                    points = state.points || 0;
+                }
+
+                renderHexagons();
+                renderFoundWords();
+                updateScore();
+                tryPlayMusic();
+            } catch (e) {
+                showToast('Connection error', true);
+            }
+        }
+
+        function renderHexagons() {
+            const container = document.getElementById('hex-container');
+            container.innerHTML = '';
+            const row1 = document.createElement('div'); row1.className = 'hex-row';
+            row1.appendChild(createHexCell(outerLetters[0], false));
+            row1.appendChild(createHexCell(outerLetters[1], false));
+            container.appendChild(row1);
+            const row2 = document.createElement('div'); row2.className = 'hex-row';
+            row2.appendChild(createHexCell(outerLetters[2], false));
+            row2.appendChild(createHexCell(centerLetter, true));
+            row2.appendChild(createHexCell(outerLetters[3], false));
+            container.appendChild(row2);
+            const row3 = document.createElement('div'); row3.className = 'hex-row';
+            row3.appendChild(createHexCell(outerLetters[4], false));
+            row3.appendChild(createHexCell(outerLetters[5], false));
+            container.appendChild(row3);
+        }
+
+        function createHexCell(letter, isCenter) {
+            const cell = document.createElement('div');
+            cell.className = `hex-cell ${isCenter ? 'center' : ''}`;
+            cell.textContent = letter;
+            cell.onclick = () => addLetter(letter);
+            return cell;
+        }
+
+        function addLetter(letter) {
+            currentWord += letter;
+            document.getElementById('word-display').textContent = currentWord;
+        }
+
+        function deleteLetter() {
+            currentWord = currentWord.slice(0, -1);
+            document.getElementById('word-display').textContent = currentWord;
+        }
+
+        function shuffleLetters() {
+            for (let i = outerLetters.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [outerLetters[i], outerLetters[j]] = [outerLetters[j], outerLetters[i]];
+            }
+            renderHexagons();
+        }
+
+        async function submitWord() {
+            if (currentWord.length < 4) { showToast('Too short (4+ letters)', true); currentWord = ''; document.getElementById('word-display').textContent = ''; return; }
+            if (!currentWord.includes(centerLetter)) { showToast('Missing center letter!', true); currentWord = ''; document.getElementById('word-display').textContent = ''; return; }
+            if (foundWords.includes(currentWord)) { showToast('Already found!', true); currentWord = ''; document.getElementById('word-display').textContent = ''; return; }
+
+            try {
+                const res = await fetch(`${API_BASE}/api/spellingbee/check`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ word: currentWord, date: getToday() })
+                });
+                const data = await res.json();
+
+                if (data.valid) {
+                    foundWords.push(currentWord);
+                    points += data.points;
+                    if (data.is_pangram) {
+                        showToast('PANGRAM! +' + data.points, false, true);
+                    } else {
+                        showToast('+' + data.points + ' points');
+                    }
+                    renderFoundWords();
+                    updateScore();
+                    saveGameState();
+                    if (points >= maxPoints) submitScore();
+                } else {
+                    showToast(data.error || 'Not in word list', true);
+                }
+            } catch (e) {
+                showToast('Connection error', true);
+            }
+
+            currentWord = '';
+            document.getElementById('word-display').textContent = '';
+        }
+
+        function renderFoundWords() {
+            const list = document.getElementById('words-list');
+            document.getElementById('found-count').textContent = foundWords.length;
+            const allLetters = centerLetter + outerLetters.join('');
+            list.innerHTML = [...foundWords].sort().map(word => {
+                const unique = [...new Set(word.split(''))];
+                const isPangram = unique.length === 7 && unique.every(l => allLetters.includes(l));
+                return `<span class="found-word ${isPangram ? 'pangram' : ''}">${word}</span>`;
+            }).join('');
+        }
+
+        function updateScore() {
+            document.getElementById('points-display').textContent = points;
+            document.getElementById('words-display').textContent = foundWords.length;
+            const pct = maxPoints > 0 ? (points / maxPoints) * 100 : 0;
+            document.getElementById('rank-fill').style.width = Math.min(100, pct) + '%';
+            let rank = RANKS[0];
+            for (const r of RANKS) { if (pct >= r.threshold) rank = r; }
+            document.getElementById('rank-label').textContent = rank.name;
+        }
+
+        function saveGameState() {
+            localStorage.setItem(`spellingkraken_${getToday()}`, JSON.stringify({ foundWords, points }));
+        }
+
+        async function submitScore() {
+            try {
+                await fetch(`${API_BASE}/api/spellingbee/score`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ date: getToday(), player_name: playerName, points, words_found: foundWords.length })
+                });
+            } catch (e) {}
+        }
+
+        // Keyboard input
+        document.addEventListener('keydown', e => {
+            if (document.getElementById('game-screen').style.display !== 'flex') return;
+            if (adminOpen) return;
+            if (e.key === 'Enter') { submitWord(); }
+            else if (e.key === 'Backspace') { deleteLetter(); }
+            else if (/^[a-zA-Z]$/.test(e.key)) {
+                const letter = e.key.toUpperCase();
+                const allLetters = centerLetter + outerLetters.join('');
+                if (allLetters.includes(letter)) addLetter(letter);
+            }
+            if (e.key === '~' || e.key === '`') {
+                e.preventDefault();
+                adminOpen ? closeAdmin() : openAdmin();
+            }
+        });
+
+        function showToast(msg, isError = false, isPangram = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast show';
+            if (isError) t.classList.add('error');
+            if (isPangram) t.classList.add('pangram');
+            setTimeout(() => t.className = 'toast', 2500);
+        }
+
+        // Modals
+        function openHelp() { document.getElementById('help-modal').style.display = 'flex'; }
+        function closeHelp() { document.getElementById('help-modal').style.display = 'none'; }
+        function openAdmin() { adminOpen = true; document.getElementById('admin-modal').style.display = 'flex'; document.getElementById('horizon-line').style.display = 'block'; }
+        function closeAdmin() { adminOpen = false; document.getElementById('admin-modal').style.display = 'none'; document.getElementById('horizon-line').style.display = 'none'; }
+
+        async function openLeaderboard() {
+            document.getElementById('leaderboard-modal').style.display = 'flex';
+            try {
+                const res = await fetch(`${API_BASE}/api/spellingbee/scores?date=${getToday()}`);
+                const data = await res.json();
+                document.getElementById('score-list').innerHTML = data.slice(0, 10).map((s, i) =>
+                    `<li style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #333;"><span>#${i+1} ${s.player_name}</span><span>${s.points} pts</span></li>`
+                ).join('');
+            } catch (e) {}
+        }
+        function closeLeaderboard() { document.getElementById('leaderboard-modal').style.display = 'none'; }
+
+        // Admin
+        function updateHorizon(val) { horizonPercent = parseFloat(val); document.getElementById('horizon-value').textContent = Math.round(val); document.getElementById('horizon-line').style.top = val + '%'; initStars(); }
+        function updateVolume(val) { document.getElementById('volume-value').textContent = Math.round(val); audio.volume = val / 100; }
+        function saveAdminSettings() { localStorage.setItem('kraken_settings', JSON.stringify({ horizon: horizonPercent, volume: audio.volume * 100 })); showToast('Settings saved'); closeAdmin(); }
+        function loadSettings() { try { const s = JSON.parse(localStorage.getItem('kraken_settings')); if (s) { horizonPercent = s.horizon; audio.volume = s.volume / 100; document.getElementById('horizon-slider').value = s.horizon; document.getElementById('volume-slider').value = s.volume; document.getElementById('horizon-value').textContent = Math.round(s.horizon); document.getElementById('volume-value').textContent = Math.round(s.volume); } } catch(e){} }
+
+        async function regeneratePuzzle() {
+            if (!confirm('Generate new puzzle for today?')) return;
+            try {
+                await fetch(`${API_BASE}/api/generate/spellingbee`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date: getToday() }) });
+                location.reload();
+            } catch (e) { showToast('Failed', true); }
+        }
+
+        function toggleMusic() { audio.paused ? audio.play().catch(()=>{}) : audio.pause(); }
+        function tryPlayMusic() { audio.play().catch(() => {}); }
+
+        // Stars
+        const canvas = document.getElementById('star-canvas'), ctx = canvas.getContext('2d');
+        let stars = [];
+        function initStars() {
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            stars = [];
+            const maxY = canvas.height * (horizonPercent / 100);
+            for (let i = 0; i < 150; i++) {
+                stars.push({ x: Math.random() * canvas.width, y: Math.random() * maxY, size: Math.random() * 2, twinkle: Math.random() * 100 });
+            }
+        }
+        function animateStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            stars.forEach(s => {
+                const alpha = 0.5 + Math.sin(Date.now() * 0.002 + s.twinkle) * 0.3;
+                ctx.fillStyle = `rgba(255,255,255,${Math.max(0, alpha)})`;
+                ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2); ctx.fill();
+            });
+            requestAnimationFrame(animateStars);
+        }
+        window.addEventListener('resize', initStars);
+        initStars(); animateStars();
+    </script>
+</body>
+</html>

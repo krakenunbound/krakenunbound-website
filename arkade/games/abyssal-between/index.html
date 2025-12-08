@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ABYSSAL BETWEEN</title>
+    <style>
+        :root {
+            --bg-color: #050510;
+            --text-color: #ffffff;
+            --neon: #ff6600;
+            --neon-cyan: #00ffff;
+            --neon-magenta: #ff00ff;
+            --glass-bg: rgba(10, 20, 40, 0.85);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+        #wallpaper {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('/arkade/assets/desktop.png') center/cover;
+            opacity: 0.4; z-index: -3;
+        }
+        @media (orientation: portrait) {
+            #wallpaper { background-image: url('/arkade/assets/mobile.png'); }
+        }
+        #star-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -2; }
+        #horizon-line { position: fixed; left: 0; width: 100%; height: 2px; background: red; display: none; z-index: 999; }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 102, 0, 0.3);
+            padding: 25px;
+            box-shadow: 0 0 30px rgba(255, 102, 0, 0.15);
+            max-width: 95vw;
+            width: 500px;
+            text-align: center;
+        }
+        .action-btn {
+            width: 100%; padding: 14px; margin-top: 10px;
+            background: linear-gradient(45deg, var(--neon), #ff3300);
+            border: none; border-radius: 8px;
+            color: #fff; font-weight: bold; font-size: 1rem;
+            cursor: pointer; transition: 0.3s;
+        }
+        .action-btn:hover { box-shadow: 0 0 20px rgba(255, 102, 0, 0.5); transform: scale(1.02); }
+        input[type="text"] {
+            width: 100%; padding: 14px; margin: 10px 0;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid #444; border-radius: 8px;
+            color: white; text-align: center; font-size: 1.2rem;
+            text-transform: uppercase; letter-spacing: 2px;
+        }
+        input[type="text"]:focus { border-color: var(--neon-cyan); outline: none; box-shadow: 0 0 15px rgba(0, 255, 255, 0.2); }
+
+        .bounds-display { display: flex; justify-content: center; align-items: center; gap: 15px; margin: 20px 0; }
+        .bound-word {
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid var(--neon);
+            border-radius: 12px; padding: 12px 20px;
+            font-size: 1.3rem; font-weight: bold;
+            color: var(--neon); text-shadow: 0 0 10px rgba(255, 102, 0, 0.5);
+            min-width: 100px;
+        }
+        .bound-label { font-size: 0.7rem; color: #888; text-transform: uppercase; margin-bottom: 5px; }
+        .bound-container { display: flex; flex-direction: column; align-items: center; }
+        .arrow { font-size: 1.5rem; color: var(--neon-cyan); opacity: 0.7; }
+
+        .stats-bar { display: flex; justify-content: center; gap: 40px; margin: 15px 0; padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 8px; }
+        .stat { text-align: center; }
+        .stat-value { font-size: 1.6rem; font-weight: bold; color: var(--neon-cyan); }
+        .stat-label { font-size: 0.7rem; color: #888; text-transform: uppercase; }
+
+        .guess-history { max-height: 200px; overflow-y: auto; margin-top: 15px; }
+        .guess-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 15px; margin: 5px 0;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px; border-left: 3px solid;
+        }
+        .guess-item.too-low { border-color: #ff4444; }
+        .guess-item.too-high { border-color: #4444ff; }
+        .guess-item.correct { border-color: #44ff44; background: rgba(0, 255, 0, 0.1); }
+        .guess-word { font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        .guess-dir { font-size: 0.85rem; opacity: 0.8; }
+
+        .toast {
+            position: fixed; top: 100px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px 30px; border-radius: 8px;
+            border: 1px solid var(--neon);
+            opacity: 0; transition: 0.3s; pointer-events: none; z-index: 100;
+        }
+        .toast.show { opacity: 1; top: 120px; }
+        .toast.error { border-color: #ff4444; }
+        .toast.success { border-color: #44ff44; background: rgba(0, 255, 0, 0.1); }
+
+        #back-to-arkade {
+            position: fixed; top: 10px; left: 10px;
+            color: var(--neon-cyan); text-decoration: none;
+            border: 1px solid var(--neon-cyan);
+            padding: 8px 12px; border-radius: 8px;
+            background: rgba(0, 0, 0, 0.6); font-size: 0.9rem;
+        }
+        #help-btn, #music-btn {
+            position: fixed; top: 10px; width: 40px; height: 40px;
+            border-radius: 50%; background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--neon-magenta); color: var(--neon-magenta);
+            font-size: 1.2rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #help-btn { right: 60px; }
+        #music-btn { right: 10px; }
+
+        #help-modal, #admin-modal, #leaderboard-modal, #win-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .help-content, .admin-content, .modal-content {
+            background: var(--glass-bg);
+            border: 1px solid var(--neon); border-radius: 16px;
+            padding: 25px; max-width: 400px; width: 90%;
+            max-height: 80vh; overflow-y: auto;
+        }
+        .admin-content label { display: block; margin-top: 15px; color: #888; font-size: 0.9rem; }
+        .admin-content input[type="range"] { width: 100%; margin-top: 5px; }
+
+        #loading {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color);
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.5rem; color: var(--neon); z-index: 2000;
+        }
+
+        .win-title { font-size: 2rem; color: #44ff44; text-shadow: 0 0 20px rgba(0, 255, 0, 0.5); margin-bottom: 15px; }
+        .win-word { font-size: 2.5rem; font-weight: bold; color: var(--neon); margin: 20px 0; text-shadow: 0 0 20px rgba(255, 102, 0, 0.5); }
+    </style>
+</head>
+<body>
+    <div id="wallpaper"></div>
+    <canvas id="star-canvas"></canvas>
+    <div id="horizon-line"></div>
+    <a id="back-to-arkade" href="/arkade/">< ARKADE</a>
+    <button id="help-btn" onclick="openHelp()" title="How to Play">?</button>
+    <button id="music-btn" onclick="toggleMusic()" title="Toggle Music">&#9835;</button>
+    <div id="toast" class="toast">Message</div>
+
+    <!-- Help Modal -->
+    <div id="help-modal">
+        <div class="help-content" style="position: relative;">
+            <button onclick="closeHelp()" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 24px; cursor: pointer;">&times;</button>
+            <h2 style="margin-top: 10px;">HOW TO PLAY</h2>
+            <p style="font-size: 1.1rem; margin-bottom: 20px; text-align: center;">Find the <span style="color: var(--neon); font-weight: bold;">secret word</span> hidden alphabetically between two bounds.</p>
+
+            <div style="margin: 20px 0; border-top: 1px solid #444; border-bottom: 1px solid #444; padding: 15px 0;">
+                <p style="margin-bottom: 10px;"><strong>How It Works</strong></p>
+                <ul style="margin: 10px 0 15px 20px; text-align: left;">
+                    <li>Guess any word between the upper and lower bounds</li>
+                    <li>Each guess narrows down the range</li>
+                    <li><strong style="color: #ff4444;">Too Low</strong> = word comes before the secret</li>
+                    <li><strong style="color: #4444ff;">Too High</strong> = word comes after the secret</li>
+                </ul>
+            </div>
+
+            <p><strong>Tips:</strong></p>
+            <p style="font-size: 0.9rem; color: #aaa;">Think alphabetically! Start with words in the middle of the range to narrow it quickly.</p>
+
+            <p style="text-align: center; color: #888; font-size: 0.9rem; margin-top: 15px;">Fewer guesses = better score! A new puzzle each day.</p>
+        </div>
+    </div>
+    <div id="loading">LOADING...</div>
+
+    <!-- Admin Modal -->
+    <div id="admin-modal">
+        <div class="admin-content">
+            <h2 style="border-bottom: 1px solid #444; padding-bottom: 10px;">System Config</h2>
+            <label>Horizon: <span id="horizon-value">55</span>%</label>
+            <input type="range" id="horizon-slider" min="0" max="100" value="55" oninput="updateHorizon(this.value)">
+            <label>Volume: <span id="volume-value">15</span>%</label>
+            <input type="range" id="volume-slider" min="0" max="100" value="15" oninput="updateVolume(this.value)">
+            <button onclick="saveAdminSettings()" style="background:#0a5; color:#fff; border:none; width:100%; margin-top:15px; padding:12px;">Save Settings</button>
+            <div style="margin-top:20px; padding-top:15px; border-top:1px solid #444;">
+                <button onclick="regeneratePuzzle()" style="background:#b85; color:#fff; border:none; width:100%; padding:12px;">Regenerate Puzzle</button>
+            </div>
+            <button onclick="closeAdmin()" style="background:#333; color:#fff; border:1px solid #666; width:100%; margin-top:15px; padding:12px;">Close</button>
+        </div>
+    </div>
+
+    <!-- Setup Screen -->
+    <div id="setup-screen" class="glass-panel" style="display:none;">
+        <h2 style="margin-bottom: 10px; color: var(--neon);">ABYSSAL BETWEEN</h2>
+        <p style="color: #aaa; margin-bottom: 20px;">Find the word hidden in the depths</p>
+        <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+        <button class="action-btn" onclick="startGame()">DIVE IN</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="glass-panel" style="display:none;">
+        <div class="bounds-display">
+            <div class="bound-container">
+                <div class="bound-label">Lower Bound</div>
+                <div class="bound-word" id="lower-bound">ABYSS</div>
+            </div>
+            <div class="arrow">...</div>
+            <div class="bound-container">
+                <div class="bound-label">Upper Bound</div>
+                <div class="bound-word" id="upper-bound">ZENITH</div>
+            </div>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat"><div class="stat-value" id="guess-count">0</div><div class="stat-label">Guesses</div></div>
+        </div>
+
+        <input type="text" id="guess-input" placeholder="Enter a word" maxlength="20" autocomplete="off">
+        <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">Press Enter to guess</p>
+
+        <div class="guess-history" id="guess-history"></div>
+    </div>
+
+    <!-- Win Modal -->
+    <div id="win-modal">
+        <div class="modal-content">
+            <div class="win-title">TARGET FOUND!</div>
+            <div class="win-word" id="target-word">KRAKEN</div>
+            <div class="stats-bar">
+                <div class="stat"><div class="stat-value" id="final-guesses">0</div><div class="stat-label">Guesses</div></div>
+                <div class="stat"><div class="stat-value" id="final-score">100</div><div class="stat-label">Score</div></div>
+            </div>
+            <button class="action-btn" onclick="shareResults()" style="background: linear-gradient(45deg, #1da1f2, #0077b5);">SHARE RESULTS</button>
+            <button class="action-btn" onclick="location.reload()">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboard-modal">
+        <div class="modal-content">
+            <h2 style="color: var(--neon); margin-bottom: 15px;">TODAY'S LEADERBOARD</h2>
+            <ul id="score-list" style="list-style: none; padding: 0;"></ul>
+            <button class="action-btn" onclick="closeLeaderboard()" style="margin-top: 15px;">CLOSE</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://kraken-arkade-api.krakenunbound.workers.dev';
+        let playerName = '';
+        let lowerBound = '';
+        let upperBound = '';
+        let guesses = [];
+        let guessCount = 0;
+        let gameWon = false;
+        let targetWord = '';
+        let adminOpen = false;
+        let horizonPercent = 55;
+
+        const audio = new Audio('/arkade/assets/music/lofi-ambient.mp3');
+        audio.loop = true;
+        audio.volume = 0.15;
+
+        function getToday() { return new Date().toISOString().split('T')[0]; }
+
+        window.onload = async function() {
+            initStars();
+            loadSettings();
+            const savedName = localStorage.getItem('kraken_user');
+            if (savedName) document.getElementById('playerName').value = savedName;
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('setup-screen').style.display = 'flex';
+        };
+
+        async function startGame() {
+            const input = document.getElementById('playerName');
+            if (!input.value.trim()) return showToast('Enter your name!', true);
+            playerName = input.value.trim().toUpperCase();
+            localStorage.setItem('kraken_user', playerName);
+
+            try {
+                const res = await fetch(`${API_BASE}/api/between/daily`);
+                const data = await res.json();
+                if (data.error) { showToast(data.error, true); return; }
+
+                lowerBound = data.lower_bound;
+                upperBound = data.upper_bound;
+
+                // Check for saved game
+                const saved = localStorage.getItem(`abyssalbetween_${getToday()}`);
+                if (saved) {
+                    const state = JSON.parse(saved);
+                    if (state.won) {
+                        guesses = state.guesses;
+                        guessCount = state.guessCount;
+                        targetWord = state.targetWord;
+                        showWinScreen();
+                        return;
+                    }
+                    guesses = state.guesses || [];
+                    guessCount = state.guessCount || 0;
+                    lowerBound = state.lowerBound || lowerBound;
+                    upperBound = state.upperBound || upperBound;
+                }
+
+                document.getElementById('setup-screen').style.display = 'none';
+                document.getElementById('game-screen').style.display = 'flex';
+                updateDisplay();
+                renderGuessHistory();
+
+                document.getElementById('guess-input').focus();
+                tryPlayMusic();
+            } catch (e) {
+                showToast('Connection error', true);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('guess-input').addEventListener('keypress', e => {
+                if (e.key === 'Enter') makeGuess();
+            });
+        });
+
+        async function makeGuess() {
+            const input = document.getElementById('guess-input');
+            const guess = input.value.trim().toUpperCase();
+            input.value = '';
+
+            if (!guess || guess.length < 2) return showToast('Word must be at least 2 letters', true);
+            if (!/^[A-Z]+$/.test(guess)) return showToast('Only letters allowed', true);
+            if (guesses.some(g => g.word === guess)) return showToast('Already guessed!', true);
+            if (guess <= lowerBound || guess >= upperBound) return showToast('Guess must be between bounds!', true);
+
+            try {
+                const res = await fetch(`${API_BASE}/api/between/check`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ word: guess, date: getToday() })
+                });
+                const data = await res.json();
+
+                if (!data.valid) return showToast(data.error || 'Not a valid word', true);
+
+                guessCount++;
+
+                if (data.result === 'correct') {
+                    gameWon = true;
+                    targetWord = guess;
+                    guesses.push({ word: guess, direction: 'correct' });
+                    saveGameState(true);
+                    submitScore();
+                    showWinScreen();
+                    return;
+                }
+
+                if (data.result === 'too_low') {
+                    lowerBound = guess;
+                    guesses.push({ word: guess, direction: 'too-low' });
+                    showToast(`"${guess}" is too low!`);
+                } else {
+                    upperBound = guess;
+                    guesses.push({ word: guess, direction: 'too-high' });
+                    showToast(`"${guess}" is too high!`);
+                }
+
+                updateDisplay();
+                renderGuessHistory();
+                saveGameState(false);
+            } catch (e) {
+                showToast('Connection error', true);
+            }
+        }
+
+        function updateDisplay() {
+            document.getElementById('lower-bound').textContent = lowerBound;
+            document.getElementById('upper-bound').textContent = upperBound;
+            document.getElementById('guess-count').textContent = guessCount;
+        }
+
+        function renderGuessHistory() {
+            const container = document.getElementById('guess-history');
+            container.innerHTML = guesses.map(g => `
+                <div class="guess-item ${g.direction}">
+                    <span class="guess-word">${g.word}</span>
+                    <span class="guess-dir">${g.direction === 'too-low' ? '↑ Higher' : g.direction === 'too-high' ? '↓ Lower' : '✓ Correct!'}</span>
+                </div>
+            `).reverse().join('');
+        }
+
+        function showWinScreen() {
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('win-modal').style.display = 'flex';
+            document.getElementById('target-word').textContent = targetWord;
+            document.getElementById('final-guesses').textContent = guessCount;
+            document.getElementById('final-score').textContent = Math.max(100 - (guessCount - 1) * 10, 10);
+        }
+
+        function saveGameState(won) {
+            localStorage.setItem(`abyssalbetween_${getToday()}`, JSON.stringify({
+                guesses, guessCount, lowerBound, upperBound, won, targetWord: won ? targetWord : null
+            }));
+        }
+
+        async function submitScore() {
+            const score = Math.max(100 - (guessCount - 1) * 10, 10);
+            try {
+                await fetch(`${API_BASE}/api/between/score`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ date: getToday(), player_name: playerName, guesses: guessCount, score })
+                });
+            } catch (e) {}
+        }
+
+        function shareResults() {
+            const squares = guesses.map(g => g.direction === 'correct' ? '🟩' : g.direction === 'too-low' ? '🟥' : '🟦').join('');
+            const text = `Abyssal Between ${getToday()}\n${guessCount} guesses\n${squares}\nkrakenunbound.com/arkade/`;
+            if (navigator.share) navigator.share({ text });
+            else { navigator.clipboard.writeText(text); showToast('Copied to clipboard!', false, true); }
+        }
+
+        function showToast(msg, isError = false, isSuccess = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast show';
+            if (isError) t.classList.add('error');
+            if (isSuccess) t.classList.add('success');
+            setTimeout(() => t.className = 'toast', 2500);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', e => {
+            if (e.key === '~' || e.key === '`') {
+                e.preventDefault();
+                adminOpen ? closeAdmin() : openAdmin();
+            }
+        });
+
+        // Modals
+        function openHelp() { document.getElementById('help-modal').style.display = 'flex'; }
+        function closeHelp() { document.getElementById('help-modal').style.display = 'none'; }
+        function openAdmin() { adminOpen = true; document.getElementById('admin-modal').style.display = 'flex'; document.getElementById('horizon-line').style.display = 'block'; }
+        function closeAdmin() { adminOpen = false; document.getElementById('admin-modal').style.display = 'none'; document.getElementById('horizon-line').style.display = 'none'; }
+        function closeLeaderboard() { document.getElementById('leaderboard-modal').style.display = 'none'; }
+
+        // Admin
+        function updateHorizon(val) { horizonPercent = parseFloat(val); document.getElementById('horizon-value').textContent = Math.round(val); document.getElementById('horizon-line').style.top = val + '%'; initStars(); }
+        function updateVolume(val) { document.getElementById('volume-value').textContent = Math.round(val); audio.volume = val / 100; }
+        function saveAdminSettings() { localStorage.setItem('kraken_settings', JSON.stringify({ horizon: horizonPercent, volume: audio.volume * 100 })); showToast('Settings saved'); closeAdmin(); }
+        function loadSettings() { try { const s = JSON.parse(localStorage.getItem('kraken_settings')); if (s) { horizonPercent = s.horizon; audio.volume = s.volume / 100; document.getElementById('horizon-slider').value = s.horizon; document.getElementById('volume-slider').value = s.volume; document.getElementById('horizon-value').textContent = Math.round(s.horizon); document.getElementById('volume-value').textContent = Math.round(s.volume); } } catch(e){} }
+
+        async function regeneratePuzzle() {
+            if (!confirm('Generate new puzzle for today?')) return;
+            try {
+                await fetch(`${API_BASE}/api/generate/between`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date: getToday() }) });
+                location.reload();
+            } catch (e) { showToast('Failed', true); }
+        }
+
+        function toggleMusic() { audio.paused ? audio.play().catch(()=>{}) : audio.pause(); }
+        function tryPlayMusic() { audio.play().catch(() => {}); }
+
+        // Stars
+        const canvas = document.getElementById('star-canvas'), ctx = canvas.getContext('2d');
+        let stars = [];
+        function initStars() {
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            stars = [];
+            const maxY = canvas.height * (horizonPercent / 100);
+            for (let i = 0; i < 150; i++) {
+                stars.push({ x: Math.random() * canvas.width, y: Math.random() * maxY, size: Math.random() * 2, twinkle: Math.random() * 100 });
+            }
+        }
+        function animateStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            stars.forEach(s => {
+                const alpha = 0.5 + Math.sin(Date.now() * 0.002 + s.twinkle) * 0.3;
+                ctx.fillStyle = `rgba(255,255,255,${Math.max(0, alpha)})`;
+                ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2); ctx.fill();
+            });
+            requestAnimationFrame(animateStars);
+        }
+        window.addEventListener('resize', initStars);
+        initStars(); animateStars();
+    </script>
+</body>
+</html>

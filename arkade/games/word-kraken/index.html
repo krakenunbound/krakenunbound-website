@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WORD KRAKEN</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <style>
+        :root {
+            --text: #e0e0e0;
+            --absent: rgba(58, 58, 60, 0.95);
+            --present: rgba(181, 159, 59, 0.95);
+            --correct: rgba(83, 141, 78, 0.95);
+            --border: rgba(255, 255, 255, 0.2);
+            --neon: #00ffff;
+            --kraken-cyan: #00ffff;
+            --kraken-magenta: #ff00ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            color: var(--text);
+            font-family: 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 50%, #0a1a2e 100%);
+            touch-action: manipulation;
+        }
+
+        #star-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        #ui-layer {
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+        }
+
+        .glass-panel {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            padding: 20px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.15);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 95vw;
+            max-height: 95vh;
+            overflow-y: auto;
+        }
+
+        h1 {
+            margin: 0 0 15px 0;
+            font-size: 2rem;
+            letter-spacing: 4px;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            text-transform: uppercase;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.4);
+            padding-bottom: 10px;
+            background: linear-gradient(135deg, var(--kraken-cyan), var(--kraken-magenta));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        #theme-display {
+            font-size: 0.9rem;
+            color: var(--kraken-magenta);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #board {
+            display: grid;
+            grid-template-rows: repeat(6, 1fr);
+            gap: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+        }
+
+        .tile {
+            width: 55px;
+            height: 55px;
+            border: 2px solid var(--border);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            background: rgba(0, 0, 0, 0.4);
+            user-select: none;
+            text-shadow: 0 0 5px black;
+        }
+
+        @media (max-height: 700px) {
+            .tile {
+                width: 45px;
+                height: 45px;
+                font-size: 1.5rem;
+            }
+            h1 {
+                font-size: 1.5rem;
+                margin: 10px 0;
+            }
+        }
+
+        .tile[data-state='active'] {
+            border-color: var(--neon);
+            background: rgba(0, 255, 255, 0.1);
+        }
+
+        .tile.correct {
+            background-color: var(--correct);
+            border-color: var(--correct);
+        }
+
+        .tile.present {
+            background-color: var(--present);
+            border-color: var(--present);
+        }
+
+        .tile.absent {
+            background-color: var(--absent);
+            border-color: var(--absent);
+        }
+
+        .tile.flip {
+            animation: flip 0.5s ease forwards;
+        }
+
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(1px); }
+            20% { transform: translateX(-3px); }
+            40% { transform: translateX(1px); }
+            60% { transform: translateX(-3px); }
+            80% { transform: translateX(-1px); }
+        }
+
+        @keyframes flip {
+            0% { transform: rotateX(0); }
+            50% { transform: rotateX(90deg); }
+            100% { transform: rotateX(0); }
+        }
+
+        #keyboard {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .key-row {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .key {
+            flex: 1;
+            height: 58px;
+            border-radius: 6px;
+            background-color: rgba(200, 200, 200, 0.2);
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-transform: uppercase;
+            user-select: none;
+            transition: 0.2s;
+            font-size: 1.3rem;
+            color: #fff;
+            text-shadow: 0 0 3px black;
+        }
+
+        .key:active {
+            background-color: #fff;
+            color: #000;
+        }
+
+        .key.big {
+            flex: 1.5;
+            font-size: 0.9rem;
+        }
+
+        .key.correct { background-color: var(--correct); }
+        .key.present { background-color: var(--present); }
+        .key.absent {
+            background-color: rgba(30, 30, 30, 0.9);
+            color: #444;
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 600px) {
+            #keyboard {
+                max-width: 100%;
+                gap: 4px;
+                padding: 0 5px;
+            }
+            .key-row { gap: 3px; }
+            .key {
+                height: 50px;
+                font-size: 1.1rem;
+            }
+            .glass-panel {
+                padding: 10px;
+                width: 98%;
+            }
+        }
+
+        input {
+            margin: 10px;
+            padding: 10px;
+            font-size: 1.2rem;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: 1px solid #777;
+            text-align: center;
+            font-family: inherit;
+            width: 80%;
+        }
+
+        button.action-btn {
+            background: var(--present);
+            color: black;
+            border: none;
+            padding: 12px 20px;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+            font-size: 1rem;
+        }
+
+        button.share-btn {
+            background: var(--correct);
+            color: white;
+            text-shadow: 0 1px 2px black;
+        }
+
+        #toast-notification {
+            visibility: hidden;
+            min-width: 280px;
+            background-color: rgba(10, 10, 10, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 16px;
+            position: fixed;
+            z-index: 2000;
+            left: 50%;
+            top: 50px;
+            transform: translateX(-50%);
+            font-size: 1rem;
+            letter-spacing: 1px;
+            opacity: 0;
+            transition: all 0.3s ease-in-out;
+            text-transform: uppercase;
+        }
+
+        #toast-notification.show {
+            visibility: visible;
+            opacity: 1;
+            top: 100px;
+        }
+
+        #toast-notification.error {
+            border-color: rgba(255, 50, 50, 0.5);
+        }
+
+        #back-to-arkade {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            opacity: 0.7;
+            font-size: 0.8rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 4px;
+            z-index: 10;
+            cursor: pointer;
+            color: var(--neon);
+            border: 1px solid var(--neon);
+            text-decoration: none;
+        }
+
+        #back-to-arkade:hover {
+            opacity: 1;
+            background: rgba(0, 255, 255, 0.2);
+        }
+
+        #victory-modal, #scoreboard {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 340px;
+            background: rgba(20, 20, 20, 0.98);
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+            border: 1px solid #555;
+            text-align: center;
+            z-index: 50;
+        }
+
+        .score-tabs {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #444;
+        }
+
+        .score-tab {
+            background: none;
+            border: none;
+            color: #888;
+            padding: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 1rem;
+            flex: 1;
+        }
+
+        .score-tab.active {
+            color: var(--neon);
+            border-bottom: 2px solid var(--neon);
+            font-weight: bold;
+        }
+
+        h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.5rem;
+            color: var(--neon);
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        li {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #444;
+            font-size: 0.9rem;
+        }
+
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--neon);
+            font-size: 1.5rem;
+            z-index: 1000;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="star-canvas"></canvas>
+    <canvas id="confetti-canvas"></canvas>
+    <div id="toast-notification">Notification</div>
+    <div id="loading">LOADING...</div>
+
+    <div id="ui-layer" style="display: none;">
+        <a id="back-to-arkade" href="/arkade/">< ARKADE</a>
+
+        <div id="setup" class="glass-panel" style="text-align:center;">
+            <h1>WORD KRAKEN</h1>
+            <p>IDENTIFY YOURSELF:</p>
+            <input type="text" id="name-input" placeholder="NAME" autocomplete="off">
+            <br>
+            <button onclick="handleLogin()" class="action-btn" style="width: 200px;">INITIALIZE</button>
+            <button onclick="openScoreboard('setup')" class="action-btn" style="width: 200px; background: #333; margin-top: 10px;">LEADERBOARD</button>
+            <button onclick="window.location.href='/arkade/'" class="action-btn" style="width: 200px; background: #500; margin-top: 10px;">< BACK TO ARKADE</button>
+        </div>
+
+        <div id="game-container" class="glass-panel" style="display:none;">
+            <h1>WORD KRAKEN</h1>
+            <div id="theme-display"></div>
+            <div id="board"></div>
+            <div id="keyboard"></div>
+        </div>
+
+        <div id="victory-modal">
+            <h2 id="victory-title">SEQUENCE COMPLETE</h2>
+            <div id="victory-message" style="margin: 15px 0; font-size: 1.5rem; color: #fff;"></div>
+            <div id="victory-word" style="margin: 10px 0; font-size: 1.2rem; color: var(--correct);"></div>
+            <button onclick="shareResult()" class="action-btn share-btn">SHARE RESULT</button>
+            <button onclick="openScoreboard('victory')" class="action-btn" style="background:#333; margin-top:10px;">VIEW LEADERBOARD</button>
+            <button onclick="window.location.href='/arkade/'" class="action-btn" style="background:#500; margin-top:10px;">BACK TO ARKADE</button>
+        </div>
+
+        <div id="scoreboard">
+            <h2>LEADERBOARD</h2>
+            <ul id="score-list"></ul>
+            <button onclick="closeScoreboard()" class="action-btn">CLOSE</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://kraken-arkade-api.krakenunbound.workers.dev';
+        const rows = 6, cols = 5;
+        let currentRow = 0, currentTile = 0, gameOver = false, playerName = "";
+        let secretWord = "", wordTheme = "";
+        const board = document.getElementById('board'), keyboard = document.getElementById('keyboard');
+        const keys = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+        let lastScreen = "setup";
+
+        function showToast(msg, isError = false) {
+            const t = document.getElementById("toast-notification");
+            t.textContent = msg;
+            t.className = isError ? "show error" : "show";
+            setTimeout(() => t.className = "", 2500);
+        }
+
+        function formatDate() {
+            return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        function getToday() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        // Load game on startup
+        window.onload = async function() {
+            await loadDailyWord();
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('ui-layer').style.display = 'flex';
+
+            const n = localStorage.getItem('wordkraken_user');
+            if (n) {
+                document.getElementById('name-input').value = n;
+            }
+
+            initStars();
+            animate();
+        };
+
+        async function loadDailyWord() {
+            try {
+                const res = await fetch(`${API_BASE}/api/daily-word?date=${getToday()}`);
+                const data = await res.json();
+                if (data.word) {
+                    secretWord = data.word.toUpperCase();
+                    wordTheme = data.theme || '';
+                } else {
+                    // Fallback
+                    secretWord = "KRAKE";
+                    wordTheme = "General";
+                }
+            } catch (e) {
+                console.error('Failed to load daily word:', e);
+                secretWord = "OCEAN";
+                wordTheme = "General";
+            }
+        }
+
+        function handleLogin() {
+            const i = document.getElementById('name-input');
+            if (!i.value) return showToast("IDENTIFICATION REQUIRED", true);
+            playerName = i.value.trim().toUpperCase();
+            localStorage.setItem('wordkraken_user', playerName);
+            document.getElementById('setup').style.display = 'none';
+            startGame();
+        }
+
+        function startGame() {
+            document.getElementById('game-container').style.display = 'flex';
+            if (wordTheme) {
+                document.getElementById('theme-display').textContent = `Theme: ${wordTheme}`;
+            }
+            initBoard();
+            initKeyboard();
+            loadSavedState();
+        }
+
+        function loadSavedState() {
+            const saved = localStorage.getItem(`wordle_${getToday()}_${playerName}`);
+            if (saved) {
+                const state = JSON.parse(saved);
+                state.guesses.forEach((word, rowIdx) => {
+                    for (let i = 0; i < word.length; i++) {
+                        document.getElementById(`${rowIdx}-${i}`).textContent = word[i];
+                    }
+                    currentRow = rowIdx;
+                    currentTile = 5;
+                    applyGuessResult(word, rowIdx, true);
+                });
+                currentRow = state.guesses.length;
+                currentTile = 0;
+                if (state.finished) {
+                    gameOver = true;
+                    document.getElementById('keyboard').style.display = 'none';
+                }
+            }
+        }
+
+        function saveState(guesses, finished) {
+            localStorage.setItem(`wordle_${getToday()}_${playerName}`, JSON.stringify({ guesses, finished }));
+        }
+
+        function initBoard() {
+            board.innerHTML = '';
+            for (let r = 0; r < rows; r++) {
+                const rowDiv = document.createElement('div');
+                rowDiv.classList.add('row');
+                rowDiv.id = `row-${r}`;
+                for (let c = 0; c < cols; c++) {
+                    const tile = document.createElement('div');
+                    tile.classList.add('tile');
+                    tile.id = `${r}-${c}`;
+                    rowDiv.appendChild(tile);
+                }
+                board.appendChild(rowDiv);
+            }
+        }
+
+        function initKeyboard() {
+            keyboard.innerHTML = '';
+            keyboard.style.display = 'flex';
+            keys.forEach((rowKeys, i) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.classList.add('key-row');
+                if (i === 2) addKey(rowDiv, "ENTER", "big");
+                rowKeys.split('').forEach(k => addKey(rowDiv, k));
+                if (i === 2) addKey(rowDiv, "DEL", "big");
+                keyboard.appendChild(rowDiv);
+            });
+            document.addEventListener('keydown', handleKey);
+        }
+
+        function addKey(row, letter, className) {
+            const key = document.createElement('div');
+            key.textContent = letter;
+            key.classList.add('key');
+            if (className) key.classList.add(className);
+            key.id = "key-" + letter;
+            key.ontouchstart = e => { e.preventDefault(); key.click(); };
+            key.onclick = () => {
+                if (letter === "ENTER") submitGuess();
+                else if (letter === "DEL") deleteLetter();
+                else addLetter(letter);
+            };
+            row.appendChild(key);
+        }
+
+        function handleKey(e) {
+            if (gameOver) return;
+            if (e.key === "Enter") submitGuess();
+            else if (e.key === "Backspace") deleteLetter();
+            else if (/^[a-zA-Z]$/.test(e.key)) addLetter(e.key.toUpperCase());
+        }
+
+        function addLetter(letter) {
+            if (currentTile < cols && currentRow < rows) {
+                const tile = document.getElementById(`${currentRow}-${currentTile}`);
+                tile.textContent = letter;
+                tile.setAttribute('data-state', 'active');
+                currentTile++;
+            }
+        }
+
+        function deleteLetter() {
+            if (currentTile > 0) {
+                currentTile--;
+                const tile = document.getElementById(`${currentRow}-${currentTile}`);
+                tile.textContent = "";
+                tile.removeAttribute('data-state');
+            }
+        }
+
+        async function submitGuess() {
+            if (currentTile !== cols || gameOver) return;
+
+            let guess = Array.from({ length: cols }, (_, c) =>
+                document.getElementById(`${currentRow}-${c}`).textContent
+            ).join("");
+
+            // Validate word
+            try {
+                const res = await fetch(`${API_BASE}/api/wordle/validate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ word: guess })
+                });
+                const data = await res.json();
+                if (!data.valid) {
+                    document.getElementById(`row-${currentRow}`).classList.add('shake');
+                    setTimeout(() => document.getElementById(`row-${currentRow}`).classList.remove('shake'), 500);
+                    showToast("UNKNOWN WORD", true);
+                    return;
+                }
+            } catch (e) {
+                // If validation fails, proceed anyway
+                console.warn('Validation failed, proceeding:', e);
+            }
+
+            applyGuessResult(guess, currentRow, false);
+        }
+
+        function applyGuessResult(guess, row, isReplay) {
+            // Calculate result
+            const result = ['absent', 'absent', 'absent', 'absent', 'absent'];
+            const targetCounts = {};
+            for (const char of secretWord) {
+                targetCounts[char] = (targetCounts[char] || 0) + 1;
+            }
+
+            // First pass: correct letters
+            for (let i = 0; i < 5; i++) {
+                if (guess[i] === secretWord[i]) {
+                    result[i] = 'correct';
+                    targetCounts[guess[i]]--;
+                }
+            }
+
+            // Second pass: present letters
+            for (let i = 0; i < 5; i++) {
+                if (result[i] === 'absent' && targetCounts[guess[i]] > 0) {
+                    result[i] = 'present';
+                    targetCounts[guess[i]]--;
+                }
+            }
+
+            const delay = isReplay ? 0 : 200;
+
+            result.forEach((status, i) => {
+                const tile = document.getElementById(`${row}-${i}`);
+                setTimeout(() => {
+                    tile.classList.add(status, 'flip');
+                    const key = document.getElementById("key-" + guess[i]);
+                    if (key) {
+                        if (status === 'correct') key.classList.add('correct');
+                        else if (status === 'present' && !key.classList.contains('correct')) key.classList.add('present');
+                        else if (status === 'absent' && !key.classList.contains('correct') && !key.classList.contains('present')) key.classList.add('absent');
+                    }
+                }, i * delay);
+            });
+
+            const solved = guess === secretWord;
+
+            if (!isReplay) {
+                // Save state
+                const saved = localStorage.getItem(`wordle_${getToday()}_${playerName}`);
+                const state = saved ? JSON.parse(saved) : { guesses: [], finished: false };
+                state.guesses.push(guess);
+                state.finished = solved || row === 5;
+                saveState(state.guesses, state.finished);
+
+                // Report score if solved
+                if (solved) {
+                    reportScore(row + 1);
+                }
+            }
+
+            if (solved) {
+                setTimeout(() => {
+                    gameOver = true;
+                    document.getElementById('keyboard').style.display = 'none';
+                    if (!isReplay) {
+                        startConfetti();
+                        document.getElementById('victory-title').textContent = "SEQUENCE COMPLETE";
+                        document.getElementById('victory-message').textContent = `${row + 1} / 6`;
+                        document.getElementById('victory-word').textContent = `The word was: ${secretWord}`;
+                        document.getElementById('victory-modal').style.display = 'block';
+                    }
+                }, cols * delay + 500);
+            } else if (row === rows - 1) {
+                setTimeout(() => {
+                    gameOver = true;
+                    if (!isReplay) {
+                        showToast("SEQUENCE TERMINATED", true);
+                        document.getElementById('victory-title').textContent = "SEQUENCE FAILED";
+                        document.getElementById('victory-message').textContent = "Better luck tomorrow!";
+                        document.getElementById('victory-word').textContent = `The word was: ${secretWord}`;
+                        document.getElementById('victory-modal').style.display = 'block';
+                    }
+                }, cols * delay + 500);
+            }
+
+            if (!isReplay) {
+                currentRow++;
+                currentTile = 0;
+            }
+        }
+
+        async function reportScore(guesses) {
+            try {
+                await fetch(`${API_BASE}/api/wordle/score`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        date: getToday(),
+                        player_name: playerName,
+                        guesses: guesses
+                    })
+                });
+            } catch (e) {
+                console.error('Failed to report score:', e);
+            }
+        }
+
+        function shareResult() {
+            let title = `WORD KRAKEN (${formatDate()})`;
+            let text = `${title}\nCompleted: ${currentRow}/6\n\n`;
+
+            for (let r = 0; r < currentRow; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const tile = document.getElementById(`${r}-${c}`);
+                    text += tile.classList.contains('correct') ? "🟩" :
+                            tile.classList.contains('present') ? "🟨" : "⬛";
+                }
+                text += "\n";
+            }
+            text += "\nhttps://krakenunbound.com/arkade/";
+
+            navigator.clipboard.writeText(text).then(
+                () => showToast("COPIED TO CLIPBOARD"),
+                () => prompt("Copy this:", text)
+            );
+        }
+
+        function openScoreboard(source) {
+            lastScreen = source;
+            ['setup', 'victory-modal', 'game-container'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
+            document.getElementById('scoreboard').style.display = 'block';
+            loadLeaderboard();
+        }
+
+        function closeScoreboard() {
+            document.getElementById('scoreboard').style.display = 'none';
+            if (lastScreen === 'setup') document.getElementById('setup').style.display = 'flex';
+            else if (lastScreen === 'victory') {
+                document.getElementById('game-container').style.display = 'flex';
+                document.getElementById('victory-modal').style.display = 'block';
+            }
+        }
+
+        async function loadLeaderboard() {
+            try {
+                const res = await fetch(`${API_BASE}/api/wordle/scores?date=${getToday()}`);
+                const data = await res.json();
+                const list = document.getElementById('score-list');
+                list.innerHTML = "";
+
+                if (data.length === 0) {
+                    const li = document.createElement('li');
+                    li.textContent = "No scores yet today!";
+                    li.style.justifyContent = 'center';
+                    list.appendChild(li);
+                } else {
+                    data.forEach((entry, idx) => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<span>${idx + 1}. ${entry.player_name}</span> <span>${entry.guesses} guesses</span>`;
+                        list.appendChild(li);
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to load leaderboard:', e);
+            }
+        }
+
+        // Star animation
+        const canvas = document.getElementById('star-canvas'), ctx = canvas.getContext('2d');
+        const confettiCanvas = document.getElementById('confetti-canvas'), cCtx = confettiCanvas.getContext('2d');
+        let width, height, stars = [], shootingStar = null, particles = [];
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            confettiCanvas.width = width;
+            confettiCanvas.height = height;
+            initStars();
+        }
+
+        class Star {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.size = Math.random() * 2;
+                this.baseAlpha = Math.random() * 0.5 + 0.3;
+                this.twinkleOffset = Math.random() * 100;
+            }
+            draw() {
+                const alpha = this.baseAlpha + Math.sin(Date.now() * 0.002 + this.twinkleOffset) * 0.2;
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0, alpha)})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        class ShootingStar {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height * 0.5;
+                this.speed = Math.random() * 10 + 5;
+                this.angle = Math.PI / 4;
+                this.active = true;
+            }
+            update() {
+                this.x += this.speed * Math.cos(this.angle);
+                this.y += this.speed * Math.sin(this.angle);
+                if (this.x > width || this.y > height) this.active = false;
+            }
+            draw() {
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x - 10, this.y - 10);
+                ctx.stroke();
+            }
+        }
+
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < 150; i++) stars.push(new Star());
+        }
+
+        function startConfetti() {
+            for (let i = 0; i < 150; i++) {
+                particles.push({
+                    x: width / 2,
+                    y: height / 2,
+                    vx: (Math.random() - 0.5) * 20,
+                    vy: (Math.random() - 0.5) * 20 - 5,
+                    color: Math.random() > 0.5 ? '#00ffff' : '#ff00ff',
+                    size: Math.random() * 8 + 4,
+                    life: 1.0
+                });
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            stars.forEach(star => star.draw());
+
+            if (!shootingStar && Math.random() < 0.005) shootingStar = new ShootingStar();
+            if (shootingStar) {
+                shootingStar.update();
+                shootingStar.draw();
+                if (!shootingStar.active) shootingStar = null;
+            }
+
+            cCtx.clearRect(0, 0, width, height);
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.2;
+                p.life -= 0.01;
+                cCtx.fillStyle = p.color;
+                cCtx.globalAlpha = p.life;
+                cCtx.fillRect(p.x, p.y, p.size, p.size);
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+    </script>
+</body>
+
+</html>

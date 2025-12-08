@@ -587,33 +587,31 @@
 
     <!-- Help Modal -->
     <div id="help-modal">
-        <div class="help-content">
-            <h2>HOW TO PLAY</h2>
-            <h3>Objective</h3>
-            <p>Find the secret word by guessing words and using semantic similarity as your guide.</p>
+        <div class="help-content" style="position: relative;">
+            <button onclick="closeHelp()" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">&times;</button>
+            <h2 style="margin-top: 10px;">HOW TO PLAY</h2>
+            <p style="font-size: 1.1rem; margin-bottom: 20px; text-align: center;">Find the secret word using <span style="color: var(--neon-cyan); font-weight: bold;">semantic similarity</span>.</p>
 
-            <h3>How It Works</h3>
-            <p>Each guess is ranked by how semantically similar it is to the secret word. The closer your guess is in meaning, the lower (better) your rank!</p>
+            <p>Each guess is ranked by how related it is to the secret word. Lower rank = closer to the answer!</p>
 
-            <div class="help-example">
-                <span class="rank-hot">#1-100</span> = Very hot! You're close!<br>
-                <span class="rank-warm">#100-300</span> = Warm, on the right track<br>
-                <span class="rank-cool">#300-600</span> = Cool, getting there<br>
-                <span class="rank-cold">#600+</span> = Cold, try a different direction
+            <div style="margin: 20px 0; border-top: 1px solid #444; border-bottom: 1px solid #444; padding: 15px 0;">
+                <p style="margin-bottom: 10px;"><strong>Temperature Guide</strong></p>
+                <div class="help-example" style="line-height: 1.8;">
+                    <span class="rank-hot">#1-100</span> = HOT! Very close<br>
+                    <span class="rank-warm">#100-300</span> = Warm, right direction<br>
+                    <span class="rank-cool">#300-600</span> = Cool, keep exploring<br>
+                    <span class="rank-cold">#600+</span> = Cold, try something different
+                </div>
             </div>
 
-            <h3>Tips</h3>
-            <ul>
-                <li>Start with broad category words</li>
-                <li>Use the HINT button if stuck</li>
-                <li>Pay attention to the theme</li>
+            <p><strong>Tips:</strong></p>
+            <ul style="margin: 10px 0 15px 20px;">
+                <li>Start with broad category words related to the theme</li>
+                <li>Use the HINT button if you're stuck</li>
                 <li>Think about synonyms and related concepts</li>
             </ul>
 
-            <h3>Scoring</h3>
-            <p>Your goal is to find the secret word in as few guesses as possible. Fewer guesses = better score on the leaderboard!</p>
-
-            <button class="action-btn" onclick="closeHelp()" style="margin-top: 20px;">GOT IT!</button>
+            <p style="text-align: center; color: #888; font-size: 0.9rem;">Fewer guesses = better score! A new puzzle appears each day.</p>
         </div>
     </div>
     <div id="loading">LOADING...</div>
@@ -621,24 +619,29 @@
     <!-- Admin Modal -->
     <div id="admin-modal">
         <div class="admin-content">
-            <h2>Settings</h2>
-            <label>Horizon Line (0-100%): <span id="horizon-value">55</span>%</label>
-            <input type="range" id="horizon-slider" min="0" max="100" value="55" oninput="updateHorizon(this.value)">
-            <p style="color:#666; font-size:0.8rem; margin-top:5px;">Stars will only appear above this line</p>
+            <h2 style="border-bottom: 1px solid #444; padding-bottom: 10px;">System Config</h2>
 
-            <label>Music Volume: <span id="volume-value">15</span>%</label>
+            <label>Horizon: <span id="horizon-value">55</span>%</label>
+            <input type="range" id="horizon-slider" min="0" max="100" value="55" oninput="updateHorizon(this.value)">
+
+            <label>Volume: <span id="volume-value">15</span>%</label>
             <input type="range" id="volume-slider" min="0" max="100" value="15" oninput="updateVolume(this.value)">
 
+            <button onclick="saveAdminSettings()" style="background:#0a5; color:#fff; border:none; width:100%; margin-top:15px; padding:12px;">Save Settings</button>
+
             <div style="margin-top:20px; padding-top:15px; border-top:1px solid #444;">
-                <label style="color:#f05;">Testing Tools</label>
-                <button onclick="instantSolve()" style="background:#333; color:#0f0; border:1px solid #0f0; width:100%;">Instant Solve</button>
-                <button onclick="resetToday()" style="background:#333; color:#f50; border:1px solid #f50; width:100%; margin-top:10px;">Reset Today's Progress</button>
+                <button onclick="instantSolve()" style="background:#c33; color:#fff; border:none; width:100%; padding:12px;">Force Solve</button>
+                <button onclick="regenerateWord()" style="background:#b85; color:#fff; border:none; width:100%; margin-top:10px; padding:12px;">Regenerate Word</button>
             </div>
 
-            <div style="display:flex; gap:10px; margin-top:20px;">
-                <button onclick="saveAdminSettings()" style="flex:1; background:#0a5; color:#fff; border:none;">Save</button>
-                <button onclick="closeAdmin()" style="flex:1; background:#333; color:#fff; border:1px solid #666;">Cancel</button>
+            <div style="margin-top:20px; padding-top:15px; border-top:1px solid #444;">
+                <h3 style="color:#f05; margin-bottom:10px; font-size:1rem;">User Management</h3>
+                <div id="user-list" style="max-height:150px; overflow-y:auto; margin-bottom:10px;">
+                    <p style="color:#666; font-size:0.9rem;">Loading users...</p>
+                </div>
             </div>
+
+            <button onclick="closeAdmin()" style="background:#333; color:#fff; border:1px solid #666; width:100%; margin-top:15px; padding:12px;">Close</button>
         </div>
     </div>
 
@@ -1134,6 +1137,69 @@
             const horizonLine = document.getElementById('horizon-line');
             horizonLine.style.display = 'block';
             horizonLine.style.top = (horizonPercent) + '%';
+            // Load user list
+            loadUserList();
+        }
+
+        async function loadUserList() {
+            const userListEl = document.getElementById('user-list');
+            try {
+                const res = await fetch(`${API_BASE}/api/contexto/scores?date=${getToday()}`);
+                const data = await res.json();
+                if (!data || data.length === 0) {
+                    userListEl.innerHTML = '<p style="color:#666; font-size:0.9rem;">No users today</p>';
+                } else {
+                    userListEl.innerHTML = data.map(u => `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid #333;">
+                            <span style="color:#aaa;">${u.player_name}</span>
+                            <button onclick="deleteUser('${u.player_name}')" style="background:#a33; color:#fff; border:none; padding:4px 8px; cursor:pointer; font-size:0.8rem;">Delete</button>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                userListEl.innerHTML = '<p style="color:#f55; font-size:0.9rem;">Failed to load users</p>';
+            }
+        }
+
+        async function deleteUser(username) {
+            if (!confirm(`Delete all data for ${username}?`)) return;
+            try {
+                await fetch(`${API_BASE}/api/contexto/delete-user`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ player_name: username, date: getToday() })
+                });
+                showToast(`Deleted ${username}`);
+                loadUserList();
+            } catch (e) {
+                showToast('Delete failed');
+            }
+        }
+
+        async function regenerateWord() {
+            if (!confirm('Generate a new word for today? This will affect all players.')) return;
+            try {
+                const res = await fetch(`${API_BASE}/api/generate/contexto`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ date: getToday(), force: true })
+                });
+                const data = await res.json();
+                if (data.theme) {
+                    puzzleTheme = data.theme;
+                    document.getElementById('theme-display').textContent = puzzleTheme;
+                    showToast('New word generated!');
+                    // Reset game state
+                    guesses = [];
+                    solved = false;
+                    renderGuesses();
+                    document.getElementById('guess-input').disabled = false;
+                } else {
+                    showToast('Regeneration failed');
+                }
+            } catch (e) {
+                showToast('Regeneration failed');
+            }
         }
 
         function closeAdmin() {

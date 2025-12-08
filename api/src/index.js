@@ -437,6 +437,20 @@ export default {
         result = rows.results;
       }
 
+      // Delete user scores (admin function)
+      else if (path === '/api/wordle/delete-user' && request.method === 'POST') {
+        const body = await request.json();
+        const { player_name, date } = body;
+        if (date) {
+          await env.DB.prepare('DELETE FROM wordle_scores WHERE player_name = ? AND date = ?').bind(player_name, date).run();
+          await env.DB.prepare('DELETE FROM game_state WHERE player_name = ? AND date = ?').bind(player_name, date).run();
+        } else {
+          await env.DB.prepare('DELETE FROM wordle_scores WHERE player_name = ?').bind(player_name).run();
+          await env.DB.prepare('DELETE FROM game_state WHERE player_name = ?').bind(player_name).run();
+        }
+        result = { success: true, deleted: player_name };
+      }
+
       else if (path === '/api/wordle/state' && request.method === 'GET') {
         const date = url.searchParams.get('date');
         const player = url.searchParams.get('player');
@@ -503,6 +517,18 @@ export default {
           'SELECT * FROM connections_scores WHERE date = ? ORDER BY mistakes ASC, solved DESC'
         ).bind(date).all();
         result = rows.results;
+      }
+
+      // Delete user connections scores (admin function)
+      else if (path === '/api/connections/delete-user' && request.method === 'POST') {
+        const body = await request.json();
+        const { player_name, date } = body;
+        if (date) {
+          await env.DB.prepare('DELETE FROM connections_scores WHERE player_name = ? AND date = ?').bind(player_name, date).run();
+        } else {
+          await env.DB.prepare('DELETE FROM connections_scores WHERE player_name = ?').bind(player_name).run();
+        }
+        result = { success: true, deleted: player_name };
       }
 
       // ===== SPELLING BEE (Spelling Kraken) =====
@@ -684,6 +710,18 @@ Keep it SHORT (under 10 words). Do NOT mention the actual word.`;
           'SELECT player_name, guesses, solved FROM contexto_scores WHERE date = ? AND solved = 1 ORDER BY guesses ASC LIMIT 20'
         ).bind(date).all();
         result = rows.results;
+      }
+
+      // Delete user contexto scores (admin function)
+      else if (path === '/api/contexto/delete-user' && request.method === 'POST') {
+        const body = await request.json();
+        const { player_name, date } = body;
+        if (date) {
+          await env.DB.prepare('DELETE FROM contexto_scores WHERE player_name = ? AND date = ?').bind(player_name, date).run();
+        } else {
+          await env.DB.prepare('DELETE FROM contexto_scores WHERE player_name = ?').bind(player_name).run();
+        }
+        result = { success: true, deleted: player_name };
       }
 
       // ===== ARCADE SCORES =====

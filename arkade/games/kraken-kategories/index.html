@@ -528,58 +528,59 @@
 
     <!-- Help Modal -->
     <div id="help-modal">
-        <div class="help-content">
-            <h2>HOW TO PLAY</h2>
-            <h3>Objective</h3>
-            <p>Group 16 words into 4 categories of 4 words each.</p>
+        <div class="help-content" style="position: relative;">
+            <button onclick="closeHelp()" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">&times;</button>
+            <h2 style="margin-top: 10px;">HOW TO PLAY</h2>
+            <p style="font-size: 1.1rem; margin-bottom: 20px; text-align: center;">Find groups of four items that share something in common.</p>
 
-            <h3>How It Works</h3>
-            <p>Select 4 words you think belong together and tap SUBMIT. If correct, the category is revealed!</p>
-
-            <h3>Difficulty Levels</h3>
-            <div style="margin: 10px 0;">
-                <span class="cat-example cat-1">YELLOW</span> = Easiest<br>
-                <span class="cat-example cat-2">GREEN</span> = Medium<br>
-                <span class="cat-example cat-3">BLUE</span> = Hard<br>
-                <span class="cat-example cat-4">PURPLE</span> = Trickiest
+            <div style="margin: 20px 0; border-top: 1px solid #444; border-bottom: 1px solid #444; padding: 15px 0;">
+                <p style="margin-bottom: 10px;"><strong>Category Difficulty</strong></p>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px;">
+                    <span class="cat-example cat-1">YELLOW</span>
+                    <span class="cat-example cat-2">GREEN</span>
+                    <span class="cat-example cat-3">BLUE</span>
+                    <span class="cat-example cat-4">PURPLE</span>
+                </div>
+                <p style="font-size: 0.9rem; color: #aaa;">Yellow is easiest, purple is trickiest. Purple often involves wordplay!</p>
             </div>
 
-            <h3>Tips</h3>
-            <ul>
-                <li>Look for obvious groups first</li>
-                <li>Watch out for red herrings - words that seem to fit multiple categories</li>
-                <li>Purple categories often involve wordplay or hidden patterns</li>
-                <li>If you're "one away", you have 3 correct words selected</li>
+            <p><strong>Tips:</strong></p>
+            <ul style="margin: 10px 0 15px 20px;">
+                <li>Select 4 items and tap Submit to check your guess</li>
+                <li>Watch out for red herrings - words that fit multiple groups</li>
+                <li>"One away" means 3 of your 4 words are correct</li>
             </ul>
 
-            <h3>Mistakes</h3>
-            <p>You get 4 mistakes before the game ends. Use them wisely!</p>
-
-            <button class="action-btn" onclick="closeHelp()" style="margin-top: 20px;">GOT IT!</button>
+            <p style="text-align: center; color: #888; font-size: 0.9rem;">You have 4 mistakes before the game ends. A new puzzle appears each day!</p>
         </div>
     </div>
 
     <!-- Admin Modal -->
     <div id="admin-modal">
         <div class="admin-content">
-            <h2>Settings</h2>
-            <label>Horizon Line (0-100%): <span id="horizon-value">55</span>%</label>
-            <input type="range" id="horizon-slider" min="0" max="100" value="55" oninput="updateHorizon(this.value)">
-            <p style="color:#666; font-size:0.8rem; margin-top:5px;">Stars will only appear above this line</p>
+            <h2 style="border-bottom: 1px solid #444; padding-bottom: 10px;">System Config</h2>
 
-            <label>Music Volume: <span id="volume-value">15</span>%</label>
+            <label>Horizon: <span id="horizon-value">55</span>%</label>
+            <input type="range" id="horizon-slider" min="0" max="100" value="55" oninput="updateHorizon(this.value)">
+
+            <label>Volume: <span id="volume-value">15</span>%</label>
             <input type="range" id="volume-slider" min="0" max="100" value="15" oninput="updateVolume(this.value)">
 
+            <button onclick="saveAdminSettings()" style="background:#0a5; color:#fff; border:none; width:100%; margin-top:15px; padding:12px;">Save Settings</button>
+
             <div style="margin-top:20px; padding-top:15px; border-top:1px solid #444;">
-                <label style="color:#f05;">Testing Tools</label>
-                <button onclick="instantSolve()" style="background:#333; color:#0f0; border:1px solid #0f0; width:100%;">Instant Solve</button>
-                <button onclick="resetToday()" style="background:#333; color:#f50; border:1px solid #f50; width:100%; margin-top:10px;">Reset Today's Progress</button>
+                <button onclick="instantSolve()" style="background:#c33; color:#fff; border:none; width:100%; padding:12px;">Force Solve</button>
+                <button onclick="regeneratePuzzle()" style="background:#b85; color:#fff; border:none; width:100%; margin-top:10px; padding:12px;">Regenerate Puzzle</button>
             </div>
 
-            <div style="display:flex; gap:10px; margin-top:20px;">
-                <button onclick="saveAdminSettings()" style="flex:1; background:#0a5; color:#fff; border:none;">Save</button>
-                <button onclick="closeAdmin()" style="flex:1; background:#333; color:#fff; border:1px solid #666;">Cancel</button>
+            <div style="margin-top:20px; padding-top:15px; border-top:1px solid #444;">
+                <h3 style="color:#f05; margin-bottom:10px; font-size:1rem;">User Management</h3>
+                <div id="user-list" style="max-height:150px; overflow-y:auto; margin-bottom:10px;">
+                    <p style="color:#666; font-size:0.9rem;">Loading users...</p>
+                </div>
             </div>
+
+            <button onclick="closeAdmin()" style="background:#333; color:#fff; border:1px solid #666; width:100%; margin-top:15px; padding:12px;">Close</button>
         </div>
     </div>
 
@@ -1155,6 +1156,65 @@
             const horizonLine = document.getElementById('horizon-line');
             horizonLine.style.display = 'block';
             horizonLine.style.top = (horizonPercent) + '%';
+            // Load user list
+            loadUserList();
+        }
+
+        async function loadUserList() {
+            const userListEl = document.getElementById('user-list');
+            try {
+                const res = await fetch(`${API_BASE}/api/connections/scores?date=${getToday()}`);
+                const data = await res.json();
+                if (!data || data.length === 0) {
+                    userListEl.innerHTML = '<p style="color:#666; font-size:0.9rem;">No users today</p>';
+                } else {
+                    userListEl.innerHTML = data.map(u => `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid #333;">
+                            <span style="color:#aaa;">${u.player_name}</span>
+                            <button onclick="deleteUser('${u.player_name}')" style="background:#a33; color:#fff; border:none; padding:4px 8px; cursor:pointer; font-size:0.8rem;">Delete</button>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                userListEl.innerHTML = '<p style="color:#f55; font-size:0.9rem;">Failed to load users</p>';
+            }
+        }
+
+        async function deleteUser(username) {
+            if (!confirm(`Delete all data for ${username}?`)) return;
+            try {
+                await fetch(`${API_BASE}/api/connections/delete-user`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ player_name: username, date: getToday() })
+                });
+                showToast(`Deleted ${username}`);
+                loadUserList();
+            } catch (e) {
+                showToast('Delete failed', true);
+            }
+        }
+
+        async function regeneratePuzzle() {
+            if (!confirm('Generate a new puzzle for today? This will affect all players.')) return;
+            try {
+                const res = await fetch(`${API_BASE}/api/generate/connections`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ date: getToday(), force: true })
+                });
+                const data = await res.json();
+                if (data.puzzle_data) {
+                    puzzleData = JSON.parse(data.puzzle_data);
+                    showToast('New puzzle generated!');
+                    // Reload to apply new puzzle
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast('Regeneration failed', true);
+                }
+            } catch (e) {
+                showToast('Regeneration failed', true);
+            }
         }
 
         function closeAdmin() {

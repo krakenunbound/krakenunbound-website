@@ -87,15 +87,6 @@
                             <path class="tentacle t6" d="M140 115 Q165 145 175 180 Q180 210 165 235 Q162 240 158 235 Q152 220 155 200 Q150 170 130 140" fill="url(#tentacleGradient)"/>
                         </g>
 
-                        <!-- Suckers on front tentacles -->
-                        <g class="suckers" fill="#2a6a8a" opacity="0.6">
-                            <circle cx="42" cy="175" r="3"/><circle cx="48" cy="195" r="2.5"/><circle cx="40" cy="215" r="2"/>
-                            <circle cx="58" cy="180" r="3"/><circle cx="62" cy="200" r="2.5"/><circle cx="65" cy="220" r="2"/>
-                            <circle cx="85" cy="185" r="3"/><circle cx="88" cy="205" r="2.5"/><circle cx="92" cy="225" r="2"/>
-                            <circle cx="115" cy="185" r="3"/><circle cx="112" cy="205" r="2.5"/><circle cx="108" cy="225" r="2"/>
-                            <circle cx="142" cy="180" r="3"/><circle cx="138" cy="200" r="2.5"/><circle cx="135" cy="220" r="2"/>
-                            <circle cx="158" cy="175" r="3"/><circle cx="152" cy="195" r="2.5"/><circle cx="160" cy="215" r="2"/>
-                        </g>
 
                         <!-- Bioluminescent spots - BIGGER AND BRIGHTER -->
                         <g class="bio-glow" filter="url(#glow)">
@@ -134,8 +125,19 @@
                             <ellipse cx="129" cy="70" rx="1.5" ry="2" fill="rgba(125,211,252,0.6)" class="eye-shine-2"/>
                         </g>
 
-                        <!-- Siphon (below eyes, between tentacles) -->
-                        <ellipse cx="100" cy="110" rx="8" ry="5" fill="#1a4a5a" class="siphon"/>
+                        <!-- Beak/Mouth - parrot-like kraken beak -->
+                        <g class="beak">
+                            <!-- Outer beak shadow -->
+                            <ellipse cx="100" cy="108" rx="12" ry="8" fill="#0a1a20" opacity="0.5"/>
+                            <!-- Upper beak -->
+                            <path class="beak-upper" d="M88 105 Q100 100 112 105 Q108 110 100 112 Q92 110 88 105 Z" fill="#1a3a4a"/>
+                            <!-- Lower beak -->
+                            <path class="beak-lower" d="M90 108 Q100 106 110 108 Q106 115 100 117 Q94 115 90 108 Z" fill="#122a35"/>
+                            <!-- Beak opening (dark interior) -->
+                            <ellipse cx="100" cy="109" rx="6" ry="3" fill="#050a0f" class="beak-opening"/>
+                            <!-- Beak edge highlight -->
+                            <path d="M92 106 Q100 103 108 106" stroke="#2a5a6a" stroke-width="1" fill="none" opacity="0.6"/>
+                        </g>
                     </svg>
                 </div>
             </div>

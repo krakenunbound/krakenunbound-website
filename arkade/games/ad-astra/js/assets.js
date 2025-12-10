@@ -5,8 +5,8 @@ import { Utils } from './utils.js';
 
 class AssetManager {
     constructor() {
-        this.assetsPath = 'assets/images/';
-        this.animationsPath = 'assets/videos/';
+        this.assetsPath = '/arkade/games/ad-astra/assets/images/';
+        this.animationsPath = '/arkade/games/ad-astra/assets/videos/';
         this.loadedImages = new Map();
         this.fallbackEnabled = true; // Use placeholders if images not found
 

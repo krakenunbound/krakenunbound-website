@@ -10,6 +10,9 @@ export class GameState {
         this.gameData = null;
         this.galaxy = null;
         this.settings = null;
+
+        // Initialize from storage immediately
+        this.currentUser = Utils.storage.get('currentUser');
         this.load();
     }
 
@@ -76,10 +79,10 @@ export class GameState {
     // Create new player data
     createPlayer(username, pilotName, shipCustomName = null, shipType = 'Scout', shipVariant = 1) {
         const isAdmin = username === 'admin';
-        
+
         // Use custom ship name or default to ship type
         const finalShipName = shipCustomName || shipType;
-        
+
         const playerData = {
             username: username,
             pilotName: pilotName,

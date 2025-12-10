@@ -18,7 +18,7 @@ export class UI {
             hash = ((hash << 5) - hash) + locationName.charCodeAt(i);
             hash = hash & hash;
         }
-        
+
         // Choose from 4 vendor images
         const vendorNum = (Math.abs(hash) % 4) + 1;
         return `assets/images/vendor${vendorNum}.webp`;
@@ -83,13 +83,13 @@ export class UI {
     // Render Galaxy Map with zoom and pan
     renderGalaxyMap(galaxyData, currentSectorId, ship = null) {
         const container = document.getElementById('galaxy-map');
-        console.log('🗺️ renderGalaxyMap called:', { 
-            hasContainer: !!container, 
+        console.log('🗺️ renderGalaxyMap called:', {
+            hasContainer: !!container,
             hasGalaxyData: !!galaxyData,
             currentSectorId: currentSectorId,
             sectorsCount: galaxyData?.sectors ? Object.keys(galaxyData.sectors).length : 0
         });
-        
+
         if (!container || !galaxyData) {
             console.error('❌ Galaxy map render failed:', { container: !!container, galaxyData: !!galaxyData });
             return;
@@ -186,8 +186,8 @@ export class UI {
                 if (currentSectorData) {
                     // Check if there's a direct warp lane connection
                     // Use Number() to ensure type consistency
-                    hasWarpLane = currentSectorData.warps?.includes(Number(sector.id)) || 
-                                  currentSectorData.warps?.includes(sector.id);
+                    hasWarpLane = currentSectorData.warps?.includes(Number(sector.id)) ||
+                        currentSectorData.warps?.includes(sector.id);
 
                     // Calculate direct distance (for single jump)
                     const dist = Utils.distance(currentSectorData.x, currentSectorData.y, sector.x, sector.y);
@@ -199,7 +199,7 @@ export class UI {
                         fuelCost = directFuelCost;
                         tooltip += `\n⛽ Fuel: ${fuelCost}`;
                         tooltip += `\n⏱️ Time: ${(travelTime / 1000).toFixed(1)}s`;
-                        
+
                         if (directFuelCost <= ship.fuel) {
                             zone = 'green';
                             tooltip += '\n✅ Direct jump available';
@@ -210,15 +210,35 @@ export class UI {
                     } else {
                         // No direct connection - calculate route
                         const route = window.game.navigation.calculateRoute(currentSectorId, sector.id, ship);
-                        
+
                         if (route.success) {
                             fuelCost = route.fuelNeeded;
                             tooltip += `\n🗺️ Route: ${route.jumps} jumps`;
                             tooltip += `\n⛽ Total fuel: ${fuelCost}`;
-                            
+
                             if (route.fuelNeeded <= ship.fuel) {
                                 zone = 'yellow';
                                 tooltip += '\n🟡 Route plannable';
+                                // The following code block was inserted by the user's request.
+                                // It appears to be HTML generation for a "fighter-location" display,
+                                // which is out of context for a galaxy map tooltip.
+                                // It will cause a syntax error as 'summary' and 'html' are undefined here.
+                                // To maintain syntactic correctness as per instructions, it's commented out.
+                                // If this was intended for a different part of the UI, it should be placed there.
+                                /*
+                                summary.locations.forEach(loc => {
+                                            html += `
+                                                <div class="fighter-location">
+                                                    <div class="fighter-location-info">
+                                                        <div class="fighter-location-sector">Sector ${loc.sectorId}</div>
+                                                        <div class="fighter-location-counts">
+                                                            Fighters: ${loc.fighters} | Mines: ${loc.mines}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        });
+                                */
                             } else {
                                 zone = 'red';
                                 tooltip += '\n❌ Beyond fuel range';
@@ -244,7 +264,7 @@ export class UI {
                     hasWarpLane: hasWarpLane,
                     fuelCost: fuelCost
                 });
-                
+
                 if (window.game) {
                     if (sector.id == currentSectorId) {
                         console.log('🗺️ Same sector, ignoring');
@@ -505,17 +525,17 @@ export class UI {
             `Credits: ${Utils.format.credits(summary.credits)}`;
         document.getElementById('turns-display').textContent =
             `Turns: ${summary.turns}`;
-        
+
         // Update sector display
         document.getElementById('sector-display').textContent =
             `Sector: ${summary.sector}`;
-        
+
         // Update fuel display (get fuel from ship data)
         const fuel = gameState.gameData.ship.fuel || 0;
         const fuelMax = gameState.gameData.ship.fuelMax || 0;
         document.getElementById('fuel-display').textContent =
             `Fuel: ${fuel}/${fuelMax}`;
-        
+
         // Update the panel header sector ID
         const currentSectorIdElement = document.getElementById('current-sector-id');
         if (currentSectorIdElement) {
@@ -597,6 +617,28 @@ export class UI {
                 btn.textContent = `Trade at ${content.name}`;
                 btn.onclick = () => window.game.showTrading(content);
                 sectorActions.appendChild(btn);
+
+                // Planet Claim/Management
+                if (content.owner === gameState.currentUser) {
+                    const manageBtn = document.createElement('button');
+                    manageBtn.textContent = 'Manage Colony';
+                    manageBtn.className = 'btn-primary';
+                    manageBtn.style.marginTop = '5px';
+                    manageBtn.onclick = () => {
+                        window.game.ui.showView('computer');
+                        document.getElementById('comp-nav-colonies').click();
+                    };
+                    sectorActions.appendChild(manageBtn);
+                } else if (!content.owner) {
+                    const claimBtn = document.createElement('button');
+                    claimBtn.textContent = 'Claim Planet (10k cr)';
+                    claimBtn.className = 'btn-secondary';
+                    claimBtn.style.marginTop = '5px';
+                    // Pass current loop index
+                    const planetIndex = sector.contents.indexOf(content);
+                    claimBtn.onclick = () => window.game.claimPlanet(sector.id, planetIndex);
+                    sectorActions.appendChild(claimBtn);
+                }
             } else if (content.type === 'station') {
                 const btn = document.createElement('button');
                 btn.textContent = `Dock at ${content.name}`;
@@ -604,16 +646,16 @@ export class UI {
                 sectorActions.appendChild(btn);
             }
         });
-        
+
         // Check for asteroid field and show/hide mining controls
         const hasAsteroids = sector.contents.some(c => c.type === 'debris' && c.name === 'Asteroid Field');
         const miningControls = document.getElementById('mining-controls');
         const miningStatus = document.getElementById('mining-equipment-status');
-        
+
         if (hasAsteroids && miningControls) {
             console.log('🪨 Asteroid field detected, showing mining controls');
             miningControls.style.display = 'block';
-            
+
             // Show equipment status
             const ship = gameState.gameData.ship;
             if (ship.equipment && ship.equipment.miningLaser) {
@@ -762,14 +804,14 @@ export class UI {
         let shopName = planet.name;
         let vendorGreeting = `Welcome to ${planet.name}. What can I do for you?`;
         let vendorImage = this.getRandomVendorImage(planet.name);
-        
+
         if (vendorDialogue) {
             shopName = vendorDialogue.generateShopName(planet);
             vendorGreeting = vendorDialogue.generateVendorGreeting(shopName, gameState.gameData.pilotName || 'Pilot');
         }
 
         let html = '';
-        
+
         // Outer container with background image covering everything
         html += `<div class="trading-post-container" style="
             position: relative;
@@ -780,15 +822,16 @@ export class UI {
             padding: 25px;
             min-height: 500px;
         ">`;
-        
+
         // Vendor dialogue section
         html += `<div class="vendor-section" style="margin-bottom: 25px;">`;
-        
-        html += `<div style="text-align: center; margin-bottom: 15px;">`;
+
+        html += `<div style="text-align: center; margin-bottom: 15px; position: relative;">`;
         html += `<h3 style="color: var(--accent-blue); margin: 0 0 10px 0; font-size: 1.4em;">${shopName}</h3>`;
         html += `<div style="font-style: italic; color: var(--text-secondary); font-size: 0.9em;">${planet.planetType} Planet - Tech Level ${planet.techLevel}</div>`;
+        html += `<button onclick="window.game.chatWithVendor()" style="position: absolute; right: 0; top: 0; padding: 5px 10px; font-size: 0.8em;">💬 Chat</button>`;
         html += `</div>`;
-        
+
         html += `<div id="vendor-dialogue" style="
             background: rgba(0, 0, 0, 0.4);
             border-left: 3px solid var(--accent-green);
@@ -801,11 +844,11 @@ export class UI {
             min-height: 50px;
             cursor: pointer;
         " onclick="window.game?.skipVendorDialogue()" title="Click to skip animation">${vendorGreeting}</div>`;
-        
+
         html += `<div style="text-align: center; margin-top: 10px; font-size: 0.8em; color: var(--text-secondary); opacity: 0.7;">
             <em>Click dialogue to skip animation</em>
         </div>`;
-        
+
         html += `</div>`; // End vendor-section
 
         // Trading grid (still inside the background container)
@@ -825,16 +868,31 @@ export class UI {
 
             html += `<span class="commodity-name">${commodity}</span>`;
             html += '</div>';
-            html += `<p style="color: var(--text-secondary); margin: 10px 0;">Supply: ${eco.supply} units</p>`;
+            const isProducer = eco.supply > 0;
+            const isConsumer = eco.supply === 0;
+
+            html += `<p style="color: var(--text-secondary); margin: 10px 0;">Supply: ${isProducer ? eco.supply + ' units' : '<span style="color:var(--accent-red)">OUT OF STOCK</span>'}</p>`;
             html += `<p style="color: var(--text-secondary);">You have: ${playerHas} units</p>`;
             html += '<div style="margin: 15px 0;">';
-            html += `<div style="color: var(--accent-green);">Buy: ${Utils.format.credits(eco.buyPrice)}/unit</div>`;
+
+            if (isProducer) {
+                html += `<div style="color: var(--accent-green);">Buy: ${Utils.format.credits(eco.buyPrice)}/unit</div>`;
+            } else {
+                html += `<div style="color: var(--text-secondary); opacity: 0.5;">Buy: N/A</div>`;
+            }
+
             html += `<div style="color: var(--accent-yellow);">Sell: ${Utils.format.credits(eco.sellPrice)}/unit</div>`;
             html += '</div>';
 
             html += '<div class="commodity-controls">';
             html += `<input type="number" id="trade-qty-${commodity}" min="0" value="10" style="width: 60px;">`;
-            html += `<button class="btn-buy" onclick="window.game.buyCommodity('${commodity}')">Buy</button>`;
+
+            if (isProducer) {
+                html += `<button class="btn-buy" onclick="window.game.buyCommodity('${commodity}')">Buy</button>`;
+            } else {
+                html += `<button class="btn-buy" disabled style="opacity: 0.5; cursor: not-allowed;">Buy</button>`;
+            }
+
             html += `<button class="btn-sell" onclick="window.game.sellCommodity('${commodity}')">Sell</button>`;
             html += '</div>';
 
@@ -843,14 +901,14 @@ export class UI {
 
         html += '</div>'; // End trade-grid
         html += '</div>'; // End trading-post-container
-        
+
         tradeInterface.innerHTML = html;
-        
+
         // Store current greeting for skip function
         if (window.game) {
             window.game.currentVendorGreeting = vendorGreeting;
         }
-        
+
         // Trigger typewriter effect
         if (vendorDialogue) {
             const dialogueElement = document.getElementById('vendor-dialogue');
@@ -1119,8 +1177,8 @@ export class UI {
         // Use the in-game message system instead of browser alerts
         if (!buttons) {
             // For simple messages, use the ship's log with appropriate styling
-            const type = title.toLowerCase().includes('error') ? 'error' : 
-                        title.toLowerCase().includes('success') ? 'success' : 'info';
+            const type = title.toLowerCase().includes('error') ? 'error' :
+                title.toLowerCase().includes('success') ? 'success' : 'info';
             this.addMessage(`${title}: ${body}`, type);
         } else {
             // For complex modals with buttons, we would need a proper modal system
@@ -1389,6 +1447,71 @@ export class UI {
                 }
             });
         });
+    }
+
+    // New Custom Modal System
+    showCustomModal(title, message, buttons = []) {
+        const modal = document.getElementById('game-modal');
+        const titleEl = document.getElementById('game-modal-title');
+        const msgEl = document.getElementById('game-modal-message');
+        const footer = document.getElementById('game-modal-footer');
+
+        if (!modal || !titleEl || !msgEl || !footer) return;
+
+        titleEl.textContent = title;
+        msgEl.innerHTML = message.replace(/\n/g, '<br>');
+        footer.innerHTML = '';
+
+        if (buttons.length === 0) {
+            // Default OK button
+            buttons = [{
+                text: 'OK',
+                class: 'btn-primary',
+                callback: () => this.hideCustomModal()
+            }];
+        }
+
+        buttons.forEach(btn => {
+            const button = document.createElement('button');
+            button.className = btn.class || 'btn-secondary';
+            button.textContent = btn.text;
+            button.onclick = () => {
+                if (btn.callback) btn.callback();
+                if (btn.close !== false) this.hideCustomModal();
+            };
+            footer.appendChild(button);
+        });
+
+        modal.classList.add('active');
+    }
+
+    hideCustomModal() {
+        const modal = document.getElementById('game-modal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    showConfirm(title, message) {
+        return new Promise((resolve) => {
+            const buttons = [
+                { text: 'Cancel', class: 'btn-secondary', callback: () => resolve(false) },
+                { text: 'Confirm', class: 'btn-danger', callback: () => resolve(true) }
+            ];
+            this.showCustomModal(title, message, buttons);
+        });
+    }
+
+    showLoading(text = 'Processing...') {
+        const overlay = document.getElementById('loading-overlay');
+        const textEl = document.getElementById('loading-text');
+        if (overlay && textEl) {
+            textEl.textContent = text;
+            overlay.classList.add('active');
+        }
+    }
+
+    hideLoading() {
+        const overlay = document.getElementById('loading-overlay');
+        if (overlay) overlay.classList.remove('active');
     }
 }
 

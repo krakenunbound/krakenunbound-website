@@ -29,29 +29,29 @@
             <div class="auth-container">
                 <h1>Ad Astra</h1>
                 <p class="tagline">Journey to the Stars</p>
+                <div class="version-display"
+                    style="position: absolute; top: 10px; right: 10px; color: #444; font-size: 12px; font-family: monospace;">
+                    v1.0.7</div>
 
-                <!-- Auth Error Display -->
-                <div id="auth-error" class="auth-error" style="display: none;"></div>
+                <!-- Landing / Launch Screen -->
+                <div id="landing-actions" class="form-section active" style="text-align: center;">
+                    <button id="start-game-btn" class="btn-primary glow"
+                        style="font-size: 1.5rem; padding: 20px 40px; margin-bottom: 20px; width: 100%;">LAUNCH
+                        MISSION</button>
 
-                <!-- Login Form -->
-                <div id="login-form" class="form-section active">
-                    <h2>Login</h2>
-                    <input type="text" id="login-username" placeholder="Username" autocomplete="username">
-                    <input type="password" id="login-password" placeholder="Password" autocomplete="current-password">
-                    <button id="login-btn">Enter the Galaxy</button>
-                    <p class="form-switch">New pilot? <a href="#" id="show-register">Create Account</a></p>
+                    <div style="margin-top: 10px;">
+                        <a href="/arkade/" class="back-to-arkade">Back to Arkade</a>
+                    </div>
+
+                    <div class="admin-section" style="margin-top: 30px; opacity: 0.5;">
+                        <a href="#" id="show-admin-login"
+                            style="color: #444; font-size: 0.8rem; text-decoration: none;">Sysop Access</a>
+                    </div>
                 </div>
 
-                <!-- Register Form -->
-                <div id="register-form" class="form-section">
-                    <h2>Create Account</h2>
-                    <input type="text" id="register-username" placeholder="Username" autocomplete="username">
-                    <input type="password" id="register-password" placeholder="Password" autocomplete="new-password">
-                    <input type="password" id="register-confirm" placeholder="Confirm Password"
-                        autocomplete="new-password">
-                    <button id="register-btn">Launch Career</button>
-                    <p class="form-switch">Already registered? <a href="#" id="show-login">Login</a></p>
-                </div>
+                <!-- Removed Legacy Login/Register Forms (Unified Auth) -->
+                <form id="login-form" style="display: none;"></form>
+                <form id="register-form" style="display: none;"></form>
 
                 <!-- Character Creation -->
                 <div id="character-creation" class="form-section">
@@ -88,24 +88,16 @@
                 </div>
 
                 <!-- Admin Login -->
-                <div id="admin-login-form" class="form-section">
+                <form id="admin-login-form" class="form-section" onsubmit="return false;">
                     <h2>Sysop Access</h2>
                     <input type="text" id="admin-username" placeholder="Admin Username" autocomplete="username">
                     <input type="password" id="admin-password" placeholder="Admin Password"
                         autocomplete="current-password">
                     <button id="admin-login-btn">Access Admin Panel</button>
                     <p class="form-switch"><a href="#" id="show-login-from-admin">Back to Login</a></p>
-                </div>
+                </form>
 
-                <!-- Admin Login Link -->
-                <div class="admin-section">
-                    <a href="#" id="show-admin-login">Sysop Access</a>
-                </div>
 
-                <!-- Back to Arkade -->
-                <div class="arkade-link">
-                    <a href="/arkade/" class="back-to-arkade">← Back to Kraken Arkade</a>
-                </div>
             </div>
         </div>
 
@@ -649,28 +641,49 @@
             </div>
         </div>
 
-    <!-- Alpha Tester Panel (Overlay) -->
-    <div id="alpha-tester-panel" class="alpha-panel">
-        <div class="alpha-header">
-            <h2>🧪 Alpha Testing Checklist</h2>
-            <div class="alpha-controls">
-                <span id="alpha-completion">0% Complete</span>
-                <button id="alpha-export" class="alpha-btn">📥 Export Results</button>
-                <button id="alpha-clear" class="alpha-btn">🗑️ Clear All</button>
-                <button id="alpha-close" class="alpha-btn-close">✕</button>
+        <!-- Alpha Tester Panel (Overlay) -->
+        <div id="alpha-tester-panel" class="alpha-panel">
+            <div class="alpha-header">
+                <h2>🧪 Alpha Testing Checklist</h2>
+                <div class="alpha-controls">
+                    <span id="alpha-completion">0% Complete</span>
+                    <button id="alpha-export" class="alpha-btn">📥 Export Results</button>
+                    <button id="alpha-clear" class="alpha-btn">🗑️ Clear All</button>
+                    <button id="alpha-close" class="alpha-btn-close">✕</button>
+                </div>
+            </div>
+            <div class="alpha-content">
+                <div class="alpha-instructions">
+                    <p><strong>Welcome, Alpha Tester!</strong> Test each feature and mark as ✅ Pass, ❌ Fail, or ⏭️
+                        Skip. Add notes for failures.</p>
+                    <p><em>Export results as JSON to share with developers.</em></p>
+                </div>
+                <div id="alpha-test-list" class="alpha-test-list">
+                    <!-- Test categories will be populated here -->
+                </div>
             </div>
         </div>
-        <div class="alpha-content">
-            <div class="alpha-instructions">
-                <p><strong>Welcome, Alpha Tester!</strong> Test each feature and mark as ✅ Pass, ❌ Fail, or ⏭️
-                    Skip. Add notes for failures.</p>
-                <p><em>Export results as JSON to share with developers.</em></p>
-            </div>
-            <div id="alpha-test-list" class="alpha-test-list">
-                <!-- Test categories will be populated here -->
+        <!-- Generic Game Modal -->
+        <div id="game-modal" class="modal-overlay">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2 id="game-modal-title">Title</h2>
+                </div>
+                <div class="modal-body">
+                    <p id="game-modal-message"></p>
+                </div>
+                <div class="modal-footer" id="game-modal-footer">
+                    <!-- Buttons populated by JS -->
+                </div>
             </div>
         </div>
-    </div>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <div class="loading-text" id="loading-text">Processing...</div>
+        </div>
+
     </div> <!-- Close cockpit-grid -->
 
     <!-- Load JavaScript Modules -->

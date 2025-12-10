@@ -23,13 +23,23 @@ export class AudioSystem {
         this.tracks = {};
 
         this.sfxFiles = {
-            warp: 'assets/audio/sfx/warp.mp3',
-            laser: 'assets/audio/sfx/laser.mp3',
-            explosion: 'assets/audio/sfx/explosion.mp3',
-            click: 'assets/audio/sfx/click.mp3',
-            alert: 'assets/audio/sfx/alert.mp3',
-            success: 'assets/audio/sfx/success.mp3',
-            error: 'assets/audio/sfx/error.mp3'
+            warp: '/arkade/games/ad-astra/assets/audio/sfx/warp.mp3',
+            laser: '/arkade/games/ad-astra/assets/audio/sfx/laser.mp3',
+            explosion: '/arkade/games/ad-astra/assets/audio/sfx/explosion.mp3',
+            click: '/arkade/games/ad-astra/assets/audio/sfx/click.mp3',
+            alert: '/arkade/games/ad-astra/assets/audio/sfx/alert.mp3',
+            success: '/arkade/games/ad-astra/assets/audio/sfx/success.mp3',
+            error: '/arkade/games/ad-astra/assets/audio/sfx/error.mp3',
+            // Minigame SFX
+            shoot: '/arkade/games/ad-astra/assets/effects/shoot.mp3',
+            hit: '/arkade/games/ad-astra/assets/effects/hit.mp3',
+            damage: '/arkade/games/ad-astra/assets/effects/shield_down1.mp3',
+            cannon: '/arkade/games/ad-astra/assets/effects/cannon1.mp3',
+            thruster: '/arkade/games/ad-astra/assets/effects/thruster1.mp3',
+            // Mappings
+            powerup: '/arkade/games/ad-astra/assets/audio/sfx/success.mp3',
+            collect: '/arkade/games/ad-astra/assets/audio/sfx/click.mp3',
+            spawn: '/arkade/games/ad-astra/assets/effects/missle_launch1.mp3'
         };
 
         this.initialized = false;
@@ -88,30 +98,51 @@ export class AudioSystem {
         return {
             menu: {
                 name: 'Menu Theme',
-                path: 'assets/audio/music/theme_menu.mp3',
+                path: '/arkade/games/ad-astra/assets/audio/music/theme_menu.mp3',
                 description: 'Calm and welcoming',
                 category: 'menu',
                 variant: 0
             },
             exploration: {
                 name: 'Exploration Theme',
-                path: 'assets/audio/music/theme_exploration.mp3',
+                path: '/arkade/games/ad-astra/assets/audio/music/theme_exploration.mp3',
                 description: 'Adventure and discovery',
                 category: 'exploration',
                 variant: 0
             },
             combat: {
                 name: 'Combat Theme',
-                path: 'assets/audio/music/theme_combat.mp3',
+                path: '/arkade/games/ad-astra/assets/audio/music/theme_combat.mp3',
                 description: 'Intense and action-packed',
                 category: 'combat',
                 variant: 0
             },
             docked: {
                 name: 'Docked Theme',
-                path: 'assets/audio/music/theme_docked.mp3',
+                path: '/arkade/games/ad-astra/assets/audio/music/theme_docked.mp3',
                 description: 'Peaceful station ambience',
                 category: 'docked',
+                variant: 0
+            },
+            'asteroid-run': {
+                name: 'Asteroid Run',
+                path: '/arkade/games/ad-astra/assets/music/theme_asteroid_run2.mp3',
+                description: 'Asteroid Field',
+                category: 'minigame',
+                variant: 0
+            },
+            'hive-assault': {
+                name: 'Hive Assault',
+                path: '/arkade/games/ad-astra/assets/music/theme_hive_assault1.mp3',
+                description: 'Alien Hive',
+                category: 'minigame',
+                variant: 0
+            },
+            'hive-assault-boss': {
+                name: 'Hive Boss',
+                path: '/arkade/games/ad-astra/assets/music/theme_hive_assault_boss1.mp3',
+                description: 'Hive Queen',
+                category: 'minigame',
                 variant: 0
             }
         };
@@ -125,12 +156,15 @@ export class AudioSystem {
                 const parsed = JSON.parse(settings);
                 this.musicVolume = parsed.musicVolume ?? 0.2;
                 this.sfxVolume = parsed.sfxVolume ?? 0.7;
-                this.musicEnabled = parsed.musicEnabled ?? true;
+                this.musicEnabled = parsed.musicEnabled ?? true; // Default to TRUE
                 this.playlist = parsed.playlist ?? [];
                 this.playlistMode = parsed.playlistMode ?? true;
             } catch (e) {
                 console.warn('Failed to load audio settings:', e);
+                this.musicEnabled = true; // Fallback to TRUE
             }
+        } else {
+            this.musicEnabled = true; // No settings found, default to TRUE
         }
     }
 

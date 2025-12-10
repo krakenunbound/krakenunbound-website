@@ -123,13 +123,15 @@ export class AlphaTesterHandlers {
         }
     }
 
-    exportAlphaResults() {
+    async exportAlphaResults() {
         try {
-            this.game.alphaTester.exportResults();
-            this.game.ui.addMessage('Test results exported successfully', 'success');
+            this.game.ui.addMessage('Submitting test results to server...', 'info');
+            await this.game.alphaTester.submitResults();
+            this.game.ui.addMessage('Test results submitted to database successfully!', 'success');
             this.game.audio.playSfx('success');
         } catch (error) {
-            this.game.ui.showError('Failed to export results: ' + error.message);
+            console.error(error);
+            this.game.ui.showError('Failed to submit results: ' + error.message);
         }
     }
 

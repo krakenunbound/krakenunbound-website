@@ -7,8 +7,10 @@
     border-radius: 4px;
     padding: 20px;
     flex: 1;
-    min-height: 600px;  /* Increased from 500px */
-    height: 600px;      /* ADDED: Force explicit height */
+    min-height: 600px;
+    /* Increased from 500px */
+    height: 600px;
+    /* ADDED: Force explicit height */
     position: relative;
     overflow: hidden;
     cursor: grab;
@@ -607,6 +609,7 @@
 .sector-node.zone-green {
     cursor: pointer;
 }
+
 .sector-node.zone-green:hover {
     box-shadow: 0 0 20px var(--accent-green), 0 0 30px rgba(74, 222, 128, 0.5);
 }
@@ -615,6 +618,7 @@
 .sector-node.zone-yellow {
     cursor: pointer;
 }
+
 .sector-node.zone-yellow:hover {
     box-shadow: 0 0 20px var(--accent-yellow), 0 0 30px rgba(250, 204, 21, 0.5);
 }
@@ -624,6 +628,7 @@
     opacity: 0.35;
     cursor: not-allowed;
 }
+
 .sector-node.zone-red:hover {
     box-shadow: 0 0 10px rgba(248, 113, 113, 0.3);
 }
@@ -1520,4 +1525,53 @@
 .form-group input:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 2000;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+}
+
+.loading-overlay.active {
+    display: flex;
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 5px solid var(--bg-medium);
+    border-top: 5px solid var(--accent-blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+}
+
+.loading-text {
+    color: var(--accent-blue);
+    font-size: 1.2rem;
+    font-family: 'Unispace', monospace;
+    letter-spacing: 2px;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }

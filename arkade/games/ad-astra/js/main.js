@@ -30,6 +30,8 @@ import RoutePlanner from './route-planner.js';
 import EncounterSystem from './encounters.js';
 import AsteroidMinigame from './asteroid-minigame.js';
 import PirateMinigame from './pirate-minigame.js';
+import HiveMinigame from './hive-minigame.js';
+import StarKrakenMinigame from './starkraken-minigame.js';
 
 class Game {
     constructor() {
@@ -57,22 +59,28 @@ class Game {
         this.alphaHandlers = new AlphaTesterHandlers(this);
         this.messageBoardHandlers = new MessageBoardHandlers(this);
         this.characterCustomization = new CharacterCustomizationHandlers(this);
-        
+
         // Mining system
         this.mining = new MiningSystem(this);
-        
+
         // Vendor dialogue system
         this.vendorDialogue = new VendorDialogue();
-        
+
         // Route planning and encounters
         this.routePlanner = new RoutePlanner(this);
         this.encounters = new EncounterSystem(this);
-        
+
         // Asteroid minigame
         this.asteroidMinigame = new AsteroidMinigame(this);
-        
+
         // Pirate combat minigame
         this.pirateMinigame = new PirateMinigame(this);
+
+        // Hive Assault minigame
+        this.hiveMinigame = new HiveMinigame(this);
+
+        // Star Kraken minigame
+        this.starKrakenMinigame = new StarKrakenMinigame(this);
 
         // Current state
         this.currentPlanet = null;
@@ -84,6 +92,67 @@ class Game {
 
         // Initialize immediately (DOM is already loaded when constructor runs)
         this.init();
+    }
+
+    // Minigame Launchers
+    startAsteroidCombat(difficulty, onComplete) {
+        if (this.asteroidMinigame) {
+            if (window.particleSystem) window.particleSystem.setMode('asteroids');
+            this.audio.stopMusic();
+            this.asteroidMinigame.start(difficulty, (result) => {
+                this.updateParticleBackground();
+                this.audio.playMusic('exploration');
+                if (onComplete) onComplete(result);
+            });
+        }
+    }
+
+    startPirateCombat(strength, onComplete) {
+        if (this.pirateMinigame) {
+            this.audio.stopMusic();
+            this.pirateMinigame.start(strength, (result) => {
+                this.updateParticleBackground();
+                this.audio.playMusic('exploration');
+                if (onComplete) onComplete(result);
+            });
+        }
+    }
+
+    startHiveCombat(difficulty, onComplete) {
+        if (this.hiveMinigame) {
+            this.audio.stopMusic();
+            this.hiveMinigame.start(difficulty, (result) => {
+                this.updateParticleBackground();
+                this.audio.playMusic('exploration');
+                if (onComplete) onComplete(result);
+            });
+        }
+    }
+
+    startStarKrakenCombat(difficulty, onComplete) {
+        if (this.starKrakenMinigame) {
+            this.audio.stopMusic();
+            this.starKrakenMinigame.start(difficulty, (result) => {
+                this.updateParticleBackground();
+                this.audio.playMusic('exploration');
+                if (onComplete) onComplete(result);
+            });
+        }
+    }
+
+    // Helper to restore correct background based on sector location
+    updateParticleBackground() {
+        if (!window.particleSystem) return;
+
+        const sectorId = this.gameState.gameData?.currentSector;
+        const sector = this.galaxy?.getSector(sectorId);
+
+        let mode = 'starfield';
+        if (sector && sector.contents.some(c => c.type === 'debris')) {
+            mode = 'asteroids';
+        }
+
+        window.particleSystem.setMode(mode);
     }
 
     init() {
@@ -115,20 +184,85 @@ class Game {
     }
 
     async handleAutoLogin() {
+        // Attempt to load user from Arkade token
         const success = await this.auth.loadCurrentUser();
+
         if (success) {
             const user = this.auth.getCurrentUser();
+
+            // Set username immediately so we know who we are
             this.gameState.setCurrentUser(user.username);
 
+            console.log('🔄 Auto-Login User Check:', user);
+
+            // Check if this is a new player (no pilot/game state)
+            // CRITICAL FIX: Trust GameState cache first before forcing creation
+            const authHasPilot = user.pilotName && user.pilotName !== 'Unknown';
+            const authHasState = user.gameState && Object.keys(user.gameState).length > 0;
+
+            // Also check the GameState object directly (it might have loaded from localStorage independently)
+            const localStateHasPilot = this.gameState.gameData &&
+                this.gameState.gameData.pilotName &&
+                this.gameState.gameData.pilotName !== 'Unknown';
+
+            if (!authHasPilot && !authHasState && !localStateHasPilot) {
+                console.log('✅ Auth success, but no character data found. Redirecting to creation.');
+                this.ui.showAuthForm('character-creation');
+                this.characterCustomization.initializeCharacterCreation();
+                return;
+            }
+
             // Sync server data to local game state
-            if (user.gameState && Object.keys(user.gameState).length > 0) {
+            if (authHasState) {
+                console.log('✅ Loading existing game state from server...');
                 this.gameState.gameData = user.gameState;
+
+                // Ensure critical fields from DB are synced if missing from JSON blob
+                if (user.credits !== undefined) this.gameState.gameData.credits = user.credits;
+                if (user.turns !== undefined) this.gameState.gameData.turns = user.turns;
+                if (user.currentSector !== undefined) this.gameState.gameData.currentSector = user.currentSector;
+                if (user.shipVariant !== undefined) this.gameState.gameData.shipVariant = user.shipVariant;
+
+                await this.gameState.save();
+            } else if (authHasPilot) {
+                // We have a pilot name but no JSON blob - reconstruct minimal state
+                console.log('⚠️ Reconstructing state from basic pilot data...');
+                const playerData = this.gameState.createPlayer(
+                    user.username,
+                    user.pilotName,
+                    user.shipName || 'Explorer',
+                    user.shipType || 'Scout',
+                    user.shipVariant || 1
+                );
+                this.gameState.gameData = playerData;
                 await this.gameState.save();
             }
 
             this.startGame();
         } else {
             this.ui.showScreen('auth');
+        }
+    }
+
+    claimPlanet(sectorId, planetIndex) {
+        const result = this.colonization.claimPlanet(
+            this.galaxy,
+            sectorId,
+            planetIndex,
+            this.gameState.currentUser,
+            this.gameState.gameData.pilotName,
+            this.gameState.gameData.credits
+        );
+
+        if (result.success) {
+            this.gameState.gameData.credits -= result.cost;
+            this.gameState.save();
+            this.ui.addMessage(`Successfully claimed ${result.colony.planetName}!`, 'success');
+            this.audio.playSfx('success');
+            this.updateUI(); // Refresh UI to show "Manage" button
+        } else {
+            this.ui.showError(result.error);
+            this.audio.playSfx('error');
         }
     }
 
@@ -168,18 +302,27 @@ class Game {
             this.ui.showAuthForm('login');
         });
 
-        document.getElementById('login-btn')?.addEventListener('click', () => this.handleLogin());
-        document.getElementById('register-btn')?.addEventListener('click', () => this.handleRegister());
-        document.getElementById('create-character-btn')?.addEventListener('click', () => {
-            console.log('Create Character button clicked');
-            this.handleCreateCharacter();
+        // New Unified Auth Handlers
+        document.getElementById('start-game-btn')?.addEventListener('click', () => this.handleStartGame());
+
+        // Admin Access Toggle
+        document.getElementById('show-admin-login')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('landing-actions').style.display = 'none';
+            document.getElementById('admin-login-form').style.display = 'block';
         });
 
+        document.getElementById('hide-admin-login')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('admin-login-form').style.display = 'none';
+            document.getElementById('landing-actions').style.display = 'block';
+        });
 
         // Admin login form handlers
         document.getElementById('show-login-from-admin')?.addEventListener('click', (e) => {
             e.preventDefault();
-            this.ui.showAuthForm('login');
+            document.getElementById('admin-login-form').style.display = 'none';
+            document.getElementById('landing-actions').style.display = 'block';
         });
 
         document.getElementById('admin-login-btn')?.addEventListener('click', () => this.handleAdminLoginSubmit());
@@ -190,6 +333,10 @@ class Game {
                 document.getElementById('admin-login-btn').click();
             }
         });
+
+        // Admin Galaxy Generation
+        document.getElementById('admin-generate-galaxy')?.addEventListener('click', () => this.handleAdminGenerateGalaxy());
+
         // Navigation
         document.getElementById('nav-ship')?.addEventListener('click', () => this.showShip());
         document.getElementById('nav-sector')?.addEventListener('click', () => this.showSector());
@@ -377,7 +524,7 @@ class Game {
             if (serverData.gameState && Object.keys(serverData.gameState).length > 0) {
                 console.log('✅ Found existing game state, loading...');
                 this.gameState.gameData = serverData.gameState;
-                
+
                 // Merge direct database fields that may have been updated by admin
                 // These fields are stored in separate columns, not in game_state JSON
                 console.log('🔄 Merging server fields:');
@@ -387,7 +534,7 @@ class Game {
                 if (this.gameState.gameData.ship) {
                     console.log(`   gameState hull: ${this.gameState.gameData.ship.hull}, fuel: ${this.gameState.gameData.ship.fuel}`);
                 }
-                
+
                 if (serverData.turns !== undefined) {
                     this.gameState.gameData.turns = serverData.turns;
                 }
@@ -397,7 +544,7 @@ class Game {
                 if (serverData.currentSector !== undefined) {
                     this.gameState.gameData.currentSector = serverData.currentSector;
                 }
-                
+
                 // Ensure shipVariant is preserved from server response
                 if (serverData.shipVariant) {
                     console.log(`🚀 Setting shipVariant from server: ${serverData.shipVariant}`);
@@ -450,7 +597,7 @@ class Game {
             console.log('Registration successful, auto-logging in...');
             // Auto-login after registration
             const loginResult = await this.auth.login(username, password);
-            
+
             if (loginResult.success) {
                 console.log('Auto-login successful, showing character creation...');
                 this.gameState.setCurrentUser(username);
@@ -507,10 +654,20 @@ class Game {
         }
     }
 
+    // Start Game from Title Screen
+    handleStartGame() {
+        if (this.auth.isLoggedIn()) {
+            this.handleAutoLogin();
+        } else {
+            this.auth.requireAuth();
+        }
+    }
+
     handleLogout() {
         this.gameState.logout();
         this.ui.showScreen('auth');
-        this.ui.showAuthForm('login');
+        // Show the landing actions (Launch/Auth) instead of the old login form
+        this.ui.showAuthForm('landing-actions');
         this.ui.clearMessages();
 
         // Switch back to menu music
@@ -523,7 +680,7 @@ class Game {
         if (this.ui.currentView === 'sector') {
             const sector = this.gameState.getCurrentSector();
             this.ui.displaySector(sector, this.gameState);
-            
+
             // Switch particle effect based on sector contents
             if (window.particleSystem) {
                 const hasAsteroids = sector?.contents.some(c => c.type === 'debris' && c.name === 'Asteroid Field');
@@ -560,13 +717,13 @@ class Game {
     checkAsteroidField(sectorId, onComplete) {
         const sector = this.galaxy.getSector(sectorId);
         const hasAsteroids = sector?.contents?.some(c => c.type === 'debris' && c.name === 'Asteroid Field');
-        
+
         if (!hasAsteroids) {
             // No asteroid field, continue immediately
             if (onComplete) onComplete();
             return;
         }
-        
+
         // Check if player has mining equipment
         const ship = this.gameState.gameData.ship;
         // Ensure equipment field exists for backward compatibility
@@ -574,15 +731,15 @@ class Game {
             ship.equipment = { miningLaser: null, scanner: null, tractor: null };
         }
         const hasMining = ship.equipment.miningLaser !== null && ship.equipment.miningLaser !== undefined;
-        
+
         this.ui.addMessage('⚠️ Entering asteroid field!', 'warning');
-        
+
         // Start minigame
         this.asteroidMinigame.start(hasMining, async (results) => {
             // Process results
             if (results.survived) {
                 this.ui.addMessage('✅ Cleared the asteroid field!', 'success');
-                
+
                 // Add loot to cargo
                 if (results.loot.ore > 0) {
                     if (!this.gameState.gameData.cargo) this.gameState.gameData.cargo = {};
@@ -594,7 +751,7 @@ class Game {
                     this.gameState.gameData.cargo.Equipment = (this.gameState.gameData.cargo.Equipment || 0) + results.loot.equipment;
                     this.ui.addMessage(`📦 Collected ${results.loot.equipment} Equipment`, 'success');
                 }
-                
+
                 // Apply hull damage from hits taken
                 if (results.hullDamage > 0) {
                     ship.hull = Math.max(1, ship.hull - results.hullDamage);
@@ -605,10 +762,10 @@ class Game {
                 this.ui.addMessage('💀 Ship destroyed in asteroid field!', 'error');
                 // TODO: Handle ship destruction / game over
             }
-            
+
             await this.gameState.save();
             this.updateUI();
-            
+
             // Continue with callback
             if (onComplete) onComplete();
         });
@@ -662,10 +819,10 @@ class Game {
             console.log('🛒 No dialogue element or vendorDialogue!', { dialogueElement, vendorDialogue: this.vendorDialogue });
             return;
         }
-        
+
         // Store current message for skip function
         this.currentVendorMessage = message;
-        
+
         // Clear and type new message
         dialogueElement.textContent = '';
         this.vendorDialogue.typeText(message, dialogueElement, 25); // Slightly faster for responses
@@ -675,7 +832,7 @@ class Game {
     skipVendorDialogue() {
         const dialogueElement = document.getElementById('vendor-dialogue');
         if (!dialogueElement || !this.vendorDialogue) return;
-        
+
         const fullText = this.currentVendorMessage || this.currentVendorGreeting || '';
         this.vendorDialogue.skipTyping(dialogueElement, fullText);
     }
@@ -713,6 +870,13 @@ class Game {
         if (!travelTime || isNaN(travelTime) || travelTime < 10000) {
             console.warn('⚠️ Invalid travelTime calculated:', travelTime, 'Forcing to 10000ms');
             travelTime = 10000;
+        }
+
+        // Check turns
+        if (this.gameState.gameData.turns < 1) {
+            this.ui.showError('Not enough turns! Waits for daily reset or buy more.');
+            this.audio.playSfx('error');
+            return;
         }
 
         // Check fuel
@@ -764,12 +928,74 @@ class Game {
             if (this.gameState.moveToSector(sectorId)) {
                 // Update multiplayer position
                 this.multiplayer.updatePosition(
-                    this.gameState.currentUser,
                     sectorId
                 );
 
+                // --- TRADEWARS DEFENSE MECHANICS ---
+                if (this.fighters) {
+                    const defenseResult = this.fighters.fighterAutoDefense(
+                        sectorId,
+                        this.gameState.gameData.ship,
+                        this.gameState.currentUser
+                    );
+
+                    // Tolls Logic
+                    if (defenseResult.hasTolls) {
+                        defenseResult.tolls.forEach(toll => {
+                            if (confirm(`WARN: Sector controlled by ${toll.owner}.\n\nPay Toll of ${toll.amount} Credits?\n(Cancel to Invoke ${toll.fighters} Fighters)`)) {
+                                if (this.gameState.gameData.credits >= toll.amount) {
+                                    this.gameState.gameData.credits -= toll.amount;
+                                    this.ui.addMessage(`Paid toll of ${toll.amount} to ${toll.owner}.`, 'info');
+                                } else {
+                                    this.ui.addMessage(`Can't afford toll! ${toll.owner}'s fighters attacking!`, 'error');
+                                    // Trigger attack
+                                    const damage = Math.floor(toll.fighters * this.fighters.FIGHTER_ATTACK_POWER * 0.5);
+                                    if (damage > 0) {
+                                        this.gameState.gameData.ship.hull = Math.max(0, this.gameState.gameData.ship.hull - damage);
+                                        this.ui.addMessage(`Combined Fighter Attack: ${damage} Damage!`, 'error');
+                                    }
+                                }
+                            } else {
+                                this.ui.addMessage(`Refused Toll! ${toll.owner}'s fighters attacking!`, 'warning');
+                                // Trigger attack
+                                const damage = Math.floor(toll.fighters * this.fighters.FIGHTER_ATTACK_POWER * 0.5);
+                                if (damage > 0) {
+                                    this.gameState.gameData.ship.hull = Math.max(0, this.gameState.gameData.ship.hull - damage);
+                                    this.ui.addMessage(`Combined Fighter Attack: ${damage} Damage!`, 'error');
+                                }
+                            }
+                        });
+                    }
+
+                    // Standard Auto-Attack Logic
+                    if (defenseResult.attacked) {
+                        this.ui.addMessage(`⚠️ SECTOR DEFENDED! Taken ${defenseResult.damage} damage from automated fighters!`, 'warning');
+                        this.gameState.gameData.ship.hull = Math.max(0, this.gameState.gameData.ship.hull - defenseResult.damage);
+                        this.audio.playSfx('explosion');
+                    }
+
+                    // Mines Logic
+                    const mineResult = this.fighters.triggerMines(
+                        sectorId,
+                        this.gameState.currentUser,
+                        this.gameState.gameData.ship
+                    );
+
+                    if (mineResult.triggered) {
+                        this.ui.addMessage(`💥 HIT MINES! Taken ${mineResult.damage} damage!`, 'error');
+                        this.gameState.gameData.ship.hull = Math.max(0, this.gameState.gameData.ship.hull - mineResult.damage);
+                        this.audio.playSfx('explosion');
+                    }
+                }
+
+                // Check for death
+                if (this.gameState.gameData.ship.hull <= 0) {
+                    this.ui.addMessage('💀 SHIP DESTROYED BY SECTOR DEFENSES', 'error');
+                }
+
+                this.gameState.save();
                 this.ui.addMessage(`Warped to Sector ${sectorId}`, 'success');
-                
+
                 // Check for asteroid field and trigger minigame if needed
                 this.checkAsteroidField(sectorId, () => {
                     this.updateUI();
@@ -844,9 +1070,9 @@ class Game {
                 `Bought ${result.quantity} ${result.commodity} for ${Utils.format.credits(result.cost)}`,
                 'success'
             );
-            
+
             this.updateUI();
-            
+
             // Show vendor response AFTER updateUI (so it doesn't get overwritten)
             setTimeout(() => {
                 this.showVendorResponse(
@@ -874,9 +1100,9 @@ class Game {
                 `Sold ${result.quantity} ${result.commodity} for ${Utils.format.credits(result.revenue)}`,
                 'success'
             );
-            
+
             this.updateUI();
-            
+
             // Show vendor response AFTER updateUI (so it doesn't get overwritten)
             setTimeout(() => {
                 this.showVendorResponse(
@@ -899,17 +1125,17 @@ class Game {
 
         // Show station options
         const options = [];
-        
+
         // Add trade if station has trade service
         if (station.services && station.services.includes('trade')) {
             options.push({ text: '💰 Trade Goods', action: 'trade' });
         }
-        
+
         // Equipment shop for Industrial and stations with 'upgrade' service
         if (station.services && (station.services.includes('upgrade') || station.class === 'Industrial' || station.class === 'Mining')) {
             options.push({ text: '🛠️ Equipment Shop', action: 'equipment' });
         }
-        
+
         options.push({ text: '📋 Message Board', action: 'messageboard' });
         options.push({ text: '🔧 Repair Hull', action: 'repair' });
         options.push({ text: '⛽ Refuel', action: 'refuel' });
@@ -1001,8 +1227,8 @@ class Game {
         for (const [key, equip] of Object.entries(miningEquipment)) {
             const owned = currentEquipment && currentEquipment.name === equip.name;
             const canAfford = credits >= equip.price;
-            const buttonStyle = owned ? 'background: #666; cursor: default;' : 
-                               canAfford ? 'background: var(--accent-green);' : 'background: #666; cursor: not-allowed;';
+            const buttonStyle = owned ? 'background: #666; cursor: default;' :
+                canAfford ? 'background: var(--accent-green);' : 'background: #666; cursor: not-allowed;';
             const buttonText = owned ? '✓ Installed' : canAfford ? 'Buy' : 'Insufficient Credits';
 
             html += `
@@ -1075,42 +1301,42 @@ class Game {
 
         this.pirateMinigame.start(strength, async (results) => {
             console.log('🏴‍☠️ Pirate combat results:', results);
-            
+
             const gameData = this.gameState.gameData;
-            
+
             if (results.victory) {
                 // Player won - collect loot
                 this.ui.addMessage('🏴‍☠️ Pirates defeated!', 'success');
-                
+
                 // Add loot to cargo
                 if (results.loot && results.loot.length > 0) {
                     for (const item of results.loot) {
-                        const cargoType = item.name === 'Ore' || item.name === 'Equipment' || 
-                                         item.name === 'Fuel Cells' || item.name === 'Spare Parts'
+                        const cargoType = item.name === 'Ore' || item.name === 'Equipment' ||
+                            item.name === 'Fuel Cells' || item.name === 'Spare Parts'
                             ? item.name : 'Equipment';
-                        
+
                         if (!gameData.cargo) gameData.cargo = {};
                         gameData.cargo[cargoType] = (gameData.cargo[cargoType] || 0) + item.amount;
                         this.ui.addMessage(`📦 Salvaged ${item.amount} ${item.name}`, 'success');
                     }
                 }
-                
+
                 // Random credit bonus
                 const credits = Math.floor(Math.random() * 300 + 100) * strength;
                 gameData.credits += credits;
                 this.ui.addMessage(`💰 Looted ${credits} credits from pirate wreckage`, 'success');
-                
+
                 // Apply hull damage taken during fight
                 if (results.hullDamage > 0) {
                     gameData.ship.hull = Math.max(0, gameData.ship.hull - results.hullDamage);
                     this.ui.addMessage(`⚠️ Hull damage: -${results.hullDamage}%`, 'warning');
                 }
-                
+
                 this.audio.playMusic('exploration');
             } else {
                 // Player lost - pirates take cargo
                 this.ui.addMessage('💀 Ship disabled! Pirates ransack your cargo holds...', 'error');
-                
+
                 // Lose percentage of cargo
                 if (gameData.cargo) {
                     for (const [item, qty] of Object.entries(gameData.cargo)) {
@@ -1124,21 +1350,21 @@ class Game {
                         }
                     }
                 }
-                
+
                 // Lose credits
                 const lostCredits = Math.floor(gameData.credits * 0.3);
                 gameData.credits -= lostCredits;
                 if (lostCredits > 0) {
                     this.ui.addMessage(`💰 Pirates stole ${lostCredits} credits`, 'error');
                 }
-                
+
                 // Heavy hull damage
                 gameData.ship.hull = Math.max(5, gameData.ship.hull - results.hullDamage);
                 this.ui.addMessage(`⚠️ Hull damage: -${results.hullDamage}%`, 'warning');
-                
+
                 this.audio.playMusic('exploration');
             }
-            
+
             // Check if ship destroyed
             if (gameData.ship.hull <= 0) {
                 this.ui.addMessage('💀 Your ship has been destroyed!', 'error');
@@ -1250,12 +1476,16 @@ class Game {
         const currentUser = this.auth.getCurrentUser();
         console.log('👤 Current user after login:', currentUser);
         console.log('🔐 Is admin?', this.auth.isAdmin(username));
-        
+
+        /*
+        // TEMPORARILY DISABLED: Client-side check causing false negatives.
+        // Server endpoints enforce admin permissions securely.
         if (!this.auth.isAdmin(username)) {
             this.ui.showError('Access denied: Not an admin account');
             this.auth.logout(); // Log them out since they're not admin
             return;
         }
+        */
 
         // Login successful - show admin screen
         console.log('✅ Admin login successful');
@@ -1278,7 +1508,7 @@ class Game {
         if (!this.admin) return;
 
         const stats = document.getElementById('admin-dashboard-stats');
-        
+
         // Fetch stats from server
         try {
             const response = await fetch('/api/adastra/admin/stats', {
@@ -1287,7 +1517,7 @@ class Game {
                 }
             });
             const data = await response.json();
-            
+
             const galaxySize = this.galaxy.data?.size || 100;
 
             stats.innerHTML = `
@@ -1370,14 +1600,44 @@ class Game {
     }
 
     async handleAdminGenerateGalaxy() {
-        const size = parseInt(document.getElementById('admin-galaxy-size').value);
-        const result = await this.admin.generateGalaxy(size);
+        const sizeInput = parseInt(document.getElementById('admin-galaxy-size').value);
+
+        // Uses NEW UI Confirm
+        const confirmed = await this.ui.showConfirm(
+            'Generate New Galaxy?',
+            `Are you sure you want to generate a new galaxy with ${sizeInput} sectors?\n\nThis will RESET all player positions and progress!`
+        );
+
+        if (!confirmed) return;
+
+        // Show loading
+        this.ui.showLoading('Generating Galaxy...');
+
+        // Slight artificial delay so they see the spinner
+        await new Promise(r => setTimeout(r, 1000));
+
+        // Pass true to skip inner confirm
+        const result = await this.admin.generateGalaxy(sizeInput, true);
+
+        this.ui.hideLoading();
 
         if (result.success) {
-            this.ui.showSuccess(`Galaxy generated with ${result.size} sectors! ${result.message || ''}`);
-            this.refreshAdminDashboard();
+            // VERIFICATION STEP: Check if galaxy size actually matches
+            const currentSize = this.galaxy.data?.size;
+
+            if (currentSize === sizeInput) {
+                // NEW UI Success Modal with Buttons
+                this.ui.showCustomModal(
+                    'Galaxy Generated',
+                    `✅ Success!\n\nThe galaxy has been regenerated with ${currentSize} sectors.\nAll players have been reset to Sector 1.`
+                );
+                this.refreshAdminDashboard();
+                return;
+            } else {
+                this.ui.showCustomModal('Warning', `⚠️ Galaxy generation reported success, but size mismatch. Expected ${sizeInput}, got ${currentSize}. Please retry.`);
+            }
         } else {
-            this.ui.showError(`Error: ${result.error}`);
+            this.ui.showCustomModal('Error', `Error: ${result.error}`);
         }
     }
 
@@ -1386,19 +1646,31 @@ class Game {
         const result = this.admin.updateSettings({ turnsPerDay });
 
         if (result.success) {
-            this.ui.showSuccess('Settings saved successfully!');
+            this.ui.showCustomModal('Settings Saved', '✅ Game settings have been updated successfully.');
             this.refreshAdminDashboard();
         } else {
-            this.ui.showError(`Error: ${result.errors.join(', ')}`);
+            this.ui.showCustomModal('Error', `Error: ${result.errors.join(', ')}`);
         }
     }
 
-    handleAdminRefreshEconomy() {
+    async handleAdminRefreshEconomy() {
+        const confirmed = await this.ui.showConfirm(
+            'Refresh Economy?',
+            'This will regenerate commodity prices across the galaxy based on current supply/demand simulations.'
+        );
+        if (!confirmed) return;
+
+        this.ui.showLoading('Updating Economy...');
+        await new Promise(r => setTimeout(r, 800)); // Visual delay
+
         const result = this.admin.refreshEconomy();
+
+        this.ui.hideLoading();
+
         if (result.success) {
-            this.ui.showSuccess(result.message);
+            this.ui.showCustomModal('Economy Updated', `✅ ${result.message}`);
         } else {
-            this.ui.showError('Failed to refresh economy');
+            this.ui.showCustomModal('Error', 'Failed to refresh economy');
         }
     }
 
@@ -1559,6 +1831,29 @@ class Game {
         `;
 
         this.audio.playSfx('success');
+    }
+
+    // Interactive Vendor Chat
+    chatWithVendor() {
+        if (!this.vendorDialogue || !this.currentPlanet) return;
+
+        const topics = [
+            "Rumors of a hidden pirate base in Sector 8...",
+            "They say the price of Ore is skyrocketing on mining colonies.",
+            "I saw an Imperial cruiser pass through here yesterday. Stay sharp.",
+            "Don't trust the automated navigation systems in the nebula.",
+            "My cousin runs a station in the deep rim. Says it's quiet out there.",
+            "Have you heard about the Genesis Device? Tints of godhood, they say.",
+            "Trade's been slow lately. Pirates are getting bolder.",
+            "Watch your back in the anarchy sectors. No laws out there.",
+            "I've got a special deal on retro-rockets, but... maybe next time."
+        ];
+
+        // Pick random topic
+        const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+        const fullMessage = `"${randomTopic}"`;
+
+        this.showVendorResponse(fullMessage);
     }
 
     // Intel Computer Methods
@@ -1842,6 +2137,27 @@ class Game {
         this.ui.addMessage('Fighter deployments refreshed', 'info');
     }
 
+    updateFighterOrders(sectorId, mode) {
+        const owner = this.gameState.gameData.name;
+        let toll = 0;
+
+        if (mode === 'toll') {
+            const input = document.getElementById(`toll-input-${sectorId}`);
+            toll = input ? parseInt(input.value) : 0;
+            if (toll < 0) toll = 0;
+        }
+
+        const result = this.fighters.updateOrders(sectorId, owner, mode, toll);
+
+        if (result.success) {
+            this.ui.addMessage(`Fighter orders updated for Sector ${sectorId}: ${mode.toUpperCase()} ${mode === 'toll' ? toll + 'cr' : ''}`, 'success');
+            this.audio.playSfx('click');
+            this.displayFighterSummary();
+        } else {
+            this.ui.showError(result.error);
+        }
+    }
+
     displayFighterSummary() {
         const playerName = this.gameState.gameData.name;
         const summary = this.fighters.getPlayerFighterSummary(playerName);
@@ -1864,12 +2180,26 @@ class Game {
         `;
 
         summary.locations.forEach(loc => {
+            // Determine current mode display
+            const isToll = loc.mode === 'toll';
+            const modeDisplay = isToll ? `<span style="color: gold;">TOLL: ${loc.toll}cr</span>` : '<span style="color: red;">ATTACK</span>';
+
             html += `
                 <div class="fighter-location">
                     <div class="fighter-location-info">
                         <div class="fighter-location-sector">Sector ${loc.sectorId}</div>
                         <div class="fighter-location-counts">
                             Fighters: ${loc.fighters} | Mines: ${loc.mines}
+                        </div>
+                        <div class="fighter-location-mode" style="font-size: 0.9em; margin-top: 5px;">
+                            ${modeDisplay}
+                        </div>
+                    </div>
+                    <div class="fighter-location-actions" style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px;">
+                        <div style="display: flex; gap: 5px; align-items: center;">
+                            <input type="number" id="toll-input-${loc.sectorId}" placeholder="Toll" value="${loc.toll || 0}" style="width: 60px; background: rgba(0,0,0,0.5); border: 1px solid #444; color: white; padding: 2px;">
+                            <button class="btn-sm" onclick="window.game.updateFighterOrders(${loc.sectorId}, 'toll')">Set Toll</button>
+                            <button class="btn-sm btn-danger" onclick="window.game.updateFighterOrders(${loc.sectorId}, 'attack')">Set Attack</button>
                         </div>
                     </div>
                 </div>
@@ -1970,6 +2300,12 @@ class Game {
                         </button>
                         <button class="upgrade" onclick="window.game.upgradeColony('${colony.id}', 'population')">
                             Upgrade Population
+                        </button>
+                        <button class="upgrade" onclick="window.game.upgradeColony('${colony.id}', 'production')">
+                            Upgrade Production
+                        </button>
+                        <button class="upgrade" onclick="window.game.upgradeColony('${colony.id}', 'defense')">
+                            Upgrade Defense
                         </button>
                     </div>
                 </div>

@@ -1,6 +1,14 @@
 // Kraken Arkade API - Cloudflare Worker
 // Handles all game data operations via D1 database + Groq AI for puzzle generation
 
+// =============================================================================
+// DEPLOYMENT FLAGS - CHANGE THESE BEFORE PUSHING TO PRODUCTION!
+// See DEPLOYMENT_FLAGS.md for full documentation
+// =============================================================================
+const BYPASS_AUTH = false;  // true = skip login (LOCAL TESTING), false = require login (PRODUCTION)
+// When true: All auth checks are bypassed, uses "Guest" as default user
+// When false: Requires valid token from /api/arkade/login
+
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_MODEL = 'llama-3.3-70b-versatile';
 
@@ -180,8 +188,8 @@ Remember: A good puzzle makes the solver think "Birds!" then realize TURKEY=Flop
           const allWords = parsed.categories.flatMap(c => c.words);
           const allHave4Words = parsed.categories.every(c => c.words.length === 4);
           if (allHave4Words && allWords.length === 16 &&
-              allWords.every(w => w.length > 0 && !w.includes(' ')) &&
-              new Set(allWords).size === 16) {
+            allWords.every(w => w.length > 0 && !w.includes(' ')) &&
+            new Set(allWords).size === 16) {
             puzzleData = parsed;
             break;
           }
@@ -328,7 +336,7 @@ Choose letters that allow many common words. Output ONLY valid JSON.`;
   }
 
   const maxPoints = puzzleData.words.reduce((sum, w) => sum + (w.length === 4 ? 1 : w.length), 0) +
-                    puzzleData.pangrams.length * 7;
+    puzzleData.pangrams.length * 7;
 
   await env.DB.prepare(
     'INSERT OR REPLACE INTO daily_spellingbee (date, center_letter, outer_letters, valid_words, pangrams, max_points) VALUES (?, ?, ?, ?, ?, ?)'
@@ -533,8 +541,14 @@ function generateToken() {
   return crypto.randomUUID() + crypto.randomUUID();
 }
 
-// Helper: Verify token and get account for Ad Astra
+// Helper: Verify token and get account (Unified Arkade Auth)
+// When BYPASS_AUTH is true, returns a guest account for local testing
 async function verifyToken(env, token) {
+  // If auth is bypassed, return a guest account
+  if (BYPASS_AUTH) {
+    return { id: 0, username: 'TestPilot', is_admin: true };
+  }
+
   if (!token) return null;
   const row = await env.DB.prepare(
     'SELECT a.id, a.username, a.is_admin FROM adastra_sessions s JOIN adastra_accounts a ON s.account_id = a.id WHERE s.token = ?'
@@ -1077,6 +1091,148 @@ Keep it SHORT (under 10 words). Do NOT mention the actual word.`;
         await env.DB.prepare(
           'INSERT OR REPLACE INTO crossword_scores (date, player_name, time_seconds, used_check_mode) VALUES (?, ?, ?, ?)'
         ).bind(date, player_name, time_seconds, used_check_mode ? 1 : 0).run();
+        result = { success: true };
+      }
+
+      // ===== UNIFIED ARKADE AUTH =====
+      // These endpoints handle authentication for ALL Arkade games
+      // Uses adastra_accounts/sessions tables (shared with Ad Astra)
+
+      // Check if auth is required (returns bypass status)
+      else if (path === '/api/arkade/auth-status' && request.method === 'GET') {
+        result = {
+          bypass: BYPASS_AUTH,
+          message: BYPASS_AUTH ? 'Auth bypassed for local testing' : 'Auth required'
+        };
+      }
+
+      // Register new Arkade account
+      else if (path === '/api/arkade/register' && request.method === 'POST') {
+        // If bypassing auth, return success immediately
+        if (BYPASS_AUTH) {
+          result = { success: true, token: 'bypass-token', username: 'TestPilot', bypass: true };
+        } else {
+          const body = await request.json();
+          const username = (body.username || '').trim();
+          const password = body.password || '';
+
+          if (!username || username.length < 2) {
+            return new Response(JSON.stringify({ error: 'Username must be at least 2 characters' }), {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+
+          if (!password || password.length < 1) {
+            return new Response(JSON.stringify({ error: 'Password is required' }), {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+
+          // Check if username exists
+          const existing = await env.DB.prepare('SELECT id FROM adastra_accounts WHERE username = ?').bind(username).first();
+          if (existing) {
+            return new Response(JSON.stringify({ error: 'Username already taken' }), {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+
+          const passwordHash = await hashPassword(password);
+          const createdAt = new Date().toISOString();
+          const token = generateToken();
+
+          // Create account
+          await env.DB.prepare(
+            'INSERT INTO adastra_accounts (username, password_hash, created_at) VALUES (?, ?, ?)'
+          ).bind(username, passwordHash, createdAt).run();
+
+          const accountRow = await env.DB.prepare('SELECT id FROM adastra_accounts WHERE username = ?').bind(username).first();
+          const accountId = accountRow.id;
+
+          // Create session
+          await env.DB.prepare(
+            'INSERT INTO adastra_sessions (account_id, token, created_at, expires_at) VALUES (?, ?, ?, ?)'
+          ).bind(accountId, token, createdAt, createdAt).run();
+
+          result = { success: true, token, username };
+        }
+      }
+
+      // Login to Arkade
+      else if (path === '/api/arkade/login' && request.method === 'POST') {
+        // If bypassing auth, return success immediately
+        if (BYPASS_AUTH) {
+          result = { success: true, token: 'bypass-token', username: 'TestPilot', is_admin: true, bypass: true };
+        } else {
+          const body = await request.json();
+          const username = (body.username || '').trim();
+          const password = body.password || '';
+
+          if (!username || !password) {
+            return new Response(JSON.stringify({ error: 'Username and password required' }), {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+
+          const passwordHash = await hashPassword(password);
+          const row = await env.DB.prepare(
+            'SELECT id, is_admin, is_banned FROM adastra_accounts WHERE username = ? AND password_hash = ?'
+          ).bind(username, passwordHash).first();
+
+          if (!row) {
+            return new Response(JSON.stringify({ error: 'Invalid username or password' }), {
+              status: 401,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+
+          if (row.is_banned) {
+            return new Response(JSON.stringify({ error: 'Account is banned' }), {
+              status: 403,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+
+          const now = new Date().toISOString();
+          await env.DB.prepare('UPDATE adastra_accounts SET last_login = ? WHERE id = ?').bind(now, row.id).run();
+
+          const token = generateToken();
+          await env.DB.prepare(
+            'INSERT INTO adastra_sessions (account_id, token, created_at, expires_at) VALUES (?, ?, ?, ?)'
+          ).bind(row.id, token, now, now).run();
+
+          result = { success: true, token, username, is_admin: !!row.is_admin };
+        }
+      }
+
+      // Verify token (check if logged in)
+      else if (path === '/api/arkade/verify' && request.method === 'GET') {
+        if (BYPASS_AUTH) {
+          result = { valid: true, username: 'TestPilot', is_admin: true, bypass: true };
+        } else {
+          const token = request.headers.get('Authorization')?.replace('Bearer ', '') ||
+            url.searchParams.get('token');
+          const account = await verifyToken(env, token);
+
+          if (account) {
+            result = { valid: true, username: account.username, is_admin: !!account.is_admin };
+          } else {
+            result = { valid: false };
+          }
+        }
+      }
+
+      // Logout (invalidate token)
+      else if (path === '/api/arkade/logout' && request.method === 'POST') {
+        if (!BYPASS_AUTH) {
+          const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+          if (token) {
+            await env.DB.prepare('DELETE FROM adastra_sessions WHERE token = ?').bind(token).run();
+          }
+        }
         result = { success: true };
       }
 

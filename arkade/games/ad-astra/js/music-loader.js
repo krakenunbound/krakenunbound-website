@@ -3,7 +3,7 @@
 
 export class MusicLoader {
     constructor() {
-        this.musicPath = 'assets/audio/music/';
+        this.musicPath = '/arkade/games/ad-astra/assets/audio/music/';
         this.categories = ['menu', 'exploration', 'combat', 'docked'];
         this.discoveredTracks = {};
         this.maxVariants = 20; // Check up to theme_category20.mp3

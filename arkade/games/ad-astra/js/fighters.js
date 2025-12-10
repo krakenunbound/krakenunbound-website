@@ -24,7 +24,7 @@ export class FighterSystem {
     }
 
     // Deploy fighters to a sector
-    deployFighters(sectorId, owner, quantity, credits) {
+    deployFighters(sectorId, owner, quantity, credits, mode = 'attack', toll = 0) {
         const cost = quantity * this.FIGHTER_COST;
 
         if (credits < cost) {
@@ -59,11 +59,17 @@ export class FighterSystem {
         if (!deployments[sectorKey].fighters[owner]) {
             deployments[sectorKey].fighters[owner] = {
                 quantity: 0,
+                mode: mode, // 'attack' or 'toll'
+                toll: parseInt(toll) || 0,
                 deployed: Date.now()
             };
         }
 
         deployments[sectorKey].fighters[owner].quantity += quantity;
+        // Update settings if changed
+        if (mode) deployments[sectorKey].fighters[owner].mode = mode;
+        if (toll !== undefined) deployments[sectorKey].fighters[owner].toll = parseInt(toll);
+
         deployments[sectorKey].fighters[owner].lastUpdate = Date.now();
 
         this.save(deployments);
@@ -72,8 +78,26 @@ export class FighterSystem {
             success: true,
             deployed: quantity,
             cost: cost,
-            total: deployments[sectorKey].fighters[owner].quantity
+            total: deployments[sectorKey].fighters[owner].quantity,
+            mode: deployments[sectorKey].fighters[owner].mode,
+            toll: deployments[sectorKey].fighters[owner].toll
         };
+    }
+
+    // Update fighter orders (mode/toll) without deploying new ones
+    updateOrders(sectorId, owner, mode, toll) {
+        const deployments = this.load();
+        const sectorKey = `sector_${sectorId}`;
+
+        if (!deployments[sectorKey] || !deployments[sectorKey].fighters[owner]) {
+            return { success: false, error: 'No fighters deployed here.' };
+        }
+
+        deployments[sectorKey].fighters[owner].mode = mode;
+        deployments[sectorKey].fighters[owner].toll = parseInt(toll);
+        this.save(deployments);
+
+        return { success: true };
     }
 
     // Deploy mines to a sector
@@ -316,11 +340,24 @@ export class FighterSystem {
 
         let totalDamage = 0;
         const attacks = [];
+        const tolls = [];
 
-        // Enemy fighters attack with 50% accuracy
+        // Enemy fighters logic
         for (const [owner, data] of Object.entries(defenses.fighters)) {
             if (owner === playerName) continue; // Don't attack owner
 
+            // Check mode
+            if (data.mode === 'toll' && data.toll > 0) {
+                // Return toll request instead of damage
+                tolls.push({
+                    owner: owner,
+                    amount: data.toll,
+                    fighters: data.quantity
+                });
+                continue; // Skip damage calculation for this owner
+            }
+
+            // Normal Attack Mode: Enemy fighters attack with 50% accuracy
             const fighterDamage = Math.floor(data.quantity * this.FIGHTER_ATTACK_POWER * 0.5);
             totalDamage += fighterDamage;
 
@@ -334,8 +371,17 @@ export class FighterSystem {
         return {
             attacked: totalDamage > 0,
             damage: totalDamage,
-            attacks: attacks
+            attacks: attacks,
+            tolls: tolls, // List of players demanding tolls
+            hasTolls: tolls.length > 0
         };
+    }
+
+    // Pay a toll to an owner
+    payToll(sectorId, payer, recipient, amount) {
+        // This requires GameState integration to transfer credits
+        // We will just validate here
+        return { success: true, amount: amount, recipient: recipient };
     }
 
     // Get player's total deployed fighters across all sectors
@@ -354,7 +400,9 @@ export class FighterSystem {
                 locations.push({
                     sectorId: sectorId,
                     fighters: qty,
-                    mines: data.mines[playerName]?.quantity || 0
+                    mines: data.mines[playerName]?.quantity || 0,
+                    mode: data.fighters[playerName].mode || 'attack',
+                    toll: data.fighters[playerName].toll || 0
                 });
             } else if (data.mines[playerName]) {
                 const qty = data.mines[playerName].quantity;

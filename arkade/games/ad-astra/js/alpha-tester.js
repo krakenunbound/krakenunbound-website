@@ -403,29 +403,53 @@ class AlphaTesterSystem {
         return total > 0 ? Math.round((completed / total) * 100) : 0;
     }
 
-    // Export results as JSON
-    exportResults() {
+    // Submit results to server
+    async submitResults() {
         const results = {
             timestamp: Date.now(),
             tester: localStorage.getItem('currentUser') || 'anonymous',
-            gameVersion: '0.8.0',
+            gameVersion: '1.0.8', // Updated version
             completion: this.getCompletion(),
             tests: this.getAllResults()
         };
 
-        const json = JSON.stringify(results, null, 2);
-        const blob = new Blob([json], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
+        try {
+            const response = await fetch('/api/adastra/report', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(results)
+            });
 
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `ad-astra-test-results-${Date.now()}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Server error');
+            }
 
-        return results;
+            return await response.json();
+        } catch (error) {
+            console.error('Failed to submit report:', error);
+            throw error;
+        }
+    }
+
+    // Export results as JSON (backup)
+    exportResults() {
+        // ... (existing export logic if needed, but we can rely on submit)
+        // For now, I'll modify existing exportResults to just return the data object
+        // So handlers can use submitResults instead.
+        // Actually, let's keep it as is or redirect. 
+        // The user wants DATABASE submission.
+
+        // Let's defer to submitResults in the handler.
+        return {
+            timestamp: Date.now(),
+            tester: localStorage.getItem('currentUser') || 'anonymous',
+            gameVersion: '1.0.8',
+            completion: this.getCompletion(),
+            tests: this.getAllResults()
+        };
     }
 
     // Clear all results

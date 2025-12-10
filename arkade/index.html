@@ -15,23 +15,49 @@
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1 }
-            50% { opacity: 0.7 }
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0.7
+            }
         }
 
         @keyframes glow {
-            0%, 100% { filter: drop-shadow(0 0 10px currentColor) }
-            50% { filter: drop-shadow(0 0 25px currentColor) }
+
+            0%,
+            100% {
+                filter: drop-shadow(0 0 10px currentColor)
+            }
+
+            50% {
+                filter: drop-shadow(0 0 25px currentColor)
+            }
         }
 
         @keyframes float {
-            0%, 100% { transform: translateY(0) }
-            50% { transform: translateY(-10px) }
+
+            0%,
+            100% {
+                transform: translateY(0)
+            }
+
+            50% {
+                transform: translateY(-10px)
+            }
         }
 
         @keyframes scanline {
-            0% { transform: translateY(-100%) }
-            100% { transform: translateY(100%) }
+            0% {
+                transform: translateY(-100%)
+            }
+
+            100% {
+                transform: translateY(100%)
+            }
         }
 
         body {
@@ -123,44 +149,109 @@
             box-shadow: 0 10px 40px rgba(0, 255, 255, 0.3);
         }
 
-        .game-card.asteroid-run { border-color: #0ff; }
-        .game-card.asteroid-run:hover { box-shadow: 0 10px 40px rgba(0, 255, 255, 0.4); }
+        .game-card.asteroid-run {
+            border-color: #0ff;
+        }
 
-        .game-card.hive-assault { border-color: #a0f; }
-        .game-card.hive-assault:hover { box-shadow: 0 10px 40px rgba(160, 0, 255, 0.4); }
+        .game-card.asteroid-run:hover {
+            box-shadow: 0 10px 40px rgba(0, 255, 255, 0.4);
+        }
 
-        .game-card.it-lurks-below { border-color: #0cc; }
-        .game-card.it-lurks-below:hover { box-shadow: 0 10px 40px rgba(0, 204, 204, 0.4); }
+        .game-card.hive-assault {
+            border-color: #a0f;
+        }
 
-        .game-card.space-pirates { border-color: #f55; }
-        .game-card.space-pirates:hover { box-shadow: 0 10px 40px rgba(255, 85, 85, 0.4); }
+        .game-card.hive-assault:hover {
+            box-shadow: 0 10px 40px rgba(160, 0, 255, 0.4);
+        }
 
-        .game-card.star-kraken { border-color: #0ff; }
-        .game-card.star-kraken:hover { box-shadow: 0 10px 40px rgba(0, 255, 255, 0.4); }
+        .game-card.it-lurks-below {
+            border-color: #0cc;
+        }
 
-        .game-card.word-kraken { border-color: #0f0; }
-        .game-card.word-kraken:hover { box-shadow: 0 10px 40px rgba(0, 255, 0, 0.4); }
+        .game-card.it-lurks-below:hover {
+            box-shadow: 0 10px 40px rgba(0, 204, 204, 0.4);
+        }
 
-        .game-card.mini-crossword { border-color: #ff0; }
-        .game-card.mini-crossword:hover { box-shadow: 0 10px 40px rgba(255, 255, 0, 0.4); }
+        .game-card.space-pirates {
+            border-color: #f55;
+        }
 
-        .game-card.krakens-tempest { border-color: #4af; }
-        .game-card.krakens-tempest:hover { box-shadow: 0 10px 40px rgba(68, 170, 255, 0.4); }
+        .game-card.space-pirates:hover {
+            box-shadow: 0 10px 40px rgba(255, 85, 85, 0.4);
+        }
 
-        .game-card.abyssal-guess { border-color: #0088ff; }
-        .game-card.abyssal-guess:hover { box-shadow: 0 10px 40px rgba(0, 136, 255, 0.4); }
+        .game-card.star-kraken {
+            border-color: #0ff;
+        }
 
-        .game-card.spelling-kraken { border-color: #f9ca24; }
-        .game-card.spelling-kraken:hover { box-shadow: 0 10px 40px rgba(249, 202, 36, 0.4); }
+        .game-card.star-kraken:hover {
+            box-shadow: 0 10px 40px rgba(0, 255, 255, 0.4);
+        }
 
-        .game-card.abyssal-between { border-color: #ff6600; }
-        .game-card.abyssal-between:hover { box-shadow: 0 10px 40px rgba(255, 102, 0, 0.4); }
+        .game-card.word-kraken {
+            border-color: #0f0;
+        }
 
-        .game-card.phrase-kraken { border-color: #aa44ff; }
-        .game-card.phrase-kraken:hover { box-shadow: 0 10px 40px rgba(170, 68, 255, 0.4); }
+        .game-card.word-kraken:hover {
+            box-shadow: 0 10px 40px rgba(0, 255, 0, 0.4);
+        }
 
-        .game-card.ad-astra { border-color: #ffd700; }
-        .game-card.ad-astra:hover { box-shadow: 0 10px 40px rgba(255, 215, 0, 0.4); }
+        .game-card.mini-crossword {
+            border-color: #ff0;
+        }
+
+        .game-card.mini-crossword:hover {
+            box-shadow: 0 10px 40px rgba(255, 255, 0, 0.4);
+        }
+
+        .game-card.krakens-tempest {
+            border-color: #4af;
+        }
+
+        .game-card.krakens-tempest:hover {
+            box-shadow: 0 10px 40px rgba(68, 170, 255, 0.4);
+        }
+
+        .game-card.abyssal-guess {
+            border-color: #0088ff;
+        }
+
+        .game-card.abyssal-guess:hover {
+            box-shadow: 0 10px 40px rgba(0, 136, 255, 0.4);
+        }
+
+        .game-card.spelling-kraken {
+            border-color: #f9ca24;
+        }
+
+        .game-card.spelling-kraken:hover {
+            box-shadow: 0 10px 40px rgba(249, 202, 36, 0.4);
+        }
+
+        .game-card.abyssal-between {
+            border-color: #ff6600;
+        }
+
+        .game-card.abyssal-between:hover {
+            box-shadow: 0 10px 40px rgba(255, 102, 0, 0.4);
+        }
+
+        .game-card.phrase-kraken {
+            border-color: #aa44ff;
+        }
+
+        .game-card.phrase-kraken:hover {
+            box-shadow: 0 10px 40px rgba(170, 68, 255, 0.4);
+        }
+
+        .game-card.ad-astra {
+            border-color: #ffd700;
+        }
+
+        .game-card.ad-astra:hover {
+            box-shadow: 0 10px 40px rgba(255, 215, 0, 0.4);
+        }
 
         .game-icon {
             font-size: 64px;
@@ -174,19 +265,70 @@
             margin-bottom: 8px;
         }
 
-        .asteroid-run .game-title { color: #0ff; text-shadow: 0 0 10px #0ff; }
-        .hive-assault .game-title { color: #a0f; text-shadow: 0 0 10px #a0f; }
-        .it-lurks-below .game-title { color: #0cc; text-shadow: 0 0 10px #0cc; }
-        .space-pirates .game-title { color: #f55; text-shadow: 0 0 10px #f55; }
-        .star-kraken .game-title { color: #0ff; text-shadow: 0 0 10px #0ff; }
-        .word-kraken .game-title { color: #0f0; text-shadow: 0 0 10px #0f0; }
-        .mini-crossword .game-title { color: #ff0; text-shadow: 0 0 10px #ff0; }
-        .krakens-tempest .game-title { color: #4af; text-shadow: 0 0 10px #4af; }
-        .abyssal-guess .game-title { color: #0088ff; text-shadow: 0 0 10px #0088ff; }
-        .spelling-kraken .game-title { color: #f9ca24; text-shadow: 0 0 10px #f9ca24; }
-        .abyssal-between .game-title { color: #ff6600; text-shadow: 0 0 10px #ff6600; }
-        .phrase-kraken .game-title { color: #aa44ff; text-shadow: 0 0 10px #aa44ff; }
-        .ad-astra .game-title { color: #ffd700; text-shadow: 0 0 10px #ffd700; }
+        .asteroid-run .game-title {
+            color: #0ff;
+            text-shadow: 0 0 10px #0ff;
+        }
+
+        .hive-assault .game-title {
+            color: #a0f;
+            text-shadow: 0 0 10px #a0f;
+        }
+
+        .it-lurks-below .game-title {
+            color: #0cc;
+            text-shadow: 0 0 10px #0cc;
+        }
+
+        .space-pirates .game-title {
+            color: #f55;
+            text-shadow: 0 0 10px #f55;
+        }
+
+        .star-kraken .game-title {
+            color: #0ff;
+            text-shadow: 0 0 10px #0ff;
+        }
+
+        .word-kraken .game-title {
+            color: #0f0;
+            text-shadow: 0 0 10px #0f0;
+        }
+
+        .mini-crossword .game-title {
+            color: #ff0;
+            text-shadow: 0 0 10px #ff0;
+        }
+
+        .krakens-tempest .game-title {
+            color: #4af;
+            text-shadow: 0 0 10px #4af;
+        }
+
+        .abyssal-guess .game-title {
+            color: #0088ff;
+            text-shadow: 0 0 10px #0088ff;
+        }
+
+        .spelling-kraken .game-title {
+            color: #f9ca24;
+            text-shadow: 0 0 10px #f9ca24;
+        }
+
+        .abyssal-between .game-title {
+            color: #ff6600;
+            text-shadow: 0 0 10px #ff6600;
+        }
+
+        .phrase-kraken .game-title {
+            color: #aa44ff;
+            text-shadow: 0 0 10px #aa44ff;
+        }
+
+        .ad-astra .game-title {
+            color: #ffd700;
+            text-shadow: 0 0 10px #ffd700;
+        }
 
         .game-subtitle {
             color: #888;
@@ -267,205 +409,541 @@
             h1 {
                 font-size: 36px;
             }
+
             .subtitle {
                 font-size: 12px;
                 letter-spacing: 2px;
             }
+
             .games-grid {
                 grid-template-columns: 1fr;
             }
+
             .stats-bar {
                 flex-direction: column;
                 gap: 15px;
+            }
+        }
+
+        /* ===== LOGIN MODAL & USER BAR ===== */
+        .user-bar {
+            position: fixed;
+            top: 15px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(0, 30, 60, 0.9);
+            border: 1px solid #0ff;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 14px;
+            z-index: 100;
+        }
+
+        .user-bar strong {
+            color: #0ff;
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid #f55;
+            color: #f55;
+            padding: 5px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 85, 85, 0.2);
+        }
+
+        /* Login Modal */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .login-modal {
+            background: linear-gradient(135deg, #0a1525 0%, #1a2540 100%);
+            border: 2px solid #0ff;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.3);
+        }
+
+        .login-modal h2 {
+            color: #0ff;
+            margin-bottom: 10px;
+            font-size: 28px;
+            text-shadow: 0 0 20px #0ff;
+        }
+
+        .login-modal p {
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        .login-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .login-tab {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: 1px solid #444;
+            color: #888;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+
+        .login-tab.active {
+            border-color: #0ff;
+            color: #0ff;
+            background: rgba(0, 255, 255, 0.1);
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: rgba(0, 20, 40, 0.8);
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .login-input:focus {
+            border-color: #0ff;
+        }
+
+        .login-input::placeholder {
+            color: #555;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #0ff, #08a);
+            border: none;
+            border-radius: 8px;
+            color: #000;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.4);
+        }
+
+        .login-error {
+            color: #f55;
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .login-error.show {
+            display: block;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
             }
         }
     </style>
 </head>
 
 <body>
-    <a href="/" class="back-link">< Back to Kraken Unbound</a>
+    <a href="/" class="back-link">
+        < Back to Kraken Unbound</a>
 
-    <div class="container">
-        <header>
-            <h1>KRAKEN ARKADE</h1>
-            <p class="subtitle">Retro Arcade Collection</p>
-        </header>
-
-        <div class="games-grid">
-            <!-- ARCADE GAMES -->
-            <div class="game-card asteroid-run" onclick="launchGame('asteroid-run')">
-                <div class="game-icon">☄️</div>
-                <div class="game-title">ASTEROID RUN</div>
-                <div class="game-subtitle">Nebula Escape</div>
-                <span class="game-status status-ready">READY</span>
+            <!-- User Info Bar (visible when logged in) -->
+            <div id="userBar" class="user-bar" style="display: none;">
+                <span>Welcome, <strong id="usernameDisplay">Guest</strong></span>
+                <button id="logoutBtn" class="logout-btn">Logout</button>
             </div>
 
-            <div class="game-card space-pirates" onclick="launchGame('space-pirates')">
-                <div class="game-icon">🏴‍☠️</div>
-                <div class="game-title">SPACE PIRATES</div>
-                <div class="game-subtitle">Galactic Raid</div>
-                <span class="game-status status-ready">READY</span>
+            <!-- Login Modal (visible when not logged in) -->
+            <div id="loginOverlay" class="login-overlay" style="display: none;">
+                <div class="login-modal">
+                    <h2>🦑 KRAKEN ARKADE</h2>
+                    <p>Sign in to track your progress across all games</p>
+
+                    <div class="login-tabs">
+                        <button id="tabLogin" class="login-tab active" onclick="switchTab('login')">Login</button>
+                        <button id="tabRegister" class="login-tab" onclick="switchTab('register')">Register</button>
+                    </div>
+
+                    <div id="loginError" class="login-error"></div>
+
+                    <form id="authForm" onsubmit="handleAuth(event)">
+                        <input type="text" id="authUsername" class="login-input" placeholder="Username" required
+                            autocomplete="username">
+                        <input type="password" id="authPassword" class="login-input" placeholder="Password" required
+                            autocomplete="current-password">
+                        <button type="submit" id="authSubmit" class="login-btn">Login</button>
+                    </form>
+                </div>
             </div>
 
-            <div class="game-card star-kraken" onclick="launchGame('star-kraken')">
-                <div class="game-icon">🚀</div>
-                <div class="game-title">STAR KRAKEN</div>
-                <div class="game-subtitle">Galactic Defender</div>
-                <span class="game-status status-ready">READY</span>
+            <div class="container">
+                <header>
+                    <h1>KRAKEN ARKADE</h1>
+                    <p class="subtitle">Retro Arcade Collection</p>
+                </header>
+
+                <div class="games-grid">
+                    <!-- ARCADE GAMES -->
+                    <div class="game-card asteroid-run" onclick="launchGame('asteroid-run')">
+                        <div class="game-icon">☄️</div>
+                        <div class="game-title">ASTEROID RUN</div>
+                        <div class="game-subtitle">Nebula Escape</div>
+                        <span class="game-status status-ready">READY</span>
+                    </div>
+
+                    <div class="game-card space-pirates" onclick="launchGame('space-pirates')">
+                        <div class="game-icon">🏴‍☠️</div>
+                        <div class="game-title">SPACE PIRATES</div>
+                        <div class="game-subtitle">Galactic Raid</div>
+                        <span class="game-status status-ready">READY</span>
+                    </div>
+
+                    <div class="game-card star-kraken" onclick="launchGame('star-kraken')">
+                        <div class="game-icon">🚀</div>
+                        <div class="game-title">STAR KRAKEN</div>
+                        <div class="game-subtitle">Galactic Defender</div>
+                        <span class="game-status status-ready">READY</span>
+                    </div>
+
+                    <div class="game-card hive-assault" onclick="launchGame('hive-assault')">
+                        <div class="game-icon">👽</div>
+                        <div class="game-title">HIVE ASSAULT</div>
+                        <div class="game-subtitle">Alien Swarm</div>
+                        <span class="game-status status-ready">READY</span>
+                    </div>
+
+                    <div class="game-card it-lurks-below" onclick="launchGame('it-lurks-below')">
+                        <div class="game-icon">🦑</div>
+                        <div class="game-title">IT LURKS BELOW</div>
+                        <div class="game-subtitle">Deep Sea Terror</div>
+                        <span class="game-status status-ready">READY</span>
+                    </div>
+
+                    <div class="game-card krakens-tempest" onclick="launchGame('krakens-tempest')">
+                        <div class="game-icon">🌀</div>
+                        <div class="game-title">KRAKEN'S TEMPEST</div>
+                        <div class="game-subtitle">Whirlpool Defense</div>
+                        <span class="game-status status-ready">READY</span>
+                    </div>
+
+                    <!-- WORD GAMES - May Need Groq API -->
+                    <div class="game-card word-kraken" onclick="launchGame('word-kraken')">
+                        <div class="game-icon">📝</div>
+                        <div class="game-title">WORD KRAKEN</div>
+                        <div class="game-subtitle">Daily Word Puzzle</div>
+                        <span class="game-status status-ready">READY</span>
+                    </div>
+
+                    <div class="game-card mini-crossword" onclick="launchGame('kraken-kategories')">
+                        <div class="game-icon">🔗</div>
+                        <div class="game-title">KRAKEN KATEGORIES</div>
+                        <div class="game-subtitle">Cosmic Connections</div>
+                        <span class="game-status status-ready">READY</span>
+                    </div>
+
+                    <div class="game-card abyssal-guess" onclick="launchGame('abyssal-guess')">
+                        <div class="game-icon">🔮</div>
+                        <div class="game-title">ABYSSAL GUESS</div>
+                        <div class="game-subtitle">Semantic Search</div>
+                        <span class="game-status status-ready">READY</span>
+                    </div>
+
+                    <div class="game-card spelling-kraken" onclick="launchGame('spelling-kraken')">
+                        <div class="game-icon">🐝</div>
+                        <div class="game-title">SPELLING KRAKEN</div>
+                        <div class="game-subtitle">Word Hive</div>
+                        <span class="game-status status-ready">READY</span>
+                    </div>
+
+                    <div class="game-card abyssal-between" onclick="launchGame('abyssal-between')">
+                        <div class="game-icon">🔤</div>
+                        <div class="game-title">ABYSSAL BETWEEN</div>
+                        <div class="game-subtitle">Alphabetic Hunt</div>
+                        <span class="game-status status-ready">READY</span>
+                    </div>
+
+                    <div class="game-card phrase-kraken" onclick="launchGame('phrase-kraken')">
+                        <div class="game-icon">💬</div>
+                        <div class="game-title">PHRASE KRAKEN</div>
+                        <div class="game-subtitle">Quote Quest</div>
+                        <span class="game-status status-ready">READY</span>
+                    </div>
+
+                    <!-- COMPLEX GAMES -->
+                    <div class="game-card ad-astra" onclick="launchGame('ad-astra')">
+                        <div class="game-icon">✨</div>
+                        <div class="game-title">AD ASTRA</div>
+                        <div class="game-subtitle">Space Trading Simulation</div>
+                        <span class="game-status status-ready">READY</span>
+                    </div>
+                </div>
+
+                <div class="stats-bar">
+                    <div class="stat-item">
+                        <div class="stat-label">Games</div>
+                        <div class="stat-value" id="gameCount">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Available</div>
+                        <div class="stat-value" id="availableCount">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Coming Soon</div>
+                        <div class="stat-value" id="comingCount">13</div>
+                    </div>
+                </div>
+
+                <footer>
+                    <p>KRAKEN ARKADE v2.0 - Web Edition</p>
+                </footer>
             </div>
 
-            <div class="game-card hive-assault" onclick="launchGame('hive-assault')">
-                <div class="game-icon">👽</div>
-                <div class="game-title">HIVE ASSAULT</div>
-                <div class="game-subtitle">Alien Swarm</div>
-                <span class="game-status status-ready">READY</span>
-            </div>
+            <script>
+                // ===== ARKADE AUTH SYSTEM =====
+                const API_BASE = '/api/arkade';
+                const TOKEN_KEY = 'arkade_token';
+                const USER_KEY = 'arkade_user';
 
-            <div class="game-card it-lurks-below" onclick="launchGame('it-lurks-below')">
-                <div class="game-icon">🦑</div>
-                <div class="game-title">IT LURKS BELOW</div>
-                <div class="game-subtitle">Deep Sea Terror</div>
-                <span class="game-status status-ready">READY</span>
-            </div>
+                let authMode = 'login'; // 'login' or 'register'
+                let authBypass = false;
 
-            <div class="game-card krakens-tempest" onclick="launchGame('krakens-tempest')">
-                <div class="game-icon">🌀</div>
-                <div class="game-title">KRAKEN'S TEMPEST</div>
-                <div class="game-subtitle">Whirlpool Defense</div>
-                <span class="game-status status-ready">READY</span>
-            </div>
+                // Game registry - tracks which games are available
+                const games = {
+                    'asteroid-run': { ready: true },
+                    'space-pirates': { ready: true },
+                    'star-kraken': { ready: true },
+                    'hive-assault': { ready: true },
+                    'it-lurks-below': { ready: true },
+                    'krakens-tempest': { ready: true },
+                    'word-kraken': { ready: true },
+                    'kraken-kategories': { ready: true },
+                    'abyssal-guess': { ready: true },
+                    'spelling-kraken': { ready: true },
+                    'abyssal-between': { ready: true },
+                    'phrase-kraken': { ready: true },
+                    'ad-astra': { ready: true }
+                };
 
-            <!-- WORD GAMES - May Need Groq API -->
-            <div class="game-card word-kraken" onclick="launchGame('word-kraken')">
-                <div class="game-icon">📝</div>
-                <div class="game-title">WORD KRAKEN</div>
-                <div class="game-subtitle">Daily Word Puzzle</div>
-                <span class="game-status status-ready">READY</span>
-            </div>
-
-            <div class="game-card mini-crossword" onclick="launchGame('kraken-kategories')">
-                <div class="game-icon">🔗</div>
-                <div class="game-title">KRAKEN KATEGORIES</div>
-                <div class="game-subtitle">Cosmic Connections</div>
-                <span class="game-status status-ready">READY</span>
-            </div>
-
-            <div class="game-card abyssal-guess" onclick="launchGame('abyssal-guess')">
-                <div class="game-icon">🔮</div>
-                <div class="game-title">ABYSSAL GUESS</div>
-                <div class="game-subtitle">Semantic Search</div>
-                <span class="game-status status-ready">READY</span>
-            </div>
-
-            <div class="game-card spelling-kraken" onclick="launchGame('spelling-kraken')">
-                <div class="game-icon">🐝</div>
-                <div class="game-title">SPELLING KRAKEN</div>
-                <div class="game-subtitle">Word Hive</div>
-                <span class="game-status status-ready">READY</span>
-            </div>
-
-            <div class="game-card abyssal-between" onclick="launchGame('abyssal-between')">
-                <div class="game-icon">🔤</div>
-                <div class="game-title">ABYSSAL BETWEEN</div>
-                <div class="game-subtitle">Alphabetic Hunt</div>
-                <span class="game-status status-ready">READY</span>
-            </div>
-
-            <div class="game-card phrase-kraken" onclick="launchGame('phrase-kraken')">
-                <div class="game-icon">💬</div>
-                <div class="game-title">PHRASE KRAKEN</div>
-                <div class="game-subtitle">Quote Quest</div>
-                <span class="game-status status-ready">READY</span>
-            </div>
-
-            <!-- COMPLEX GAMES -->
-            <div class="game-card ad-astra" onclick="launchGame('ad-astra')">
-                <div class="game-icon">✨</div>
-                <div class="game-title">AD ASTRA</div>
-                <div class="game-subtitle">Space Trading Simulation</div>
-                <span class="game-status status-ready">READY</span>
-            </div>
-        </div>
-
-        <div class="stats-bar">
-            <div class="stat-item">
-                <div class="stat-label">Games</div>
-                <div class="stat-value" id="gameCount">0</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">Available</div>
-                <div class="stat-value" id="availableCount">0</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">Coming Soon</div>
-                <div class="stat-value" id="comingCount">13</div>
-            </div>
-        </div>
-
-        <footer>
-            <p>KRAKEN ARKADE v2.0 - Web Edition</p>
-        </footer>
-    </div>
-
-    <script>
-        // Game registry - tracks which games are available
-        const games = {
-            'asteroid-run': { ready: true },
-            'space-pirates': { ready: true },
-            'star-kraken': { ready: true },
-            'hive-assault': { ready: true },
-            'it-lurks-below': { ready: true },
-            'krakens-tempest': { ready: true },
-            'word-kraken': { ready: true },
-            'kraken-kategories': { ready: true },
-            'abyssal-guess': { ready: true },
-            'spelling-kraken': { ready: true },
-            'abyssal-between': { ready: true },
-            'phrase-kraken': { ready: true },
-            'ad-astra': { ready: true }
-        };
-
-        function launchGame(gameId) {
-            if (games[gameId] && games[gameId].ready) {
-                window.location.href = `games/${gameId}/`;
-            } else {
-                // Game not ready yet - show coming soon message
-                const card = document.querySelector(`.game-card.${gameId}`);
-                if (card) {
-                    card.style.animation = 'pulse 0.3s ease-in-out 2';
-                    setTimeout(() => {
-                        card.style.animation = '';
-                    }, 600);
-                }
-            }
-        }
-
-        function updateStats() {
-            const total = Object.keys(games).length;
-            const available = Object.values(games).filter(g => g.ready).length;
-            const coming = total - available;
-
-            document.getElementById('gameCount').textContent = total;
-            document.getElementById('availableCount').textContent = available;
-            document.getElementById('comingCount').textContent = coming;
-
-            // Update card states based on readiness
-            for (const [gameId, game] of Object.entries(games)) {
-                const card = document.querySelector(`.game-card.${gameId}`);
-                if (card) {
-                    if (game.ready) {
-                        card.classList.remove('coming-soon');
-                        card.querySelector('.game-status').textContent = 'READY';
-                        card.querySelector('.game-status').classList.remove('status-coming');
-                        card.querySelector('.game-status').classList.add('status-ready');
+                // Check if auth is bypassed (local testing mode)
+                async function checkAuthStatus() {
+                    try {
+                        const response = await fetch(`${API_BASE}/auth-status`);
+                        const data = await response.json();
+                        authBypass = data.bypass === true;
+                        return authBypass;
+                    } catch (e) {
+                        console.warn('Could not check auth status, assuming not bypassed');
+                        return false;
                     }
                 }
-            }
-        }
 
-        // Initialize on load
-        document.addEventListener('DOMContentLoaded', updateStats);
-    </script>
+                // Check if user has valid token
+                function isLoggedIn() {
+                    return !!localStorage.getItem(TOKEN_KEY);
+                }
+
+                function getUsername() {
+                    return localStorage.getItem(USER_KEY) || 'Guest';
+                }
+
+                function getToken() {
+                    return localStorage.getItem(TOKEN_KEY);
+                }
+
+                // Show the games (hide login, show user bar)
+                function showGames(username) {
+                    document.getElementById('loginOverlay').style.display = 'none';
+                    document.getElementById('userBar').style.display = 'flex';
+                    document.getElementById('usernameDisplay').textContent = username;
+                }
+
+                // Show login modal
+                function showLogin() {
+                    document.getElementById('loginOverlay').style.display = 'flex';
+                    document.getElementById('userBar').style.display = 'none';
+                }
+
+                // Switch between login/register tabs
+                function switchTab(tab) {
+                    authMode = tab;
+                    document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+                    document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+                    document.getElementById('authSubmit').textContent = tab === 'login' ? 'Login' : 'Register';
+                    document.getElementById('loginError').classList.remove('show');
+                }
+
+                // Show error message
+                function showError(message) {
+                    const errorEl = document.getElementById('loginError');
+                    errorEl.textContent = message;
+                    errorEl.classList.add('show');
+                }
+
+                // Handle login/register form submission
+                async function handleAuth(event) {
+                    event.preventDefault();
+
+                    const username = document.getElementById('authUsername').value.trim();
+                    const password = document.getElementById('authPassword').value;
+
+                    if (!username || !password) {
+                        showError('Username and password required');
+                        return;
+                    }
+
+                    const endpoint = authMode === 'login' ? `${API_BASE}/login` : `${API_BASE}/register`;
+
+                    try {
+                        const response = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ username, password })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            localStorage.setItem(TOKEN_KEY, data.token);
+                            localStorage.setItem(USER_KEY, data.username);
+                            showGames(data.username);
+                        } else {
+                            showError(data.error || 'Authentication failed');
+                        }
+                    } catch (e) {
+                        showError('Network error - please try again');
+                    }
+                }
+
+                // Handle logout
+                async function handleLogout() {
+                    const token = getToken();
+
+                    // Clear local storage
+                    localStorage.removeItem(TOKEN_KEY);
+                    localStorage.removeItem(USER_KEY);
+
+                    // Notify server
+                    if (token) {
+                        try {
+                            await fetch(`${API_BASE}/logout`, {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                        } catch (e) {
+                            // Ignore logout errors
+                        }
+                    }
+
+                    showLogin();
+                }
+
+                function launchGame(gameId) {
+                    if (games[gameId] && games[gameId].ready) {
+                        window.location.href = `games/${gameId}/`;
+                    } else {
+                        const card = document.querySelector(`.game-card.${gameId}`);
+                        if (card) {
+                            card.style.animation = 'pulse 0.3s ease-in-out 2';
+                            setTimeout(() => {
+                                card.style.animation = '';
+                            }, 600);
+                        }
+                    }
+                }
+
+                function updateStats() {
+                    const total = Object.keys(games).length;
+                    const available = Object.values(games).filter(g => g.ready).length;
+                    const coming = total - available;
+
+                    document.getElementById('gameCount').textContent = total;
+                    document.getElementById('availableCount').textContent = available;
+                    document.getElementById('comingCount').textContent = coming;
+
+                    for (const [gameId, game] of Object.entries(games)) {
+                        const card = document.querySelector(`.game-card.${gameId}`);
+                        if (card) {
+                            if (game.ready) {
+                                card.classList.remove('coming-soon');
+                                card.querySelector('.game-status').textContent = 'READY';
+                                card.querySelector('.game-status').classList.remove('status-coming');
+                                card.querySelector('.game-status').classList.add('status-ready');
+                            }
+                        }
+                    }
+                }
+
+                // Initialize on load
+                document.addEventListener('DOMContentLoaded', async () => {
+                    updateStats();
+
+                    // Setup logout button
+                    document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+
+                    // Check if auth is bypassed (local testing)
+                    const bypassed = await checkAuthStatus();
+
+                    if (bypassed) {
+                        // Auth bypassed - show games immediately with "TestPilot"
+                        console.log('Auth bypassed - local testing mode');
+                        showGames('TestPilot');
+                    } else if (isLoggedIn()) {
+                        // Already logged in - show games
+                        showGames(getUsername());
+                    } else {
+                        // Not logged in - show login modal
+                        showLogin();
+                    }
+                });
+            </script>
 </body>
 
 </html>

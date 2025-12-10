@@ -6,22 +6,28 @@ import { Utils } from './utils.js';
 class EncounterSystem {
     constructor(game) {
         this.game = game;
-        
+
         // Current encounter state
         this.activeEncounter = null;
         this.onResolveCallback = null;
-        
+
         // Encounter types with weights and definitions
         this.encounterTable = [
-            { weight: 25, type: 'pirates', generator: () => this.generatePirateEncounter() },
-            { weight: 20, type: 'debris', generator: () => this.generateDebrisEncounter() },
-            { weight: 15, type: 'derelict', generator: () => this.generateDerelictEncounter() },
-            { weight: 15, type: 'patrol', generator: () => this.generatePatrolEncounter() },
-            { weight: 10, type: 'trader', generator: () => this.generateTraderEncounter() },
-            { weight: 10, type: 'anomaly', generator: () => this.generateAnomalyEncounter() },
-            { weight: 5, type: 'distress', generator: () => this.generateDistressEncounter() }
+            { weight: 15, type: 'pirates', generator: () => this.generatePirateEncounter() }, // Reduced from 20
+            { weight: 15, type: 'debris', generator: () => this.generateDebrisEncounter() },
+            { weight: 15, type: 'hive', generator: () => this.generateHiveEncounter() },
+            { weight: 15, type: 'kraken', generator: () => this.generateStarKrakenEncounter() },
+            { weight: 10, type: 'derelict', generator: () => this.generateDerelictEncounter() },
+            { weight: 10, type: 'patrol', generator: () => this.generatePatrolEncounter() },
+            { weight: 5, type: 'trader', generator: () => this.generateTraderEncounter() },
+            { weight: 5, type: 'anomaly', generator: () => this.generateAnomalyEncounter() },
+            { weight: 5, type: 'distress', generator: () => this.generateDistressEncounter() },
+            // NEW SCI-FI ENCOUNTERS
+            { weight: 5, type: 'cylon', generator: () => this.generateCylonEncounter() },
+            { weight: 3, type: 'borg', generator: () => this.generateBorgEncounter() },
+            { weight: 3, type: 'ancient', generator: () => this.generateAncientEncounter() }
         ];
-        
+
         // Calculate total weight
         this.totalWeight = this.encounterTable.reduce((sum, e) => sum + e.weight, 0);
     }
@@ -32,14 +38,14 @@ class EncounterSystem {
      */
     rollEncounter() {
         let roll = Math.random() * this.totalWeight;
-        
+
         for (const entry of this.encounterTable) {
             roll -= entry.weight;
             if (roll <= 0) {
                 return entry.generator();
             }
         }
-        
+
         // Fallback
         return this.generatePirateEncounter();
     }
@@ -52,21 +58,18 @@ class EncounterSystem {
     triggerEncounter(encounter, onResolve) {
         this.activeEncounter = encounter;
         this.onResolveCallback = onResolve;
-        
+
         // Use 1 turn for the encounter
         const gameData = this.game.gameState.gameData;
         gameData.turns -= 1;
         this.game.gameState.save();
-        
+
         // Play alert sound
         this.game.audio.playSfx('alert');
-        if (encounter.type === 'pirates') {
-            this.game.audio.playMusic('combat');
-        }
-        
+
         // Log to ship's log
         this.game.ui.addMessage(`⚠️ ${encounter.title}`, 'warning');
-        
+
         // Show encounter modal
         this.showEncounterModal(encounter);
     }
@@ -78,7 +81,7 @@ class EncounterSystem {
     showEncounterModal(encounter) {
         // Remove any existing modal
         this.hideEncounterModal();
-        
+
         let choicesHtml = '';
         encounter.choices.forEach((choice, index) => {
             choicesHtml += `
@@ -178,10 +181,10 @@ class EncounterSystem {
 
         // Roll for outcome
         const outcome = this.rollOutcome(choice.outcomes);
-        
+
         // Apply outcome
         const result = this.applyOutcome(outcome);
-        
+
         // Show result
         this.showOutcomeModal(result);
     }
@@ -194,14 +197,14 @@ class EncounterSystem {
     rollOutcome(outcomes) {
         const totalWeight = outcomes.reduce((sum, o) => sum + o.weight, 0);
         let roll = Math.random() * totalWeight;
-        
+
         for (const outcome of outcomes) {
             roll -= outcome.weight;
             if (roll <= 0) {
                 return outcome;
             }
         }
-        
+
         return outcomes[0];
     }
 
@@ -216,12 +219,12 @@ class EncounterSystem {
             message: outcome.message,
             type: outcome.result,
             success: true,
-            combatTriggered: false
+            minigameTriggered: null // Stores type of minigame if any
         };
 
         switch (outcome.result) {
             case 'credits':
-                const creditAmount = Array.isArray(outcome.amount) 
+                const creditAmount = Array.isArray(outcome.amount)
                     ? Utils.random.int(outcome.amount[0], outcome.amount[1])
                     : outcome.amount;
                 gameData.credits += creditAmount;
@@ -236,8 +239,7 @@ class EncounterSystem {
                 gameData.ship.hull = Math.max(0, gameData.ship.hull - damageAmount);
                 result.message = outcome.message.replace('{amount}', damageAmount);
                 result.success = false;
-                
-                // Check if ship destroyed
+
                 if (gameData.ship.hull <= 0) {
                     result.shipDestroyed = true;
                 }
@@ -248,10 +250,10 @@ class EncounterSystem {
                     ? Utils.random.int(outcome.amount[0], outcome.amount[1])
                     : outcome.amount;
                 const commodity = outcome.commodity || 'Ore';
-                
+
                 if (!gameData.cargo) gameData.cargo = {};
                 gameData.cargo[commodity] = (gameData.cargo[commodity] || 0) + cargoAmount;
-                
+
                 result.message = outcome.message
                     .replace('{amount}', cargoAmount)
                     .replace('{commodity}', commodity);
@@ -261,7 +263,7 @@ class EncounterSystem {
                 const lossPercent = Array.isArray(outcome.amount)
                     ? Utils.random.int(outcome.amount[0], outcome.amount[1])
                     : outcome.amount;
-                
+
                 if (gameData.cargo) {
                     for (const [item, qty] of Object.entries(gameData.cargo)) {
                         const lost = Math.floor(qty * lossPercent / 100);
@@ -283,18 +285,16 @@ class EncounterSystem {
                 result.message = outcome.message.replace('{amount}', fuelAmount);
                 break;
 
-            case 'combat':
-                result.combatTriggered = true;
-                result.enemy = outcome.enemy || this.generateEnemy();
-                break;
-
             case 'pirateMinigame':
-                result.pirateMinigameTriggered = true;
-                result.enemy = outcome.enemy || this.generateEnemy();
+            case 'asteroidMinigame':
+            case 'hiveMinigame':
+            case 'starKrakenMinigame':
+                result.minigameTriggered = outcome.result;
+                result.difficulty = outcome.strength || outcome.difficulty || 1;
+                result.enemy = outcome.enemy;
                 break;
 
             case 'trade':
-                // Wandering trader purchase
                 if (gameData.credits >= outcome.price) {
                     gameData.credits -= outcome.price;
                     if (!gameData.cargo) gameData.cargo = {};
@@ -309,7 +309,6 @@ class EncounterSystem {
             case 'escape':
             case 'nothing':
             default:
-                // No change to game state
                 break;
         }
 
@@ -324,27 +323,25 @@ class EncounterSystem {
     showOutcomeModal(result) {
         this.hideEncounterModal();
 
-        if (result.combatTriggered) {
-            // Start combat
-            this.game.startCombat(result.enemy);
-            this.resolveEncounter();
-            return;
-        }
+        // Check for minigame triggers
+        if (result.minigameTriggered) {
+            const diff = result.difficulty || 1;
+            const callback = (res) => this.handleMinigameResult(res, result);
 
-        if (result.pirateMinigameTriggered) {
-            // Start pirate combat minigame - pass resolveEncounter as callback
-            // so route planner waits for minigame to complete before continuing
-            const strength = result.enemy?.strength || 1;
-            this.game.startPirateCombat(strength, () => {
-                this.resolveEncounter();
-            });
+            if (result.minigameTriggered === 'pirateMinigame') {
+                this.game.startPirateCombat(diff, callback);
+            } else if (result.minigameTriggered === 'asteroidMinigame') {
+                this.game.startAsteroidCombat(diff, callback);
+            } else if (result.minigameTriggered === 'hiveMinigame') {
+                this.game.startHiveCombat(diff, callback);
+            } else if (result.minigameTriggered === 'starKrakenMinigame') {
+                this.game.startStarKrakenCombat(diff, callback);
+            }
             return;
         }
 
         if (result.shipDestroyed) {
-            // Handle ship destruction
             this.game.ui.addMessage('💀 Your ship has been destroyed!', 'error');
-            // TODO: Game over handling
             this.resolveEncounter();
             return;
         }
@@ -395,31 +392,92 @@ class EncounterSystem {
         div.innerHTML = modalHtml;
         document.body.appendChild(div.firstElementChild);
 
-        // Log to ship's log
         this.game.ui.addMessage(result.message, result.success ? 'success' : 'warning');
     }
 
     /**
-     * Close outcome modal and resolve encounter
+     * Handle Minigame Completion
      */
+    handleMinigameResult(minigameResult, encounterResult) {
+        const gameData = this.game.gameState.gameData;
+        let summary = '';
+
+        const success = minigameResult.success || minigameResult.survived;
+
+        if (success) {
+            // Victory
+            this.game.audio.playSfx('success');
+            summary = 'Mission Successful! ';
+
+            // Apply loot
+            const loot = minigameResult.loot;
+            if (loot) {
+                // Asteroid Loot
+                if (loot.ore) {
+                    summary += `Mined ${loot.ore} Ore. `;
+                    gameData.cargo['Ore'] = (gameData.cargo['Ore'] || 0) + loot.ore;
+                }
+                if (loot.rare) {
+                    summary += `Found ${loot.rare} Rare Minerals. `;
+                    gameData.credits += loot.rare * 200;
+                }
+
+                if (loot.materials) {
+                    summary += `Salvaged ${loot.materials} materials. `;
+                    // Simplified: materials -> Credits conversion or cargo
+                    gameData.credits += loot.materials * 50;
+                }
+                if (loot.cargo) {
+                    summary += `Captured ${loot.cargo} units of cargo. `;
+                    gameData.cargo['Equipment'] = (gameData.cargo['Equipment'] || 0) + loot.cargo;
+                }
+                if (loot.biomass) {
+                    summary += `Collected ${loot.biomass} biomass. `;
+                    gameData.cargo['Organics'] = (gameData.cargo['Organics'] || 0) + loot.biomass;
+                }
+                if (loot.tech) {
+                    summary += `Recovered ${loot.tech} alien tech. `;
+                    gameData.cargo['Equipment'] = (gameData.cargo['Equipment'] || 0) + loot.tech;
+                }
+            }
+            // Bounty for kills in Star Kraken
+            if (minigameResult.kills) {
+                const bounty = minigameResult.kills * 100;
+                gameData.credits += bounty;
+                summary += `Earned ${bounty} credits in bounties. `;
+            }
+
+        } else {
+            // Defeat/Retreat
+            summary = 'Mission Failed/Aborted. ';
+        }
+
+        // Apply Hull Damage
+        if (minigameResult.hullDamage > 0) {
+            const dmg = Math.floor(minigameResult.hullDamage * 0.5); // Scale down damage typically
+            gameData.ship.hull = Math.max(0, gameData.ship.hull - dmg);
+            summary += `Ship took ${dmg} hull damage.`;
+        }
+
+        this.game.gameState.save();
+
+        // Show summary modal
+        this.showOutcomeModal({
+            success: success,
+            message: summary,
+            shipDestroyed: gameData.ship.hull <= 0
+        });
+    }
+
     closeOutcome() {
         this.hideEncounterModal();
         this.resolveEncounter();
     }
 
-    /**
-     * Resolve the current encounter
-     */
     resolveEncounter() {
         this.activeEncounter = null;
-        
-        // Return to exploration music
         this.game.audio.playMusic('exploration');
-        
-        // Update UI
         this.game.updateUI();
-        
-        // Call callback to resume route if any
         if (this.onResolveCallback) {
             const callback = this.onResolveCallback;
             this.onResolveCallback = null;
@@ -432,44 +490,26 @@ class EncounterSystem {
     // ==========================================
 
     generatePirateEncounter() {
-        const pirateTypes = [
-            { name: 'Pirate Scout', hull: 40, weapons: 20, credits: [100, 300], strength: 1 },
-            { name: 'Pirate Raider', hull: 60, weapons: 35, credits: [200, 500], strength: 2 },
-            { name: 'Pirate Marauder', hull: 80, weapons: 50, credits: [400, 800], strength: 3 }
-        ];
-        const pirate = pirateTypes[Math.floor(Math.random() * pirateTypes.length)];
-
         return {
             type: 'pirates',
             icon: '🏴‍☠️',
-            title: 'Pirates!',
+            title: 'Pirate Ambush!',
             titleColor: 'var(--accent-red)',
             borderColor: 'var(--accent-red)',
-            description: `A ${pirate.name} decloaks off your starboard bow! They're demanding you surrender your cargo.`,
-            stats: `<span style="color: var(--accent-red);">Enemy: ${pirate.name}</span> | Hull: ${pirate.hull} | Weapons: ${pirate.weapons}`,
-            pirate: pirate, // Store for minigame
+            description: 'Sensors detect hostile signals! Pirates are closing in for an assault.',
+            stats: '<span style="color:red">Threat Level: Moderate</span>',
             choices: [
                 {
-                    text: '⚔️ Fight!',
-                    hint: 'Engage in combat minigame',
-                    outcomes: [
-                        { weight: 100, result: 'pirateMinigame', enemy: { ...pirate, type: 'pirate' }, message: 'Engaging hostile vessel!' }
-                    ]
+                    text: '⚔️ Defend Ship',
+                    hint: 'Enter Combat',
+                    outcomes: [{ weight: 100, result: 'pirateMinigame', strength: 2 }]
                 },
                 {
-                    text: '🏃 Try to flee!',
-                    hint: '60% success, risk damage on failure',
+                    text: '🏃 Flee',
+                    hint: 'Risk Damage',
                     outcomes: [
-                        { weight: 60, result: 'escape', message: 'Your engines roar to life and you escape!' },
-                        { weight: 40, result: 'damage', amount: [15, 35], message: 'They fire as you flee! {amount} hull damage!' }
-                    ]
-                },
-                {
-                    text: '💰 Pay them off',
-                    hint: 'Costs 500-1500 credits',
-                    outcomes: [
-                        { weight: 70, result: 'credits', amount: [-1500, -500], message: 'You pay ₡{amount} and they let you pass.' },
-                        { weight: 30, result: 'cargo_loss', amount: [20, 40], message: 'They take the money AND {amount}% of your cargo!' }
+                        { weight: 40, result: 'escape', message: 'You managed to escape!' },
+                        { weight: 60, result: 'damage', amount: 20, message: 'Hit by stray fire while fleeing!' }
                     ]
                 }
             ]
@@ -480,148 +520,119 @@ class EncounterSystem {
         return {
             type: 'debris',
             icon: '🪨',
-            title: 'Debris Field',
+            title: 'Asteroid Field',
             titleColor: 'var(--accent-yellow)',
             borderColor: 'var(--accent-yellow)',
-            description: 'Your sensors detect a dense field of debris and wreckage blocking your path. Navigation will be tricky.',
+            description: 'A dense asteroid field blocks your path. You must navigate through it.',
             choices: [
                 {
-                    text: '🎯 Navigate carefully',
-                    hint: '70% safe, 30% minor damage',
-                    outcomes: [
-                        { weight: 70, result: 'nothing', message: 'You skillfully navigate through the debris field.' },
-                        { weight: 30, result: 'damage', amount: [5, 15], message: 'A chunk of debris scrapes your hull! {amount} damage.' }
-                    ]
+                    text: '🕹️ Pilot Manually',
+                    hint: 'Asteroid Minigame',
+                    outcomes: [{ weight: 100, result: 'asteroidMinigame', difficulty: 1 }]
                 },
                 {
-                    text: '🔍 Search for salvage',
-                    hint: 'Takes time, possible rewards',
-                    outcomes: [
-                        { weight: 40, result: 'credits', amount: [200, 800], message: 'You find salvageable materials worth ₡{amount}!' },
-                        { weight: 30, result: 'cargo', commodity: 'Equipment', amount: [3, 10], message: 'You recover {amount} units of {commodity}!' },
-                        { weight: 20, result: 'nothing', message: 'The debris contains nothing of value.' },
-                        { weight: 10, result: 'damage', amount: [10, 25], message: 'Something explodes! {amount} hull damage!' }
-                    ]
+                    text: '↩️ Go Around',
+                    hint: '-10 Fuel',
+                    outcomes: [{ weight: 100, result: 'fuel', amount: -10, message: 'Took a detour.' }]
+                }
+            ]
+        };
+    }
+
+    generateHiveEncounter() {
+        return {
+            type: 'hive',
+            icon: '👽',
+            title: 'Alien Hive Swarm',
+            titleColor: '#d946ef', // Fuchsia
+            borderColor: '#d946ef',
+            description: 'You have disturbed a Hive nesting ground! The swarm is awakening.',
+            stats: '<span style="color:#d946ef">Threat Level: HIGH</span>',
+            choices: [
+                {
+                    text: '🔫 Exterminate',
+                    hint: 'Hive Assault Minigame',
+                    outcomes: [{ weight: 100, result: 'hiveMinigame', difficulty: 2 }]
                 },
                 {
-                    text: '↩️ Go around',
-                    hint: 'Uses extra fuel',
-                    outcomes: [
-                        { weight: 100, result: 'fuel', amount: -10, message: 'You take a detour, using 10 extra fuel.' }
-                    ]
+                    text: '🚀 Emergency Warp',
+                    hint: '-20 Fuel',
+                    outcomes: [{ weight: 100, result: 'fuel', amount: -20, message: 'Narrow escape!' }]
+                }
+            ]
+        };
+    }
+
+    generateStarKrakenEncounter() {
+        return {
+            type: 'kraken',
+            icon: '🐙',
+            title: 'Star Kraken Forces',
+            titleColor: '#0ea5e9', // Sky blue
+            borderColor: '#0ea5e9',
+            description: 'A Star Kraken battle group has intercepted you. Prepare for ship-to-ship combat!',
+            stats: '<span style="color:#0ea5e9">Threat Level: EXTREME</span>',
+            choices: [
+                {
+                    text: '🚀 Engage Enemy',
+                    hint: 'Star Kraken Minigame',
+                    outcomes: [{ weight: 100, result: 'starKrakenMinigame', difficulty: 3 }]
                 }
             ]
         };
     }
 
     generateDerelictEncounter() {
+        const ships = ['Jupiter 2', 'Nostromo', 'Event Horizon', 'Red Dwarf', 'Discovery One', 'Kobayashi Maru'];
+        const shipName = Utils.random.choice(ships);
+
         return {
             type: 'derelict',
             icon: '🚀',
-            title: 'Derelict Vessel',
+            title: `Derelict: ${shipName}`,
             titleColor: 'var(--accent-blue)',
-            borderColor: 'var(--accent-blue)',
-            description: 'A seemingly abandoned ship drifts silently in the void. Life signs are negative, but the hull appears intact.',
+            description: `You found the drifting wreck of the ${shipName}. It appears abandoned.`,
             choices: [
                 {
-                    text: '🔧 Board and salvage',
-                    hint: 'High risk, high reward',
-                    outcomes: [
-                        { weight: 50, result: 'credits', amount: [500, 2000], message: 'You strip the ship of valuables worth ₡{amount}!' },
-                        { weight: 25, result: 'cargo', commodity: 'Equipment', amount: [10, 25], message: 'You recover {amount} units of {commodity}!' },
-                        { weight: 15, result: 'nothing', message: 'The ship was already picked clean.' },
-                        { weight: 10, result: 'damage', amount: [15, 30], message: 'A trap! The reactor overloads! {amount} damage!' }
-                    ]
+                    text: '🔧 Salvage',
+                    hint: 'Gain Credits',
+                    outcomes: [{ weight: 100, result: 'credits', amount: [200, 500], message: 'Found some credits.' }]
                 },
                 {
-                    text: '📡 Scan remotely',
-                    hint: 'Safe but less reward',
-                    outcomes: [
-                        { weight: 60, result: 'credits', amount: [100, 400], message: 'Scans reveal some data worth ₡{amount} on the market.' },
-                        { weight: 40, result: 'nothing', message: 'Scans show nothing of value.' }
-                    ]
-                },
-                {
-                    text: '🚫 Leave it alone',
-                    hint: 'Better safe than sorry',
-                    outcomes: [
-                        { weight: 100, result: 'nothing', message: 'You continue on your way, leaving the mystery unsolved.' }
-                    ]
+                    text: '🚫 Ignore',
+                    outcomes: [{ weight: 100, result: 'nothing', message: 'Left it alone.' }]
                 }
             ]
         };
     }
 
     generatePatrolEncounter() {
-        const hasContraband = this.game.gameState.gameData.cargo?.Contraband > 0;
-        
         return {
             type: 'patrol',
             icon: '🛡️',
-            title: 'Sector Patrol',
+            title: 'Security Patrol',
             titleColor: 'var(--accent-blue)',
-            borderColor: 'var(--accent-blue)',
-            description: 'A Sector Authority patrol vessel hails you and requests a routine cargo inspection.',
+            description: 'You are hailed by local security forces.',
             choices: [
                 {
-                    text: '✅ Submit to inspection',
-                    hint: hasContraband ? '⚠️ You have contraband!' : 'Standard procedure',
-                    outcomes: hasContraband ? [
-                        { weight: 100, result: 'cargo_loss', amount: [100, 100], message: 'They confiscate your contraband and fine you!' }
-                    ] : [
-                        { weight: 90, result: 'nothing', message: 'Inspection complete. They wave you through.' },
-                        { weight: 10, result: 'credits', amount: [50, 150], message: 'They appreciate your cooperation and share some intel worth ₡{amount}.' }
-                    ]
-                },
-                {
-                    text: '🏃 Attempt to flee',
-                    hint: 'Risky - they have fast ships',
-                    outcomes: [
-                        { weight: 30, result: 'escape', message: 'You outrun the patrol!' },
-                        { weight: 50, result: 'damage', amount: [20, 40], message: 'They open fire! {amount} hull damage!' },
-                        { weight: 20, result: 'combat', message: 'They pursue! Entering combat!' }
-                    ]
+                    text: '✅ Comply',
+                    outcomes: [{ weight: 100, result: 'nothing', message: 'They let you pass.' }]
                 }
             ]
         };
     }
 
     generateTraderEncounter() {
-        const commodities = ['Ore', 'Organics', 'Equipment'];
-        const commodity = commodities[Math.floor(Math.random() * commodities.length)];
-        const amount = Utils.random.int(10, 30);
-        const price = Utils.random.int(5, 15) * amount;
-
         return {
             type: 'trader',
-            icon: '🛒',
-            title: 'Wandering Trader',
-            titleColor: 'var(--accent-green)',
-            borderColor: 'var(--accent-green)',
-            description: `A friendly merchant ship hails you. They're offering ${amount} units of ${commodity} for ₡${price}.`,
-            stats: `Offer: ${amount} ${commodity} for ₡${price}`,
+            icon: '💰',
+            title: 'Venture Trader',
+            titleColor: '#22c55e',
+            description: 'A trader offers to share navigation data.',
             choices: [
                 {
-                    text: '💰 Accept the deal',
-                    hint: `Buy ${amount} ${commodity}`,
-                    outcomes: [
-                        { weight: 100, result: 'trade', commodity, amount, price, message: `Purchased ${amount} ${commodity}!` }
-                    ]
-                },
-                {
-                    text: '🤝 Try to negotiate',
-                    hint: '50% better price, 50% they leave',
-                    outcomes: [
-                        { weight: 50, result: 'trade', commodity, amount, price: Math.floor(price * 0.7), message: `Great deal! Bought ${amount} ${commodity} at a discount!` },
-                        { weight: 50, result: 'nothing', message: 'They take offense and jump away.' }
-                    ]
-                },
-                {
-                    text: '👋 Decline politely',
-                    hint: 'No transaction',
-                    outcomes: [
-                        { weight: 100, result: 'nothing', message: 'You wish them safe travels and continue on.' }
-                    ]
+                    text: '🤝 Accept',
+                    outcomes: [{ weight: 100, result: 'credits', amount: 50, message: 'Small trade completed.' }]
                 }
             ]
         };
@@ -631,26 +642,15 @@ class EncounterSystem {
         return {
             type: 'anomaly',
             icon: '🌀',
-            title: 'Space Anomaly',
-            titleColor: 'var(--accent-purple)',
-            borderColor: '#a855f7',
-            description: 'Your sensors detect a strange spatial distortion ahead. Energy readings are off the charts.',
+            title: 'Spatial Anomaly',
+            titleColor: '#8b5cf6',
+            description: 'Strange readings ahead.',
             choices: [
                 {
-                    text: '🔬 Investigate',
-                    hint: 'Unknown outcome',
+                    text: '🔬 Scan',
                     outcomes: [
-                        { weight: 30, result: 'credits', amount: [500, 1500], message: 'Exotic particles worth ₡{amount}!' },
-                        { weight: 25, result: 'fuel', amount: 30, message: 'The anomaly recharges your fuel cells! +{amount} fuel!' },
-                        { weight: 25, result: 'damage', amount: [10, 30], message: 'Energy surge! {amount} hull damage!' },
-                        { weight: 20, result: 'nothing', message: 'The anomaly dissipates before you can study it.' }
-                    ]
-                },
-                {
-                    text: '🚫 Avoid it',
-                    hint: 'Safe choice',
-                    outcomes: [
-                        { weight: 100, result: 'nothing', message: 'You give the anomaly a wide berth.' }
+                        { weight: 50, result: 'credits', amount: 200, message: 'Valuable data collected.' },
+                        { weight: 50, result: 'damage', amount: 10, message: 'Radiation surge damaged hull.' }
                     ]
                 }
             ]
@@ -661,53 +661,85 @@ class EncounterSystem {
         return {
             type: 'distress',
             icon: '🆘',
-            title: 'Distress Signal',
-            titleColor: 'var(--accent-yellow)',
-            borderColor: 'var(--accent-yellow)',
-            description: 'A weak distress signal is broadcasting on emergency frequencies. Someone needs help.',
+            title: 'Distress Beacon',
+            titleColor: '#f59e0b',
+            description: 'Someone is calling for help.',
             choices: [
                 {
-                    text: '🚑 Respond and assist',
-                    hint: 'Good karma, possible reward',
-                    outcomes: [
-                        { weight: 50, result: 'credits', amount: [300, 1000], message: 'The grateful crew rewards you with ₡{amount}!' },
-                        { weight: 20, result: 'fuel', amount: 20, message: 'They share some fuel as thanks! +{amount} fuel.' },
-                        { weight: 20, result: 'nothing', message: 'You help them but they have nothing to offer.' },
-                        { weight: 10, result: 'damage', amount: [20, 40], message: "It's a pirate trap! {amount} damage!" }
-                    ]
-                },
-                {
-                    text: '📡 Report to authorities',
-                    hint: 'Let someone else handle it',
-                    outcomes: [
-                        { weight: 100, result: 'nothing', message: 'You relay the signal and continue on your way.' }
-                    ]
-                },
-                {
-                    text: '🚫 Ignore it',
-                    hint: 'Not your problem',
-                    outcomes: [
-                        { weight: 100, result: 'nothing', message: 'You continue on, hoping someone else responds.' }
-                    ]
+                    text: '🚑 Assist',
+                    outcomes: [{ weight: 100, result: 'credits', amount: 100, message: 'They thanked you with credits.' }]
                 }
             ]
         };
     }
 
-    /**
-     * Generate a random enemy for combat
-     */
-    generateEnemy() {
-        const enemies = [
-            { name: 'Pirate Scout', hull: 40, hullMax: 40, shields: 20, shieldsMax: 20, weapons: 15, credits: [100, 300] },
-            { name: 'Pirate Raider', hull: 60, hullMax: 60, shields: 30, shieldsMax: 30, weapons: 25, credits: [200, 500] },
-            { name: 'Rogue Trader', hull: 50, hullMax: 50, shields: 25, shieldsMax: 25, weapons: 20, credits: [150, 400] }
-        ];
-        
-        const template = enemies[Math.floor(Math.random() * enemies.length)];
+    generateCylonEncounter() {
         return {
-            ...template,
-            credits: Utils.random.int(template.credits[0], template.credits[1])
+            type: 'cylon',
+            icon: '🤖',
+            title: 'Cylon Raider',
+            titleColor: '#ef4444',
+            borderColor: '#ef4444',
+            description: 'A sleek, chrome fighter appears on your scanners. Its single red eye scans your hull. "By your command."',
+            choices: [
+                {
+                    text: '⚔️ Combat',
+                    hint: 'Starfighter Combat',
+                    outcomes: [{ weight: 100, result: 'pirateMinigame', strength: 3, enemy: 'Cylon Raider' }]
+                },
+                {
+                    text: '🤫 FTL Jump',
+                    hint: '-30 Fuel',
+                    outcomes: [{ weight: 100, result: 'fuel', amount: -30, message: 'You narrowly escaped the toaster.' }]
+                }
+            ]
+        };
+    }
+
+    generateBorgEncounter() {
+        return {
+            type: 'borg',
+            icon: '⬛',
+            title: 'Borg Cube',
+            titleColor: '#10b981',
+            borderColor: '#10b981',
+            description: 'A massive cube fills the viewscreen. "WE ARE THE BORG. LOWER YOUR SHIELDS AND SURRENDER YOUR SHIPS. RESISTANCE IS FUTILE."',
+            stats: '<span style="color:#10b981">Threat: EXTREME</span>',
+            choices: [
+                {
+                    text: '🛡️ Modulate Shields',
+                    hint: 'Attempt Escape',
+                    outcomes: [
+                        { weight: 30, result: 'escape', message: 'Shield frequency matched! You escaped to warp.' },
+                        { weight: 70, result: 'damage', amount: 50, message: 'Adaptation failed! Massive damage taken.' }
+                    ]
+                },
+                {
+                    text: '⚔️ Engage',
+                    hint: 'Suicide Mission',
+                    outcomes: [{ weight: 100, result: 'starKrakenMinigame', difficulty: 5, enemy: 'Borg Cube' }]
+                }
+            ]
+        };
+    }
+
+    generateAncientEncounter() {
+        return {
+            type: 'ancient',
+            icon: '🏛️',
+            title: 'Ancient Sphere',
+            titleColor: '#eab308',
+            description: 'You encounter a device left by the Ancients. It pulses with zero-point energy.',
+            choices: [
+                {
+                    text: '🧬 Interface',
+                    hint: 'Requires Gene',
+                    outcomes: [
+                        { weight: 50, result: 'credits', amount: 1000, message: 'The device recognizes you! It grants a supply cache.' },
+                        { weight: 50, result: 'nothing', message: 'The device ignores you.' }
+                    ]
+                }
+            ]
         };
     }
 }

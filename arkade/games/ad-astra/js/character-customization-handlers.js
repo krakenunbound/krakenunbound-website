@@ -103,7 +103,7 @@ export class CharacterCustomizationHandlers {
         variants.forEach(variant => {
             const isSelected = this.selectedShipVariant === variant;
             const imagePath = `${this.game.assets.assetsPath}ship_${shipType.toLowerCase()}_${variant}.webp`;
-            
+
             html += `
                 <div class="ship-option ${isSelected ? 'selected' : ''}" 
                      data-variant="${variant}"
@@ -120,7 +120,7 @@ export class CharacterCustomizationHandlers {
 
     selectShip(variant) {
         this.selectedShipVariant = variant;
-        
+
         // Enable next button
         const nextBtn = document.getElementById('char-next-2');
         if (nextBtn) nextBtn.disabled = false;
@@ -178,15 +178,18 @@ export class CharacterCustomizationHandlers {
             return;
         }
 
+        // Ensure currentUser is correct
+        this.game.gameState.setCurrentUser(this.game.auth.getCurrentUser().username);
+
         // Create player data with customized ship
         const playerData = this.game.gameState.createPlayer(
-            this.game.gameState.currentUser, 
+            this.game.gameState.currentUser,
             pilotName,
             shipCustomName,
             shipType,
             shipVariant
         );
-        
+
         this.game.gameState.gameData = playerData;
         this.game.gameState.save();
 
@@ -203,7 +206,7 @@ export class CharacterCustomizationHandlers {
             cargo: playerData.cargo,
             equipment: {}
         };
-        
+
         console.log('💾 Saving character to server:', saveData);
         const success = await this.game.auth.savePlayerData(saveData);
         console.log('💾 Save result:', success);
@@ -219,16 +222,16 @@ export class CharacterCustomizationHandlers {
     editPlayerShip(username, shipType, shipVariant, shipCustomName) {
         // This will be called from admin panel
         const playerData = this.game.gameState.gameData;
-        
+
         if (playerData && playerData.username === username) {
             playerData.ship.type = shipType.toLowerCase();
             playerData.ship.name = shipCustomName;
             playerData.shipVariant = shipVariant;
-            
+
             this.game.gameState.save();
             return { success: true };
         }
-        
+
         return { success: false, error: 'Player not found' };
     }
 }

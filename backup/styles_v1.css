@@ -1,0 +1,447 @@
+/* Kraken Unbound - Ocean Theme */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg-primary: #0f1115;
+    --bg-secondary: #152030;
+    --bg-card: #1a2535;
+    --bg-hover: #1e2d42;
+    --text-primary: #e0e8f0;
+    --text-secondary: #8aa4bc;
+    --text-muted: #4a6480;
+    --border-color: #1e3045;
+    --accent: #3b9ebe;
+    --accent-hover: #4fb8d8;
+    --accent-glow: rgba(59, 158, 190, 0.4);
+
+    /* Social brand colors */
+    --youtube-red: #ff0000;
+    --x-white: #ffffff;
+    --discord-blurple: #5865F2;
+    --instagram-pink: #E1306C;
+    --rumble-green: #85c742;
+}
+
+html, body {
+    height: 100%;
+}
+
+body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Bubble Effect Container */
+.bubbles-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.bubble {
+    position: absolute;
+    bottom: -20px;
+    background: radial-gradient(circle at 30% 30%, rgba(120, 200, 255, 0.3), rgba(59, 158, 190, 0.1));
+    border-radius: 50%;
+    border: 1px solid rgba(120, 200, 255, 0.2);
+    animation: bubbleRise linear infinite;
+    opacity: 0;
+}
+
+.bubble::before {
+    content: '';
+    position: absolute;
+    top: 15%;
+    left: 20%;
+    width: 30%;
+    height: 30%;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+}
+
+@keyframes bubbleRise {
+    0% {
+        transform: translateY(0) translateX(0) scale(0.8);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.5;
+    }
+    30% {
+        transform: translateY(-30vh) translateX(calc(var(--drift, 10px) * 0.5)) scale(0.9);
+    }
+    50% {
+        opacity: 0.35;
+    }
+    70% {
+        transform: translateY(-70vh) translateX(var(--drift, 10px)) scale(1);
+    }
+    90% {
+        opacity: 0.15;
+    }
+    100% {
+        transform: translateY(-110vh) translateX(calc(var(--drift, 10px) * 1.2)) scale(1.05);
+        opacity: 0;
+    }
+}
+
+/* Main Container */
+.container {
+    position: relative;
+    z-index: 2;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 60px 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Hero Section */
+.hero {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.logo-container {
+    margin-bottom: 30px;
+}
+
+.kraken-icon {
+    width: 45px;
+    height: 55px;
+    margin: 0 auto;
+}
+
+.kraken-svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 0 30px rgba(59, 158, 190, 0.3));
+}
+
+/* Mantle breathing animation - VISIBLE */
+.mantle-group {
+    animation: mantleBreathe 3s ease-in-out infinite;
+    transform-origin: center 70%;
+}
+
+@keyframes mantleBreathe {
+    0%, 100% {
+        transform: scaleY(1) scaleX(1);
+    }
+    50% {
+        transform: scaleY(1.08) scaleX(0.94);
+    }
+}
+
+/* Floating animation for whole kraken - MORE MOVEMENT */
+.kraken-svg {
+    animation: krakenFloat 5s ease-in-out infinite;
+}
+
+@keyframes krakenFloat {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg);
+    }
+    25% {
+        transform: translateY(-15px) rotate(3deg);
+    }
+    50% {
+        transform: translateY(-20px) rotate(0deg);
+    }
+    75% {
+        transform: translateY(-15px) rotate(-3deg);
+    }
+}
+
+/* Tentacles - animated by JavaScript for S-curve wiggle */
+.tentacle {
+    /* JS handles the path animation */
+}
+
+/* Bioluminescent glow pulse - BRIGHT AND OBVIOUS */
+.glow-spot {
+    animation: glowPulse 2s ease-in-out infinite;
+}
+
+.g1 { animation-delay: 0s; }
+.g2 { animation-delay: 0.4s; }
+.g3 { animation-delay: 0.8s; }
+.g4 { animation-delay: 1.2s; }
+.g5 { animation-delay: 1.6s; }
+
+@keyframes glowPulse {
+    0%, 100% {
+        opacity: 0.3;
+        transform: scale(1);
+        filter: brightness(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(2);
+        filter: brightness(2);
+    }
+}
+
+/* Eye movement - LOOKING AROUND */
+.eyes {
+    animation: eyeLook 4s ease-in-out infinite;
+}
+
+@keyframes eyeLook {
+    0%, 100% { transform: translateX(0) translateY(0); }
+    20% { transform: translateX(3px) translateY(-1px); }
+    40% { transform: translateX(-2px) translateY(2px); }
+    60% { transform: translateX(-3px) translateY(-1px); }
+    80% { transform: translateX(2px) translateY(1px); }
+}
+
+/* Pupil dilation - VERY VISIBLE */
+.pupil {
+    animation: pupilPulse 3s ease-in-out infinite;
+    transform-origin: center;
+}
+
+@keyframes pupilPulse {
+    0%, 100% { transform: scale(1); }
+    30% { transform: scale(1.3); }
+    60% { transform: scale(0.8); }
+}
+
+/* Eye shine twinkle */
+.eye-shine {
+    animation: eyeTwinkle 2s ease-in-out infinite;
+}
+
+@keyframes eyeTwinkle {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* Beak animation - subtle opening/closing */
+.beak-opening {
+    animation: beakPulse 4s ease-in-out infinite;
+    transform-origin: center;
+}
+
+@keyframes beakPulse {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(1.5); }
+}
+
+/* Beak parts subtle movement */
+.beak-upper {
+    animation: beakUpperMove 4s ease-in-out infinite;
+    transform-origin: center bottom;
+}
+
+.beak-lower {
+    animation: beakLowerMove 4s ease-in-out infinite;
+    transform-origin: center top;
+}
+
+@keyframes beakUpperMove {
+    0%, 100% { transform: translateY(0) scaleY(1); }
+    50% { transform: translateY(-1px) scaleY(0.95); }
+}
+
+@keyframes beakLowerMove {
+    0%, 100% { transform: translateY(0) scaleY(1); }
+    50% { transform: translateY(1px) scaleY(0.95); }
+}
+
+.title {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.tagline {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Social Links */
+.social-links {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-width: 400px;
+}
+
+.social-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.social-card:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent);
+    transform: translateX(8px);
+    box-shadow: 0 0 20px var(--accent-glow);
+}
+
+.card-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+.card-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* Platform-specific icon colors */
+.youtube .card-icon {
+    background: rgba(255, 0, 0, 0.15);
+    color: var(--youtube-red);
+}
+
+.youtube:hover .card-icon {
+    background: rgba(255, 0, 0, 0.25);
+}
+
+.x-twitter .card-icon {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--x-white);
+}
+
+.x-twitter:hover .card-icon {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.discord .card-icon {
+    background: rgba(88, 101, 242, 0.15);
+    color: var(--discord-blurple);
+}
+
+.discord:hover .card-icon {
+    background: rgba(88, 101, 242, 0.25);
+}
+
+.instagram .card-icon {
+    background: rgba(225, 48, 108, 0.15);
+    color: var(--instagram-pink);
+}
+
+.instagram:hover .card-icon {
+    background: rgba(225, 48, 108, 0.25);
+}
+
+.rumble .card-icon {
+    background: rgba(133, 199, 66, 0.15);
+    color: var(--rumble-green);
+}
+
+.rumble:hover .card-icon {
+    background: rgba(133, 199, 66, 0.25);
+}
+
+.card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.card-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.card-handle {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.card-arrow {
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+}
+
+.card-arrow svg {
+    width: 20px;
+    height: 20px;
+}
+
+.social-card:hover .card-arrow {
+    color: var(--accent);
+    transform: translateX(4px);
+}
+
+/* Footer */
+.footer {
+    margin-top: 60px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* Arkade Card */
+.arkade .card-icon {
+    background: rgba(59, 158, 190, 0.15);
+    color: var(--accent);
+}
+
+.arkade:hover .card-icon {
+    background: rgba(59, 158, 190, 0.25);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .container {
+        padding: 40px 16px;
+    }
+
+    .title {
+        font-size: 2.2rem;
+    }
+
+    .kraken-icon {
+        width: 35px;
+        height: 43px;
+    }
+
+    .social-card {
+        padding: 14px 16px;
+    }
+}

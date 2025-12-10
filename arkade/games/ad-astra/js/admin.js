@@ -10,7 +10,7 @@ export class AdminPanel {
     }
 
     // Generate new galaxy
-    async generateGalaxy(size) {
+    async generateGalaxy(size, skipConfirm = false) {
         if (size < CONSTANTS.GALAXY.MIN_SIZE || size > CONSTANTS.GALAXY.MAX_SIZE) {
             return {
                 success: false,
@@ -18,9 +18,11 @@ export class AdminPanel {
             };
         }
 
-        const confirmed = confirm(`Generate new galaxy with ${size} sectors? This will reset ALL player progress!`);
-        if (!confirmed) {
-            return { success: false, error: 'Cancelled by user' };
+        if (!skipConfirm) {
+            const confirmed = confirm(`Generate new galaxy with ${size} sectors? This will reset ALL player progress!`);
+            if (!confirmed) {
+                return { success: false, error: 'Cancelled by user' };
+            }
         }
 
         // Reset all players on server first
@@ -192,7 +194,7 @@ export class AdminPanel {
         Utils.storage.set('maintenanceMode', enabled);
         return { success: true, enabled: enabled };
     }
-    
+
     // Get all players with full data (from server)
     async getAllPlayers() {
         try {
@@ -248,7 +250,7 @@ export class AdminPanel {
             if (updates.sector !== undefined) payload.currentSector = updates.sector;
             if (updates.hull !== undefined) payload.hull = updates.hull;
             if (updates.fuel !== undefined) payload.fuel = updates.fuel;
-            
+
             const token = this.gameState.auth.getToken();
             const response = await fetch(`/api/admin/player/${username}`, {
                 method: 'PUT',
@@ -258,13 +260,13 @@ export class AdminPanel {
                 },
                 body: JSON.stringify(payload)
             });
-            
+
             const result = await response.json();
-            
+
             if (!response.ok) {
                 return { success: false, error: result.error || 'Failed to update player' };
             }
-            
+
             return { success: true };
         } catch (error) {
             console.error('Error updating player:', error);

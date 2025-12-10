@@ -24,6 +24,10 @@ export class Galaxy {
             sectors[i] = this.createSector(i, size, rng);
         }
 
+        // --- INJECT SCI-FI LORE ---
+        this.embedSciFiLore(sectors, size, rng);
+        // --------------------------
+
         // Connect sectors with warps
         this.connectSectors(sectors, size, rng);
 
@@ -103,27 +107,33 @@ export class Galaxy {
         };
 
         // Generate economy prices
+        // Generate economy prices based on TradeWars logic
+        // STRICT PRODUCER/CONSUMER MODEL
         for (const commodity of CONSTANTS.COMMODITIES) {
-            // Contraband is ONLY sold at Black Market stations - never at planets
-            if (commodity === 'Contraband') {
-                continue;
-            }
+            // Contraband is ONLY sold at Black Market stations
+            if (commodity === 'Contraband') continue;
 
             const economyData = CONSTANTS.ECONOMY[commodity];
-            let price = economyData.basePrice;
+            let basePrice = economyData.basePrice;
+            const isSpecialty = (commodity === type.specialty);
 
-            // Specialty items are cheaper
-            if (commodity === type.specialty) {
-                price *= 0.7;
+            if (isSpecialty) {
+                // PRODUCER: Planet produces this. 
+                // High Supply, Low Buy Price (Player Buys Cheap), Low Sell Price (Planet won't pay much for it)
+                planet.economy[commodity] = {
+                    buyPrice: Math.round(basePrice * 0.7), // Player buys at 70% (Cheap)
+                    sellPrice: Math.round(basePrice * 0.5), // Player sells at 50% (Bad deal)
+                    supply: rng.int(500, 2000) // Abundant supply
+                };
             } else {
-                price *= rng.float(0.8, 1.5);
+                // CONSUMER: Planet needs this.
+                // Zero Supply (Can't buy), High Sell Price (Player Sells High)
+                planet.economy[commodity] = {
+                    buyPrice: Math.round(basePrice * 3.0), // Exorbitant (if stock existed)
+                    sellPrice: Math.round(basePrice * 1.4), // Player sells at 140% (Great deal)
+                    supply: 0 // None for sale
+                };
             }
-
-            planet.economy[commodity] = {
-                buyPrice: Math.round(price * rng.float(1.1, 1.3)),
-                sellPrice: Math.round(price * rng.float(0.7, 0.9)),
-                supply: rng.int(50, 500)
-            };
         }
 
         return planet;
@@ -223,7 +233,7 @@ export class Galaxy {
         // Generate economy for stations with trade services
         if (stationType.services.includes('trade')) {
             const commodities = [...new Set([...stationType.specialties, 'Ore', 'Organics', 'Equipment'])];
-            
+
             // Add contraband for black markets
             if (stationType.class === 'Black Market') {
                 commodities.push('Contraband');
@@ -235,7 +245,7 @@ export class Galaxy {
 
                 let price = economyData.basePrice;
                 const isSpecialty = stationType.specialties.includes(commodity);
-                
+
                 if (isSpecialty) {
                     price *= 0.85;
                 }
@@ -255,9 +265,9 @@ export class Galaxy {
         }
 
         station.planetType = stationType.class;
-        station.techLevel = stationType.class === 'Military' ? 5 : 
-                           stationType.class === 'Industrial' ? 4 : 
-                           stationType.class === 'Commercial' ? 3 : 2;
+        station.techLevel = stationType.class === 'Military' ? 5 :
+            stationType.class === 'Industrial' ? 4 :
+                stationType.class === 'Commercial' ? 3 : 2;
 
         return station;
     }
@@ -416,14 +426,14 @@ export class Galaxy {
 
         for (const sector of Object.values(this.data.sectors)) {
             if (!sector.contents) continue;
-            
+
             for (const content of sector.contents) {
                 // Update both planets and stations with economies
                 if ((content.type === 'planet' || content.type === 'station') && content.economy) {
                     for (const commodity of CONSTANTS.COMMODITIES) {
                         const eco = content.economy[commodity];
                         if (!eco || !eco.buyPrice) continue; // Skip if doesn't trade this commodity
-                        
+
                         const economyData = CONSTANTS.ECONOMY[commodity];
                         if (!economyData) continue;
 
@@ -501,6 +511,114 @@ export class Galaxy {
         }
         return prices;
     }
-}
+    // Inject legendary Sci-Fi locations
+    embedSciFiLore(sectors, size, rng) {
+        console.log('Injecting Sci-Fi Lore...');
 
+        const setSector = (id, contentData) => {
+            if (!sectors[id]) return; // Sector doesn't exist (map too small)
+
+            // Clear existing content
+            sectors[id].contents = [];
+
+            if (contentData.type === 'planet') {
+                const planet = this.generatePlanet(rng);
+                planet.name = contentData.name;
+                planet.planetType = contentData.planetType || planet.planetType;
+                if (contentData.description) planet.description = contentData.description;
+                if (contentData.specialty) planet.specialty = contentData.specialty;
+
+                // Recalculate economy based on new specialty if needed
+                if (contentData.recalcEconomy) {
+                    // Reset economy
+                    planet.economy = {};
+                    // ... logic to simple-regen economy would go here, 
+                    // but for now we rely on the main update loop or just leave it randomized
+                    // Actually let's force the specialty locally
+                    planet.specialty = contentData.specialty;
+                }
+                sectors[id].contents.push(planet);
+
+            } else if (contentData.type === 'station') {
+                const station = this.generateStation(rng);
+                station.name = contentData.name;
+                station.class = contentData.class || station.class;
+                if (contentData.description) station.description = contentData.description;
+                sectors[id].contents.push(station);
+            }
+        };
+
+        // 1. Sector 1: Sol System (Earth)
+        setSector(1, {
+            name: 'Earth (Sol)',
+            type: 'planet',
+            planetType: 'Terran',
+            specialty: 'Equipment',
+            description: 'The cradle of humanity. Home of the Federation.'
+        });
+
+        // 2. Babylon 5 (Sector 5)
+        setSector(5, {
+            name: 'Babylon 5',
+            type: 'station',
+            class: 'Diplomatic',
+            description: 'A diplomatic hub. The last best hope for peace.'
+        });
+
+        // 3. Tattooine (Random Desert)
+        const desertId = rng.int(10, size);
+        setSector(desertId, {
+            name: 'Tatooine',
+            type: 'planet',
+            planetType: 'Desert',
+            specialty: 'Ore', // Scavenging
+            description: 'A harsh desert world with twin suns. Hazardous.'
+        });
+
+        // 4. Caprica (Random Urban)
+        const capricaId = rng.int(10, size);
+        if (capricaId !== desertId) {
+            setSector(capricaId, {
+                name: 'Caprica',
+                type: 'planet',
+                planetType: 'Urban',
+                specialty: 'Equipment',
+                description: 'A high-tech colony world. Beware of cylons.'
+            });
+        }
+
+        // 5. Stardock (Sector 2 or nearby)
+        setSector(2, {
+            name: 'Stardock',
+            type: 'station',
+            class: 'Shipyard',
+            description: 'Major fleet manufacturing facility.'
+        });
+
+        // 6. The Borg Cube (Random High Sector)
+        const borgId = rng.int(Math.floor(size * 0.8), size);
+        sectors[borgId].contents.push({
+            type: 'debris',
+            name: 'Borg Debris Field',
+            description: 'Remnants of a cubic vessel. Resistance was futile.'
+        });
+
+        // 7. Magrathea (Sector 42)
+        setSector(42, {
+            name: 'Magrathea',
+            type: 'planet',
+            planetType: 'Industrial',
+            specialty: 'Luxury',
+            description: 'Ancient planet-building facility. Currently closed for recession.'
+        });
+
+        // 8. Stargate Command (Random)
+        const gateId = rng.int(5, size);
+        sectors[gateId].contents.push({
+            type: 'anomaly',
+            name: 'Chappa\'ai (Stargate)',
+            description: 'An ancient ring device of unknown origin.'
+        });
+    }
+}
 export default Galaxy;

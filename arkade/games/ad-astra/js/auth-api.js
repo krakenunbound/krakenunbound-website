@@ -1,191 +1,145 @@
-// Ad Astra - Authentication System (Server-Based)
-// Uses Flask API backend for persistent account storage
+import { ArkadeAuth } from './arkade-auth.js';
 
 export class AuthSystem {
     constructor() {
         this.currentUser = null;
-        this.token = null;
         this.apiUrl = '/api/adastra';
-        
-        // Load token from localStorage (only for session persistence)
-        this.token = localStorage.getItem('authToken');
-        
-        // Auto-login if we have a token
-        if (this.token) {
-            this.loadCurrentUser();
+
+        // Initial load if token exists
+        if (ArkadeAuth.isLoggedIn()) {
+            // We can't await here, but main.js calls loadCurrentUser anyway
         }
     }
 
-    // Register new account
+    // Register new account (Arkade-level only)
     async register(username, password, pilotName, shipName) {
-        try {
-            const response = await fetch(`${this.apiUrl}/register`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    username,
-                    password,
-                    pilotName,
-                    shipName
-                })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Registration failed');
-            }
-
-            // Save token
-            this.token = data.token;
-            localStorage.setItem('authToken', this.token);
-
-            // Load user data
+        // We ignore pilotName/shipName here as they are handled by character creation
+        const result = await ArkadeAuth.register(username, password);
+        if (result.success) {
             await this.loadCurrentUser();
-
-            return { success: true };
-
-        } catch (error) {
-            console.error('Registration error:', error);
-            return { success: false, error: error.message };
         }
+        return result;
     }
 
     // Login to existing account
     async login(username, password) {
-        try {
-            const response = await fetch(`${this.apiUrl}/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    username,
-                    password
-                })
-            });
-
-            const data = await response.json();
-            console.log('🔐 Server login response:', data);
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Login failed');
-            }
-
-            // Save token
-            this.token = data.token;
-            localStorage.setItem('authToken', this.token);
-
-            // Store basic user info from login response
-            this.currentUser = {
-                username: data.username,
-                isAdmin: data.is_admin ?? false
-            };
-            console.log('👤 Stored currentUser:', this.currentUser);
-
-            // Load player data - works for both regular users and admins who also play
-            // If no player record exists (admin-only account), that's handled gracefully
-            console.log('📦 Loading player data...');
+        const result = await ArkadeAuth.login(username, password);
+        if (result.success) {
             await this.loadCurrentUser();
-
-            return { success: true };
-
-        } catch (error) {
-            console.error('Login error:', error);
-            return { success: false, error: error.message };
         }
+        return result;
     }
 
-    // Load current user data from server
+    // Load current user data from Ad Astra endpoint
     async loadCurrentUser() {
-        if (!this.token) {
+        if (!ArkadeAuth.isLoggedIn()) {
+            this.currentUser = null;
             return false;
         }
 
+        const token = ArkadeAuth.getToken();
+        const username = ArkadeAuth.getUsername();
+
+        // 1. Check LocalStorage FIRST for cached player data
+        // This is critical for preventing the "Character Creation Loop" on refresh
+        const cachedData = localStorage.getItem(`player_${username}`);
+        if (cachedData) {
+            try {
+                const gameState = JSON.parse(cachedData);
+                // If we have a pilot name and valid gameState, USE IT immediately
+                // This bypasses the server fetch latency/failure risk during dev
+                if (gameState.pilotName && gameState.pilotName !== 'Unknown') {
+                    console.log('✅ Loaded cached player data from localStorage');
+                    this.currentUser = {
+                        username: username,
+                        pilotName: gameState.pilotName,
+                        gameState: gameState,
+                        isAdmin: false // Can't trust local admin flag, but fine for now
+                    };
+                    return true;
+                }
+            } catch (e) {
+                console.warn('Failed to parse cached player data', e);
+            }
+        }
+
+        // 2. Fetch from Server if not found locally
         try {
             const response = await fetch(`${this.apiUrl}/player`, {
                 headers: {
-                    'Authorization': `Bearer ${this.token}`
+                    'Authorization': `Bearer ${token}`
                 }
             });
 
             const data = await response.json();
 
-            if (!response.ok || data.error) {
-                // Player record not found
-                // For admin-only accounts (no player record), this is expected
-                if (this.currentUser?.isAdmin) {
-                    console.log('⚠️ Admin account with no player data - that\'s OK');
-                    return true; // Admin can still access admin panel
-                }
-                // For regular users, no player data means invalid state
-                console.error('❌ No player data found for non-admin user');
-                this.logout();
-                return false;
+            if (response.ok) {
+                // Success - we have full player data
+                this.currentUser = {
+                    ...data,
+                    username: username, // ensure we have username
+                    isAdmin: data.is_admin || false
+                };
+
+                // Persist to local storage to survive refresh
+                localStorage.setItem(`player_${username}`, JSON.stringify(this.currentUser.gameState || {}));
+
+                console.log('✅ Ad Astra Player Loaded:', this.currentUser);
+                return true;
+            } else {
+                // Failed - likely 404 Player Not Found (New Arkade User)
+                console.log('⚠️ Player data not found (New User?)');
+
+                // We construct a "partial" user so main.js sees we are logged in
+                this.currentUser = {
+                    username: username,
+                    pilotName: null, // Signals need for creation
+                    isAdmin: false
+                };
+                return true; // Return true so main.js knows we are "Authenticated"
             }
-
-            // Got player data - merge it into currentUser
-            console.log('✅ Player data loaded:', Object.keys(data));
-            this.currentUser = {
-                ...data,
-                isAdmin: data.isAdmin ?? data.is_admin ?? false
-            };
-            return true;
-
         } catch (error) {
-            console.error('Failed to load user:', error);
-            // For admin-only accounts (no player record), this is expected
-            if (this.currentUser?.isAdmin) {
-                console.log('⚠️ Admin account with no player data (caught exception)');
-                return true; // Admin can still access admin panel
-            }
+            console.error("Ad Astra Load Error:", error);
             return false;
         }
     }
 
     // Save player data to server
     async savePlayerData(playerData) {
-        if (!this.token) {
-            console.error('No auth token - cannot save');
-            return false;
-        }
+        if (!ArkadeAuth.isLoggedIn()) return false;
 
+        const token = ArkadeAuth.getToken();
         try {
             const response = await fetch(`${this.apiUrl}/player`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.token}`
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(playerData)
             });
-
             const data = await response.json();
             return data.success;
-
-        } catch (error) {
-            console.error('Failed to save player data:', error);
+        } catch (e) {
+            console.error('Failed to save player data:', e);
             return false;
         }
     }
 
     // Logout
     logout() {
+        ArkadeAuth.logout();
         this.currentUser = null;
-        this.token = null;
-        localStorage.removeItem('authToken');
     }
 
     // Check if user is logged in
     isLoggedIn() {
-        return this.currentUser !== null && this.token !== null;
+        return ArkadeAuth.isLoggedIn();
     }
 
     // Get current auth token
     getToken() {
-        return this.token;
+        return ArkadeAuth.getToken();
     }
 
     // Get current user
@@ -196,27 +150,16 @@ export class AuthSystem {
     // Check if user is admin
     isAdmin(username) {
         if (!this.currentUser) return false;
-
-        // If a username is provided, ensure it matches
-        if (username && this.currentUser.username && username !== this.currentUser.username) {
-            return false;
-        }
-
-        // Prefer normalized flag
-        if (this.currentUser.isAdmin) return true;
-
-        // Fallback to raw server flag if present
-        if (typeof this.currentUser.is_admin !== 'undefined') {
-            return !!this.currentUser.is_admin;
-        }
-
-        return false;
+        if (username && this.currentUser.username && username !== this.currentUser.username) return false;
+        return this.currentUser.isAdmin || this.currentUser.is_admin || false;
     }
 
-    // Admin login (for sysop access)
+    // Admin login (wrapper)
     async adminLogin(username, password) {
-        // For now, use regular login
-        // TODO: Add admin flag to database
         return await this.login(username, password);
+    }
+
+    requireAuth(returnUrl) {
+        return ArkadeAuth.requireAuth(returnUrl);
     }
 }

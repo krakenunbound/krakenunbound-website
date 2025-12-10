@@ -228,10 +228,18 @@ export class ColonizationSystem {
                 colony.income += 50;
                 break;
             case 'defense':
-                // Defensive upgrades (for future fighter integration)
+                // Defense upgrade deploys free fighters to sector
+                const fightersToAdd = 10 * colony.upgrades[upgradeType];
+                // Accessing main game properties via global game object if needed, 
+                // but ideally we should pass a callback. For now, we update local stats.
+                colony.defenses = (colony.defenses || 0) + fightersToAdd;
                 break;
             case 'production':
-                // Production upgrades (increases supply in economy)
+                // Production upgrades increases MAX SUPPLY of specialty
+                // We need to update the actual planet object in the galaxy
+                // This requires a save back to galaxy, which is tricky here without passing galaxy obj
+                // So we'll update the colony record and let the main loop sync it
+                colony.productionLevel = (colony.productionLevel || 1) + 1;
                 break;
         }
 
@@ -246,6 +254,68 @@ export class ColonizationSystem {
             newLevel: colony.upgrades[upgradeType],
             colonyLevel: colony.level
         };
+    }
+
+    // Claim an existing planet (Alternative to Genesis Torpedo)
+    claimPlanet(galaxy, sectorId, planetIndex, owner, pilotName, credits) {
+        const CLAIM_COST = 10000;
+
+        if (credits < CLAIM_COST) {
+            return { success: false, error: `Need ${Utils.format.credits(CLAIM_COST)} to initial colonial charter.` };
+        }
+
+        const sector = galaxy.getSector(sectorId);
+        if (!sector || !sector.contents[planetIndex]) {
+            return { success: false, error: 'Planet not found.' };
+        }
+
+        const planet = sector.contents[planetIndex];
+        if (planet.type !== 'planet') {
+            return { success: false, error: 'Target is not a planet.' };
+        }
+        if (planet.owner) {
+            return { success: false, error: `Planet already owned by ${planet.owner}.` };
+        }
+
+        // Check limits
+        const colonies = this.load();
+        const playerColonies = Object.values(colonies).filter(c => c.owner === owner);
+        if (playerColonies.length >= this.MAX_COLONIES_PER_PLAYER) {
+            return { success: false, error: 'Colony limit reached.' };
+        }
+
+        // Apply Claim
+        planet.owner = owner;
+        planet.isColony = true;
+        planet.name = `${pilotName}'s ${planet.name}`; // Rename it!
+
+        // Create Colony Record
+        const colony = {
+            id: Utils.generateId(),
+            sectorId: sectorId,
+            owner: owner,
+            pilotName: pilotName,
+            planetName: planet.name,
+            planetIndex: planetIndex, // Track index to sync economy later
+            created: Date.now(),
+            level: 1,
+            population: planet.population || 1000,
+            income: this.INCOME_PER_TICK,
+            lastCollection: Date.now(),
+            upgrades: {
+                population: 0,
+                income: 0,
+                defense: 0,
+                production: 0
+            },
+            totalEarned: 0
+        };
+
+        colonies[colony.id] = colony;
+        this.save(colonies);
+        Utils.storage.set('galaxy', galaxy.data);
+
+        return { success: true, cost: CLAIM_COST, colony: colony };
     }
 
     // Abandon colony

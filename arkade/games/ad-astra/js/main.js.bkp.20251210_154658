@@ -1511,7 +1511,7 @@ class Game {
 
         // Fetch stats from server
         try {
-            const response = await fetch('https://kraken-arkade-api.krakenunbound.workers.dev/api/adastra/admin/stats', {
+            const response = await fetch('/api/adastra/admin/stats', {
                 headers: {
                     'Authorization': `Bearer ${this.auth.token || ''}`
                 }

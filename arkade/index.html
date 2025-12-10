@@ -573,6 +573,31 @@
             animation: shake 0.5s ease-in-out;
         }
 
+        .auth-toggle {
+            margin-top: 15px;
+            font-size: 13px;
+            color: #888;
+        }
+
+        .auth-toggle a {
+            color: #0ff;
+            text-decoration: none;
+        }
+
+        .auth-toggle a:hover {
+            text-decoration: underline;
+        }
+
+        .password-warning {
+            margin-top: 12px;
+            padding: 10px;
+            background: rgba(255, 170, 0, 0.15);
+            border: 1px solid rgba(255, 170, 0, 0.4);
+            border-radius: 5px;
+            font-size: 12px;
+            color: #fa0;
+        }
+
         @keyframes shake {
 
             0%,
@@ -621,6 +646,15 @@
                             autocomplete="current-password">
                         <button type="submit" id="authSubmit" class="login-btn">Login</button>
                     </form>
+
+                    <p id="authToggle" class="auth-toggle">
+                        <span id="authToggleText">Don't have an account?</span>
+                        <a href="#" onclick="toggleAuthMode(); return false;" id="authToggleLink">Register here</a>
+                    </p>
+
+                    <p id="passwordWarning" class="password-warning" style="display: none;">
+                        ⚠️ Passwords are not highly secured. Do not reuse passwords from other accounts.
+                    </p>
                 </div>
             </div>
 
@@ -818,6 +852,18 @@
                     document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
                     document.getElementById('authSubmit').textContent = tab === 'login' ? 'Login' : 'Register';
                     document.getElementById('loginError').classList.remove('show');
+
+                    // Update toggle link text
+                    document.getElementById('authToggleText').textContent = tab === 'login' ? "Don't have an account?" : "Already have an account?";
+                    document.getElementById('authToggleLink').textContent = tab === 'login' ? "Register here" : "Login here";
+
+                    // Show password warning only on register
+                    document.getElementById('passwordWarning').style.display = tab === 'register' ? 'block' : 'none';
+                }
+
+                // Toggle between login and register mode
+                function toggleAuthMode() {
+                    switchTab(authMode === 'login' ? 'register' : 'login');
                 }
 
                 // Show error message

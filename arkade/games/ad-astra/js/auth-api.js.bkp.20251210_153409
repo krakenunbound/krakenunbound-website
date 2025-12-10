@@ -3,7 +3,7 @@ import { ArkadeAuth } from './arkade-auth.js';
 export class AuthSystem {
     constructor() {
         this.currentUser = null;
-        this.apiUrl = 'https://kraken-arkade-api.krakenunbound.workers.dev/api/adastra';
+        this.apiUrl = '/api/adastra';
 
         // Initial load if token exists
         if (ArkadeAuth.isLoggedIn()) {

@@ -12,7 +12,7 @@
  *   }
  */
 
-const API_BASE = 'https://kraken-arkade-api.krakenunbound.workers.dev/api/arkade';
+const API_BASE = '/api/arkade';
 const TOKEN_KEY = 'arkade_token';
 const USER_KEY = 'arkade_user';
 

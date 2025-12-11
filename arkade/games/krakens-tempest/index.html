@@ -368,6 +368,10 @@
                 <div class="hud-label">Lives</div>
                 <div class="hud-value" id="lives">3</div>
             </div>
+            <div class="hud-panel" style="border-color: #7b2cbf; box-shadow: 0 0 10px rgba(123, 44, 191, 0.3), inset 0 0 20px rgba(123, 44, 191, 0.1);">
+                <div class="hud-label" style="color: #7b2cbf;">Ink [Ctrl]</div>
+                <div class="hud-value" id="inkCharges" style="color: #b060d0; text-shadow: 0 0 10px #7b2cbf;">2</div>
+            </div>
         </div>
 
         <!-- Menu Screen -->
@@ -377,6 +381,7 @@
             <div class="menu-controls">
                 <span>← →</span> MOVE AROUND THE RIM<br>
                 <span>SPACE</span> FIRE INTO THE DEPTHS<br>
+                <span>R-CTRL</span> INK CLOUD (2 per wave)<br>
                 <span>ESC</span> PAUSE &nbsp;&nbsp; <span>Q</span> QUIT
             </div>
             <button class="arcade-btn" onclick="Game.start()">START GAME</button>
@@ -439,8 +444,21 @@
 
             // Menu music - use window.Audio to avoid conflict with Audio module
             const menuMusic = new window.Audio('/arkade/audio/theme_krakens_tempest.mp3');
-            menuMusic.loop = true;
+            menuMusic.loop = false;  // Don't auto-loop - we'll handle it manually with delay
             menuMusic.volume = 0.15;
+
+            // Loop with 5 second delay between plays
+            const LOOP_DELAY = 5000;  // 5 seconds
+            menuMusic.addEventListener('ended', () => {
+                if (isPlaying) {
+                    setTimeout(() => {
+                        if (isPlaying) {
+                            menuMusic.currentTime = 0;
+                            menuMusic.play().catch(() => {});
+                        }
+                    }, LOOP_DELAY);
+                }
+            });
 
             const musicBtn = document.createElement('button');
             musicBtn.innerHTML = '🔇';

@@ -380,13 +380,13 @@
 
             // Handle Manual Looping with Delay
             audio.addEventListener('ended', function () {
-                // Audio finished. Wait 1s then replay if still enabled.
+                // Audio finished. Wait 5s then replay if still enabled.
                 if (soundEnabled) {
                     setTimeout(() => {
                         if (soundEnabled) {
                             playAudio();
                         }
-                    }, 1000);
+                    }, 5000);
                 }
             });
 

@@ -59,6 +59,10 @@ let player = null;
 let enemies = [];
 let projectiles = [];
 let electricLanes = [];
+let spikes = [];  // Sea urchin spike obstacles
+let powerUps = [];  // Ink cloud, etc.
+let inkCloudActive = 0;  // Timer for screen-clearing ink cloud
+let superZapperCharges = 2;  // Player gets 2 per wave (like original Tempest)
 
 // Wave management
 let enemiesThisWave = 0;
@@ -106,22 +110,37 @@ function createPlayer() {
 function updatePlayer(dt) {
     if (!player) return;
 
-    // SMOOTH MOVEMENT - continuous while held
-    if (Input.isDown('left')) {
+    // SMOOTH MOVEMENT - Arrow keys (classic arcade style)
+    const moveLeft = Input.isDown('left') || touchState.left;
+    const moveRight = Input.isDown('right') || touchState.right;
+
+    if (moveLeft) {
         player.lane -= CONFIG.PLAYER_MOVE_SPEED * dt;
     }
-    if (Input.isDown('right')) {
+    if (moveRight) {
         player.lane += CONFIG.PLAYER_MOVE_SPEED * dt;
     }
-    
+
     // Wrap lane smoothly
     player.lane = wrapLane(player.lane);
 
-    // Shooting - continuous fire while held
+    // Shooting - Space bar (classic arcade)
+    const firing = Input.isDown('fire') || touchState.fire;
+
     player.shootCooldown -= dt;
-    if (Input.isDown('fire') && player.shootCooldown <= 0) {
+    if (firing && player.shootCooldown <= 0) {
         fireProjectile();
         player.shootCooldown = CONFIG.PLAYER_SHOOT_COOLDOWN;
+    }
+
+    // Ink Cloud - Right Control (like missile in other games)
+    if ((Input.isKeyDown('ControlRight') || touchState.inkCloud) && gameState === 'playing') {
+        if (!player.inkCloudPressed) {
+            player.inkCloudPressed = true;
+            activateInkCloud();
+        }
+    } else {
+        player.inkCloudPressed = false;
     }
 
     // Invincibility timer
@@ -324,12 +343,36 @@ const ENEMY_TYPES = {
         health: 2,
         points: 300,
         draw: drawAnglerfish
+    },
+    // NEW: Sea Urchin (Spiker) - leaves spike obstacles behind
+    urchin: {
+        color: '#8B4513',  // Saddle brown with purple spines
+        speed: 0.25,
+        health: 1,
+        points: 175,
+        draw: drawUrchin
+    },
+    // NEW: Puffer Fish (Fuseball) - evasive, moves along lane edges
+    pufferfish: {
+        color: '#FFD700',  // Gold with spots
+        speed: 0.35,
+        health: 1,
+        points: 200,
+        draw: drawPufferfish
+    },
+    // NEW: Hermit Crab (True Flipper) - hops lanes at rim
+    hermitcrab: {
+        color: '#CD853F',  // Peru/tan shell
+        speed: 0.4,
+        health: 1,
+        points: 150,
+        draw: drawHermitCrab
     }
 };
 
 function spawnEnemy(type, lane) {
     const template = ENEMY_TYPES[type];
-    enemies.push({
+    const enemy = {
         type,
         lane: lane !== undefined ? lane : Math.floor(Math.random() * CONFIG.NUM_LANES),
         depth: 0.05,
@@ -339,9 +382,17 @@ function spawnEnemy(type, lane) {
         shootTimer: template.shootInterval || 0,
         pulseTimer: 0,
         wobble: Math.random() * Math.PI * 2,
-        small: false
-    });
-    
+        small: false,
+        // New properties for new enemy types
+        spikeTimer: 0,  // For urchin spike placement
+        puffed: false,  // For pufferfish puff state
+        hopTimer: 0,    // For hermit crab lane hopping
+        hopDirection: Math.random() < 0.5 ? -1 : 1,  // Which way to hop
+        laneOffset: 0,  // For pufferfish edge movement
+        edgeDirection: Math.random() < 0.5 ? -1 : 1  // Which edge to ride
+    };
+    enemies.push(enemy);
+
     Audio.spawn();
 }
 
@@ -427,14 +478,66 @@ function updateEnemies(dt) {
             if (e.pulseTimer > 2) {
                 e.pulseTimer = 0;
                 // Pulse damage to adjacent lanes
-                if (Math.abs(wrapLaneDiff(e.lane, player.lane)) <= 1 && 
+                if (Math.abs(wrapLaneDiff(e.lane, player.lane)) <= 1 &&
                     Math.abs(e.depth - CONFIG.PLAYER_DEPTH) < 0.15 &&
                     player.invincible <= 0 && !godMode) {
                     playerHit();
                 }
             }
         }
-        
+
+        // Sea Urchin (Spiker) - leaves spikes behind as it moves
+        if (e.type === 'urchin') {
+            e.spikeTimer += dt;
+            if (e.spikeTimer > 0.8) {  // Drop spike every 0.8 seconds
+                e.spikeTimer = 0;
+                // Leave a spike at current position
+                spikes.push({
+                    lane: Math.round(e.lane),
+                    depth: e.depth,
+                    timer: 15 + wave * 2  // Spikes last longer in higher waves
+                });
+            }
+        }
+
+        // Puffer Fish (Fuseball) - evasive, rides lane edges
+        if (e.type === 'pufferfish') {
+            // Oscillate along lane edges (hard to hit)
+            e.laneOffset = Math.sin(e.wobble * 2) * 0.4 * e.edgeDirection;
+
+            // Detect incoming projectiles and dodge
+            for (const p of projectiles) {
+                if (p.type === 'player' && Math.abs(wrapLaneDiff(p.lane, e.lane)) < 1) {
+                    if (p.depth > e.depth && p.depth < e.depth + 0.3) {
+                        // Dodge! Change lanes
+                        e.edgeDirection *= -1;
+                        e.lane += e.edgeDirection * 0.5;
+                        e.puffed = true;
+                        setTimeout(() => { e.puffed = false; }, 500);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Hermit Crab (Flipper) - hops along rim when it reaches the top
+        if (e.type === 'hermitcrab') {
+            if (e.depth >= CONFIG.PLAYER_DEPTH - 0.15) {
+                // At the rim - start hopping along lanes toward player!
+                e.depth = CONFIG.PLAYER_DEPTH - 0.1;  // Stay at rim
+                e.hopTimer += dt;
+                if (e.hopTimer > 0.3) {  // Hop every 0.3 seconds
+                    e.hopTimer = 0;
+                    // Hop toward player
+                    const diff = wrapLaneDiff(player.lane, e.lane);
+                    if (Math.abs(diff) > 0.5) {
+                        e.lane += diff > 0 ? 1 : -1;
+                        e.lane = wrapLane(e.lane);
+                    }
+                }
+            }
+        }
+
         // Reached the rim?
         if (e.depth >= CONFIG.PLAYER_DEPTH - 0.05) {
             if (Math.abs(wrapLaneDiff(e.lane, player.lane)) < 0.6 && player.invincible <= 0 && !godMode) {
@@ -1082,6 +1185,292 @@ function drawAnglerfish(e, pos, angle) {
     ctx.restore();
 }
 
+// NEW: Sea Urchin (Spiker) drawing function
+function drawUrchin(e, pos, angle) {
+    ctx.save();
+    ctx.translate(pos.x, pos.y);
+    ctx.rotate(e.wobble * 0.2);  // Slow rotation
+
+    const size = 14;
+    const numSpines = 12;
+
+    // Glow
+    ctx.shadowColor = '#9932CC';  // Purple glow
+    ctx.shadowBlur = 15;
+
+    // Body (dark spherical center)
+    const bodyGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 0.6);
+    bodyGrad.addColorStop(0, '#4a3728');
+    bodyGrad.addColorStop(0.7, '#2d1f14');
+    bodyGrad.addColorStop(1, '#1a0f0a');
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, size * 0.6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Spines (long, sharp, purple-tipped)
+    for (let i = 0; i < numSpines; i++) {
+        const spineAngle = (i / numSpines) * Math.PI * 2;
+        const spineLen = size + Math.sin(e.wobble * 3 + i) * 3;
+        const wobble = Math.sin(e.wobble * 2 + i * 0.5) * 0.1;
+
+        ctx.save();
+        ctx.rotate(spineAngle + wobble);
+
+        // Spine gradient (brown to purple tip)
+        const spineGrad = ctx.createLinearGradient(0, 0, spineLen, 0);
+        spineGrad.addColorStop(0, '#4a3728');
+        spineGrad.addColorStop(0.6, '#6b4423');
+        spineGrad.addColorStop(1, '#9932CC');
+
+        ctx.strokeStyle = spineGrad;
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(size * 0.4, 0);
+        ctx.lineTo(spineLen, 0);
+        ctx.stroke();
+
+        // Spine tip glow
+        ctx.fillStyle = '#9932CC';
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(spineLen, 0, 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    // Secondary shorter spines
+    for (let i = 0; i < numSpines; i++) {
+        const spineAngle = (i / numSpines) * Math.PI * 2 + Math.PI / numSpines;
+        const spineLen = size * 0.7;
+
+        ctx.save();
+        ctx.rotate(spineAngle);
+        ctx.strokeStyle = '#5a4738';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(size * 0.35, 0);
+        ctx.lineTo(spineLen, 0);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    // Center highlight
+    ctx.fillStyle = 'rgba(150, 100, 70, 0.4)';
+    ctx.beginPath();
+    ctx.arc(-2, -2, size * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+}
+
+// NEW: Puffer Fish (Fuseball) drawing function
+function drawPufferfish(e, pos, angle) {
+    ctx.save();
+    // Account for lane offset (edge riding)
+    const offsetPos = getPositionOnLane(e.lane + (e.laneOffset || 0), e.depth);
+    ctx.translate(offsetPos.x, offsetPos.y);
+    ctx.rotate(angle + Math.PI / 2);
+
+    const basSize = e.puffed ? 22 : 14;  // Puffs up when scared
+    const wobble = Math.sin(e.wobble * 4) * 0.1;
+
+    // Glow
+    ctx.shadowColor = '#FFD700';
+    ctx.shadowBlur = e.puffed ? 25 : 12;
+
+    // Body
+    ctx.fillStyle = e.puffed ? '#FFFF00' : '#FFD700';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, basSize, basSize * 0.8, wobble, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Spots
+    ctx.fillStyle = '#8B4513';
+    const numSpots = 8;
+    for (let i = 0; i < numSpots; i++) {
+        const spotAngle = (i / numSpots) * Math.PI * 2 + e.wobble * 0.5;
+        const spotDist = basSize * 0.5;
+        const sx = Math.cos(spotAngle) * spotDist;
+        const sy = Math.sin(spotAngle) * spotDist * 0.8;
+        ctx.beginPath();
+        ctx.arc(sx, sy, 2, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // Spikes when puffed
+    if (e.puffed) {
+        ctx.strokeStyle = '#8B0000';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 16; i++) {
+            const spikeAngle = (i / 16) * Math.PI * 2;
+            const spikeLen = 8 + Math.sin(e.wobble * 8 + i) * 2;
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(spikeAngle) * basSize, Math.sin(spikeAngle) * basSize * 0.8);
+            ctx.lineTo(
+                Math.cos(spikeAngle) * (basSize + spikeLen),
+                Math.sin(spikeAngle) * (basSize * 0.8 + spikeLen)
+            );
+            ctx.stroke();
+        }
+    }
+
+    // Fins
+    ctx.fillStyle = '#DAA520';
+    // Tail fin
+    ctx.beginPath();
+    ctx.moveTo(basSize * 0.8, 0);
+    ctx.lineTo(basSize * 1.3, -5);
+    ctx.lineTo(basSize * 1.3, 5);
+    ctx.closePath();
+    ctx.fill();
+    // Top fin
+    ctx.beginPath();
+    ctx.moveTo(0, -basSize * 0.6);
+    ctx.lineTo(-5, -basSize - 5);
+    ctx.lineTo(5, -basSize - 5);
+    ctx.closePath();
+    ctx.fill();
+
+    // Eyes (big, worried looking)
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.ellipse(-basSize * 0.4, -basSize * 0.2, 5, 6, 0, 0, Math.PI * 2);
+    ctx.ellipse(basSize * 0.1, -basSize * 0.2, 5, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Pupils (looking around nervously)
+    const pupilOffset = Math.sin(e.wobble * 3) * 2;
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(-basSize * 0.4 + pupilOffset, -basSize * 0.2, 2.5, 0, Math.PI * 2);
+    ctx.arc(basSize * 0.1 + pupilOffset, -basSize * 0.2, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Mouth (small, pursed)
+    ctx.strokeStyle = '#8B4513';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(-basSize * 0.15, basSize * 0.3, 3, 0, Math.PI);
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+// NEW: Hermit Crab (Flipper) drawing function
+function drawHermitCrab(e, pos, angle) {
+    ctx.save();
+    ctx.translate(pos.x, pos.y);
+    ctx.rotate(angle + Math.PI / 2);
+
+    const size = 16;
+    const hopBounce = e.depth >= CONFIG.PLAYER_DEPTH - 0.15 ?
+        Math.abs(Math.sin(e.hopTimer * Math.PI * 3)) * 5 : 0;
+
+    ctx.translate(0, -hopBounce);  // Bounce effect when hopping
+
+    // Glow
+    ctx.shadowColor = '#CD853F';
+    ctx.shadowBlur = 12;
+
+    // Shell (spiral nautilus-like)
+    const shellGrad = ctx.createRadialGradient(-2, -2, 0, 0, 0, size);
+    shellGrad.addColorStop(0, '#DEB887');
+    shellGrad.addColorStop(0.5, '#CD853F');
+    shellGrad.addColorStop(1, '#8B4513');
+    ctx.fillStyle = shellGrad;
+    ctx.beginPath();
+    ctx.arc(0, 2, size * 0.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Shell spiral pattern
+    ctx.strokeStyle = '#6b4423';
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 3; i++) {
+        const spiralR = size * (0.3 + i * 0.2);
+        ctx.beginPath();
+        ctx.arc(-2 + i, 2 - i, spiralR, Math.PI * 0.5, Math.PI * 2);
+        ctx.stroke();
+    }
+
+    // Legs (4 pairs peeking out)
+    ctx.strokeStyle = '#FF6347';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    const legWobble = Math.sin(e.wobble * 4) * 0.3;
+    for (let side = -1; side <= 1; side += 2) {
+        for (let i = 0; i < 4; i++) {
+            const legAngle = side * (0.8 + i * 0.25) + legWobble * side * (i + 1) * 0.3;
+            const legLen = 10 + i * 2;
+            const startX = side * (size * 0.4);
+            const startY = 8 - i * 3;
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.quadraticCurveTo(
+                startX + side * legLen * 0.4,
+                startY + 5,
+                startX + Math.cos(legAngle) * legLen,
+                startY + Math.sin(legAngle) * legLen * 0.5 + 5
+            );
+            ctx.stroke();
+        }
+    }
+
+    // Claws (big, orange-red)
+    ctx.fillStyle = '#FF4500';
+    for (let side = -1; side <= 1; side += 2) {
+        ctx.save();
+        ctx.translate(side * (size * 0.6), -8);
+        ctx.rotate(side * 0.4 + Math.sin(e.wobble * 2) * 0.2 * side);
+
+        // Arm
+        ctx.fillStyle = '#FF6347';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 5, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Claw
+        ctx.fillStyle = '#FF4500';
+        ctx.beginPath();
+        ctx.moveTo(3, -2);
+        ctx.lineTo(12, -4);
+        ctx.lineTo(10, 0);
+        ctx.lineTo(12, 4);
+        ctx.lineTo(3, 2);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    // Eye stalks
+    ctx.strokeStyle = '#FF6347';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(-4, -size * 0.3);
+    ctx.lineTo(-6, -size * 0.3 - 10);
+    ctx.moveTo(4, -size * 0.3);
+    ctx.lineTo(6, -size * 0.3 - 10);
+    ctx.stroke();
+
+    // Eyes
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(-6, -size * 0.3 - 10, 3, 0, Math.PI * 2);
+    ctx.arc(6, -size * 0.3 - 10, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(-5, -size * 0.3 - 11, 1.5, 0, Math.PI * 2);
+    ctx.arc(7, -size * 0.3 - 11, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+}
+
 function drawEnemies() {
     enemies.forEach(e => {
         const pos = getPositionOnLane(e.lane, e.depth);
@@ -1180,6 +1569,142 @@ function drawElectricLanes() {
         
         ctx.restore();
     });
+}
+
+// ==================== SPIKE OBSTACLES (from Sea Urchins) ====================
+function updateSpikes(dt) {
+    for (let i = spikes.length - 1; i >= 0; i--) {
+        spikes[i].timer -= dt;
+        if (spikes[i].timer <= 0) {
+            spikes.splice(i, 1);
+        }
+    }
+}
+
+function drawSpikes() {
+    spikes.forEach(spike => {
+        const pos = getPositionOnLane(spike.lane, spike.depth);
+        const alpha = Math.min(spike.timer / 3, 1);  // Fade out in last 3 seconds
+
+        ctx.save();
+        ctx.translate(pos.x, pos.y);
+        ctx.globalAlpha = alpha;
+
+        // Purple glowing spike
+        ctx.shadowColor = '#9932CC';
+        ctx.shadowBlur = 10;
+
+        // Draw spike as small urchin spine cluster
+        const numSpines = 6;
+        const spikeSize = 8;
+        for (let i = 0; i < numSpines; i++) {
+            const angle = (i / numSpines) * Math.PI * 2 + gameTime;
+            ctx.strokeStyle = '#9932CC';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Math.cos(angle) * spikeSize, Math.sin(angle) * spikeSize);
+            ctx.stroke();
+
+            // Tip glow
+            ctx.fillStyle = '#DA70D6';
+            ctx.beginPath();
+            ctx.arc(Math.cos(angle) * spikeSize, Math.sin(angle) * spikeSize, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Center
+        ctx.fillStyle = '#4B0082';
+        ctx.beginPath();
+        ctx.arc(0, 0, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+    });
+}
+
+// Check if player hits spikes (during warp or normal play)
+function checkSpikeCollisions() {
+    if (player.invincible > 0 || godMode) return;
+
+    for (const spike of spikes) {
+        // Only check spikes near the rim (where player could hit them)
+        if (spike.depth >= CONFIG.PLAYER_DEPTH - 0.15) {
+            if (Math.abs(wrapLaneDiff(spike.lane, player.lane)) < 0.6) {
+                playerHit();
+                // Remove the spike that hit the player
+                const idx = spikes.indexOf(spike);
+                if (idx > -1) spikes.splice(idx, 1);
+                return;
+            }
+        }
+    }
+}
+
+// ==================== INK CLOUD (SuperZapper) ====================
+function activateInkCloud() {
+    if (superZapperCharges <= 0) return false;
+
+    superZapperCharges--;
+    inkCloudActive = 1.5;  // 1.5 second effect
+
+    // Kill all enemies on screen!
+    const killCount = enemies.length;
+    enemies.forEach(e => {
+        const pos = getPositionOnLane(e.lane, e.depth);
+        score += e.points;
+        Particles.explode(pos.x, pos.y, ENEMY_TYPES[e.type].color, 15, 100, 0.4);
+    });
+    enemies = [];
+
+    // Clear electric lanes too
+    electricLanes = [];
+
+    // Visual and audio feedback
+    Audio.explode();
+    updateUI();
+
+    console.log(`🦑 INK CLOUD! Destroyed ${killCount} enemies. ${superZapperCharges} charges remaining.`);
+    return true;
+}
+
+function updateInkCloud(dt) {
+    if (inkCloudActive > 0) {
+        inkCloudActive -= dt;
+    }
+}
+
+function drawInkCloud() {
+    if (inkCloudActive <= 0) return;
+
+    ctx.save();
+    const intensity = inkCloudActive / 1.5;
+
+    // Dark ink spreading from center
+    const inkGrad = ctx.createRadialGradient(
+        CONFIG.CENTER_X, CONFIG.CENTER_Y, 0,
+        CONFIG.CENTER_X, CONFIG.CENTER_Y, CONFIG.OUTER_RADIUS * (1.2 - intensity * 0.5)
+    );
+    inkGrad.addColorStop(0, `rgba(20, 0, 40, ${intensity * 0.8})`);
+    inkGrad.addColorStop(0.5, `rgba(60, 0, 80, ${intensity * 0.5})`);
+    inkGrad.addColorStop(1, 'transparent');
+
+    ctx.fillStyle = inkGrad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Swirling ink particles
+    ctx.fillStyle = `rgba(100, 50, 150, ${intensity})`;
+    for (let i = 0; i < 20; i++) {
+        const angle = gameTime * 3 + i * 0.5;
+        const dist = CONFIG.INNER_RADIUS + (CONFIG.OUTER_RADIUS - CONFIG.INNER_RADIUS) * (1 - intensity) * (i / 20);
+        const x = CONFIG.CENTER_X + Math.cos(angle) * dist;
+        const y = CONFIG.CENTER_Y + Math.sin(angle) * dist;
+        ctx.beginPath();
+        ctx.arc(x, y, 5 + Math.sin(gameTime * 5 + i) * 3, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    ctx.restore();
 }
 
 // ==================== KRAKEN (Background Boss) ====================
@@ -1438,11 +1963,15 @@ function drawPlayfield() {
 // ==================== WAVE MANAGEMENT ====================
 function startWave(waveNum) {
     wave = waveNum;
-    enemiesThisWave = 5 + waveNum * 3;
+    // Improved difficulty scaling:
+    // Wave 1: 8 enemies, Wave 5: 20, Wave 10: 35, Wave 15: 50
+    // Formula: 5 + wave*2 + floor(wave/5)*5
+    enemiesThisWave = 5 + waveNum * 2 + Math.floor(waveNum / 5) * 5;
     enemiesSpawned = 0;
     spawnTimer = 0;
+    superZapperCharges = 2;  // Replenish Ink Cloud charges each wave
     updateUI();
-    
+
     // Show wave announcement
     const announce = document.getElementById('waveAnnounce');
     announce.textContent = `WAVE ${waveNum}`;
@@ -1461,25 +1990,67 @@ function startWave(waveNum) {
 }
 
 function spawnWaveEnemy() {
-    const types = ['crab'];
-    if (wave >= 2) types.push('starfish');
-    if (wave >= 3) types.push('jellyfish');
-    if (wave >= 4) types.push('eel');
-    if (wave >= 5) types.push('anglerfish');
-    
-    const weights = types.map((t, i) => Math.max(1, types.length - i));
-    const totalWeight = weights.reduce((a, b) => a + b, 0);
+    // Progressive enemy unlock system with weighted spawning
+    // Earlier enemies remain common; newer enemies are rarer but more dangerous
+    const enemyPool = [];
+
+    // Always available
+    enemyPool.push({ type: 'crab', weight: 10 });
+
+    // Wave 2+: Starfish (Tanker - splits)
+    if (wave >= 2) enemyPool.push({ type: 'starfish', weight: 8 });
+
+    // Wave 3+: Jellyfish (area pulse) and Sea Urchin (spikes)
+    if (wave >= 3) {
+        enemyPool.push({ type: 'jellyfish', weight: 6 });
+        enemyPool.push({ type: 'urchin', weight: 5 });
+    }
+
+    // Wave 4+: Eel (electric) and Puffer Fish (evasive)
+    if (wave >= 4) {
+        enemyPool.push({ type: 'eel', weight: 5 });
+        enemyPool.push({ type: 'pufferfish', weight: 4 });
+    }
+
+    // Wave 5+: Anglerfish (chaser)
+    if (wave >= 5) enemyPool.push({ type: 'anglerfish', weight: 4 });
+
+    // Wave 6+: Hermit Crab (Flipper - hops at rim)
+    if (wave >= 6) enemyPool.push({ type: 'hermitcrab', weight: 3 });
+
+    // Wave 8+: Increase dangerous enemy weights
+    if (wave >= 8) {
+        enemyPool.forEach(e => {
+            if (['eel', 'anglerfish', 'hermitcrab'].includes(e.type)) {
+                e.weight += 2;
+            }
+        });
+    }
+
+    // Wave 10+: Even more dangerous enemies
+    if (wave >= 10) {
+        enemyPool.forEach(e => {
+            if (['eel', 'anglerfish', 'hermitcrab', 'urchin'].includes(e.type)) {
+                e.weight += 2;
+            }
+            // Reduce basic enemies
+            if (e.type === 'crab') e.weight = Math.max(3, e.weight - 3);
+        });
+    }
+
+    // Calculate total weight and select
+    const totalWeight = enemyPool.reduce((sum, e) => sum + e.weight, 0);
     let rand = Math.random() * totalWeight;
-    let selectedType = types[0];
-    
-    for (let i = 0; i < types.length; i++) {
-        rand -= weights[i];
+    let selectedType = 'crab';
+
+    for (const e of enemyPool) {
+        rand -= e.weight;
         if (rand <= 0) {
-            selectedType = types[i];
+            selectedType = e.type;
             break;
         }
     }
-    
+
     spawnEnemy(selectedType);
     enemiesSpawned++;
 }
@@ -1525,6 +2096,10 @@ function resetGame() {
     enemies = [];
     projectiles = [];
     electricLanes = [];
+    spikes = [];
+    powerUps = [];
+    inkCloudActive = 0;
+    superZapperCharges = 2;  // Start with 2 charges
     Particles.clear();
     gameTime = 0;
 }
@@ -1540,6 +2115,8 @@ function updateUI() {
     document.getElementById('score').textContent = score;
     document.getElementById('wave').textContent = wave;
     document.getElementById('lives').textContent = lives;
+    const inkEl = document.getElementById('inkCharges');
+    if (inkEl) inkEl.textContent = superZapperCharges;
 }
 
 // ==================== GAME OBJECT ====================
@@ -1548,33 +2125,37 @@ const Game = {
         gameState = 'playing';
         resetGame();
         showScreen(null);
+        showTouchControls();  // Show touch controls on mobile
         Audio.init();
         Audio.playGameMusic('krakens-tempest');
         setTimeout(() => Audio.voiceBegin(), 500);
         startWave(1);
     },
-    
+
     restart() {
         this.start();
     },
-    
+
     pause() {
         if (gameState === 'playing') {
             gameState = 'paused';
             showScreen('pauseScreen');
+            hideTouchControls();  // Hide touch controls when paused
             Audio.pauseMusic();
         }
     },
-    
+
     resume() {
         if (gameState === 'paused') {
             gameState = 'playing';
             showScreen(null);
+            showTouchControls();  // Show touch controls again
             Audio.resumeMusic();
         }
     },
-    
+
     quit() {
+        hideTouchControls();  // Hide touch controls
         Audio.stopMusic();
         window.location.href = '/arkade/';
     },
@@ -1599,7 +2180,7 @@ const Game = {
     },
     
     spawnTestEnemy() {
-        const types = ['crab', 'eel', 'jellyfish', 'starfish', 'anglerfish'];
+        const types = ['crab', 'eel', 'jellyfish', 'starfish', 'anglerfish', 'urchin', 'pufferfish', 'hermitcrab'];
         const type = types[Math.floor(Math.random() * types.length)];
         spawnEnemy(type, player ? Math.round(player.lane) : 0);
     }
@@ -1611,7 +2192,7 @@ document.addEventListener('keydown', (e) => {
         Game.toggleSecretMenu();
         return;
     }
-    
+
     if (e.key === 'Escape') {
         if (secretMenuOpen) {
             Game.toggleSecretMenu();
@@ -1622,7 +2203,7 @@ document.addEventListener('keydown', (e) => {
         }
         return;
     }
-    
+
     if (e.key.toLowerCase() === 'q') {
         if (gameState === 'playing') {
             Game.pause();
@@ -1632,6 +2213,165 @@ document.addEventListener('keydown', (e) => {
         return;
     }
 });
+
+// ==================== TOUCH CONTROLS (Mobile) ====================
+let touchState = {
+    left: false,
+    right: false,
+    fire: false,
+    inkCloud: false
+};
+
+function createTouchControls() {
+    // Check if touch device
+    if (!('ontouchstart' in window) && navigator.maxTouchPoints <= 0) return;
+
+    // Create touch control overlay
+    const touchOverlay = document.createElement('div');
+    touchOverlay.id = 'tempest-touch-controls';
+    touchOverlay.innerHTML = `
+        <style>
+            #tempest-touch-controls {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 180px;
+                pointer-events: none;
+                z-index: 9000;
+                display: none;
+            }
+            #tempest-touch-controls.active {
+                display: block;
+            }
+            .tempest-touch-btn {
+                position: absolute;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: 'Orbitron', monospace;
+                font-weight: bold;
+                pointer-events: auto;
+                touch-action: none;
+                user-select: none;
+                transition: transform 0.1s;
+            }
+            .tempest-touch-btn.pressed {
+                transform: scale(0.92);
+            }
+            /* Left/Right arc buttons */
+            #tempest-btn-left {
+                left: 15px;
+                bottom: 30px;
+                width: 100px;
+                height: 100px;
+                background: rgba(0, 255, 255, 0.15);
+                border: 3px solid rgba(0, 255, 255, 0.5);
+                color: rgba(0, 255, 255, 0.8);
+                font-size: 36px;
+            }
+            #tempest-btn-left.pressed {
+                background: rgba(0, 255, 255, 0.4);
+                border-color: #0ff;
+                color: #fff;
+            }
+            #tempest-btn-right {
+                left: 130px;
+                bottom: 30px;
+                width: 100px;
+                height: 100px;
+                background: rgba(0, 255, 255, 0.15);
+                border: 3px solid rgba(0, 255, 255, 0.5);
+                color: rgba(0, 255, 255, 0.8);
+                font-size: 36px;
+            }
+            #tempest-btn-right.pressed {
+                background: rgba(0, 255, 255, 0.4);
+                border-color: #0ff;
+                color: #fff;
+            }
+            /* Fire button */
+            #tempest-btn-fire {
+                right: 15px;
+                bottom: 30px;
+                width: 110px;
+                height: 110px;
+                background: rgba(255, 50, 50, 0.2);
+                border: 3px solid rgba(255, 100, 100, 0.6);
+                color: rgba(255, 100, 100, 0.9);
+                font-size: 14px;
+            }
+            #tempest-btn-fire.pressed {
+                background: rgba(255, 50, 50, 0.5);
+                border-color: #ff4444;
+                color: #fff;
+            }
+            /* Ink Cloud (SuperZapper) button */
+            #tempest-btn-ink {
+                right: 140px;
+                bottom: 50px;
+                width: 70px;
+                height: 70px;
+                background: rgba(123, 44, 191, 0.2);
+                border: 2px solid rgba(123, 44, 191, 0.6);
+                color: rgba(180, 100, 220, 0.9);
+                font-size: 11px;
+            }
+            #tempest-btn-ink.pressed {
+                background: rgba(123, 44, 191, 0.5);
+                border-color: #7b2cbf;
+                color: #fff;
+            }
+            /* Hide on desktop */
+            @media (pointer: fine) {
+                #tempest-touch-controls { display: none !important; }
+            }
+        </style>
+        <div class="tempest-touch-btn" id="tempest-btn-left">◀</div>
+        <div class="tempest-touch-btn" id="tempest-btn-right">▶</div>
+        <div class="tempest-touch-btn" id="tempest-btn-fire">FIRE</div>
+        <div class="tempest-touch-btn" id="tempest-btn-ink">INK</div>
+    `;
+    document.body.appendChild(touchOverlay);
+
+    // Touch handlers
+    const setupTouchButton = (id, stateKey, onPress) => {
+        const btn = document.getElementById(id);
+        btn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            btn.classList.add('pressed');
+            touchState[stateKey] = true;
+            if (onPress) onPress();
+        });
+        btn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            btn.classList.remove('pressed');
+            touchState[stateKey] = false;
+        });
+        btn.addEventListener('touchcancel', () => {
+            btn.classList.remove('pressed');
+            touchState[stateKey] = false;
+        });
+    };
+
+    setupTouchButton('tempest-btn-left', 'left');
+    setupTouchButton('tempest-btn-right', 'right');
+    setupTouchButton('tempest-btn-fire', 'fire');
+    setupTouchButton('tempest-btn-ink', 'inkCloud', () => {
+        if (gameState === 'playing') activateInkCloud();
+    });
+}
+
+function showTouchControls() {
+    const el = document.getElementById('tempest-touch-controls');
+    if (el) el.classList.add('active');
+}
+
+function hideTouchControls() {
+    const el = document.getElementById('tempest-touch-controls');
+    if (el) el.classList.remove('active');
+}
 
 // ==================== HELPER FUNCTIONS ====================
 function showScreen(screenId) {
@@ -1661,18 +2401,23 @@ function gameLoop(timestamp) {
 
     if (gameState === 'playing') {
         gameTime += dt;
-        
+
         updatePlayer(dt);
         updateEnemies(dt);
         updateProjectiles(dt);
         updateElectricLanes(dt);
+        updateSpikes(dt);           // NEW: Update spike obstacles
+        updateInkCloud(dt);         // NEW: Update ink cloud effect
+        checkSpikeCollisions();     // NEW: Check spike collisions
         Particles.update(dt);
         updateWave(dt);
 
+        drawSpikes();               // NEW: Draw spike obstacles
         drawElectricLanes();
         drawEnemies();
         drawProjectiles();
         drawPlayer();
+        drawInkCloud();             // NEW: Draw ink cloud effect (on top)
         Particles.draw(ctx);
     } else {
         // Ambient particles on menu screens
@@ -1696,8 +2441,10 @@ function gameLoop(timestamp) {
 
 // ==================== INITIALIZATION ====================
 Input.init();  // REQUIRED: Initialize input system
+createTouchControls();  // Create mobile touch controls
 showScreen('menuScreen');
 requestAnimationFrame(gameLoop);
 
 console.log('🦑 Kraken\'s Tempest loaded');
 console.log('🔧 Press ` for secret menu');
+console.log('📱 Touch controls: Left/Right to move, FIRE to shoot, INK for screen clear (2 per wave)');

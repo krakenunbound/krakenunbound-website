@@ -92,6 +92,83 @@ const GAME_INSTRUCTIONS = {
             <li>The new range will be updated based on your guess.</li>
         </ul>
     `,
+    "krakens-tempest": `
+        <h2>🦑 KRAKEN'S TEMPEST</h2>
+        <p style="color:#7b2cbf; font-style:italic;">Defend the rim from creatures rising from the abyss!</p>
+
+        <h3 style="color:#0ff; margin-top:20px; font-size:1rem;">⌨️ CONTROLS</h3>
+        <table style="width:100%; border-collapse:collapse; margin:10px 0;">
+            <tr style="border-bottom:1px solid #333;">
+                <td style="padding:8px; color:#0ff;">← →</td>
+                <td style="padding:8px;">Move around the rim</td>
+            </tr>
+            <tr style="border-bottom:1px solid #333;">
+                <td style="padding:8px; color:#0ff;">SPACE</td>
+                <td style="padding:8px;">Fire into the depths</td>
+            </tr>
+            <tr style="border-bottom:1px solid #333;">
+                <td style="padding:8px; color:#7b2cbf;">R-CTRL</td>
+                <td style="padding:8px;">Ink Cloud (destroys ALL enemies)</td>
+            </tr>
+            <tr>
+                <td style="padding:8px; color:#888;">ESC / Q</td>
+                <td style="padding:8px;">Pause / Quit</td>
+            </tr>
+        </table>
+
+        <h3 style="color:#0ff; margin-top:20px; font-size:1rem;">🐙 ENEMIES</h3>
+        <div style="display:grid; gap:8px; margin:10px 0;">
+            <div style="display:flex; align-items:center; gap:10px; padding:8px; background:rgba(255,68,68,0.1); border-left:3px solid #ff4444; border-radius:4px;">
+                <span style="font-size:1.2rem;">🦀</span>
+                <div><strong style="color:#ff4444;">Crab</strong> - Basic enemy, crawls toward the rim</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; padding:8px; background:rgba(255,107,53,0.1); border-left:3px solid #ff6b35; border-radius:4px;">
+                <span style="font-size:1.2rem;">⭐</span>
+                <div><strong style="color:#ff6b35;">Starfish</strong> - Splits into 2 when destroyed!</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; padding:8px; background:rgba(255,105,180,0.1); border-left:3px solid #ff69b4; border-radius:4px;">
+                <span style="font-size:1.2rem;">🎐</span>
+                <div><strong style="color:#ff69b4;">Jellyfish</strong> - Pulses damage to adjacent lanes</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; padding:8px; background:rgba(255,255,0,0.1); border-left:3px solid #ffff00; border-radius:4px;">
+                <span style="font-size:1.2rem;">⚡</span>
+                <div><strong style="color:#ffff00;">Electric Eel</strong> - Shoots bolts that electrify lanes</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; padding:8px; background:rgba(57,255,20,0.1); border-left:3px solid #39ff14; border-radius:4px;">
+                <span style="font-size:1.2rem;">🐟</span>
+                <div><strong style="color:#39ff14;">Anglerfish</strong> - Chases you with its glowing lure</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; padding:8px; background:rgba(153,50,204,0.1); border-left:3px solid #9932CC; border-radius:4px;">
+                <span style="font-size:1.2rem;">🔮</span>
+                <div><strong style="color:#9932CC;">Sea Urchin</strong> - Leaves spike traps behind</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; padding:8px; background:rgba(255,215,0,0.1); border-left:3px solid #FFD700; border-radius:4px;">
+                <span style="font-size:1.2rem;">🐡</span>
+                <div><strong style="color:#FFD700;">Puffer Fish</strong> - Evasive! Dodges your shots</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; padding:8px; background:rgba(205,133,63,0.1); border-left:3px solid #CD853F; border-radius:4px;">
+                <span style="font-size:1.2rem;">🐚</span>
+                <div><strong style="color:#CD853F;">Hermit Crab</strong> - Hops along rim toward you!</div>
+            </div>
+        </div>
+
+        <h3 style="color:#7b2cbf; margin-top:20px; font-size:1rem;">🦑 INK CLOUD</h3>
+        <p style="background:rgba(123,44,191,0.2); padding:10px; border-radius:8px; border:1px solid #7b2cbf;">
+            Press <strong style="color:#7b2cbf;">Right CTRL</strong> to release the Kraken's ink!<br>
+            <span style="color:#b060d0;">• Destroys ALL enemies on screen</span><br>
+            <span style="color:#b060d0;">• 2 charges per wave (replenishes each wave)</span><br>
+            <span style="color:#888; font-size:0.9rem;">Save them for emergencies!</span>
+        </p>
+
+        <h3 style="color:#0ff; margin-top:20px; font-size:1rem;">💡 TIPS</h3>
+        <ul>
+            <li>Watch for <span style="color:#9932CC;">purple spikes</span> left by Sea Urchins</li>
+            <li>Hermit Crabs are dangerous - they hop along the rim!</li>
+            <li>Yellow <span style="color:#ffff00;">electrified lanes</span> will damage you</li>
+            <li>Puffer Fish are hard to hit - lead your shots</li>
+            <li>New enemy types appear in higher waves</li>
+        </ul>
+    `,
     "default": `
         <h2>HOW TO PLAY</h2>
         <p>Follow the on-screen instructions to complete the objective.</p>

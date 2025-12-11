@@ -2,12 +2,14 @@
  * 🦑 KRAKEN ARKADE THEME
  * ========================
  * Unified visual theme for all Kraken Arkade pages
- * Features: Starfield, shooting stars, ambient music
- * 
+ * Features: Starfield, shooting stars, bubbles (underwater), ambient music
+ *
  * This module is designed to work alongside existing starfield/audio systems
  * in individual game pages, or provide a complete solution if none exists.
- * 
+ *
  * Usage: Include this script and call ArkadeTheme.init() in your page
+ *
+ * For underwater games, use: ArkadeTheme.init({ theme: 'underwater' })
  */
 
 // ============================================================================
@@ -264,6 +266,137 @@ class ArkadeStarfield {
 }
 
 // ============================================================================
+// UNDERWATER BUBBLES (for ocean-themed games)
+// ============================================================================
+
+class ArkadeBubbles {
+    constructor(canvasId = 'arkade-bubbles') {
+        this.canvas = document.getElementById(canvasId);
+        if (!this.canvas) {
+            this.canvas = document.createElement('canvas');
+            this.canvas.id = canvasId;
+            this.canvas.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: -1;
+                pointer-events: none;
+            `;
+            document.body.insertBefore(this.canvas, document.body.firstChild);
+        }
+        this.ctx = this.canvas.getContext('2d');
+        this.bubbles = [];
+        this.animationId = null;
+        this.lastTime = 0;
+        this.bubbleCount = 25;
+
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+    }
+
+    resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+        this.initBubbles();
+    }
+
+    initBubbles() {
+        this.bubbles = [];
+        for (let i = 0; i < this.bubbleCount; i++) {
+            this.bubbles.push(this.createBubble(true));
+        }
+    }
+
+    createBubble(randomY = false) {
+        const size = Math.random() * 20 + 4;
+        return {
+            x: Math.random() * this.canvas.width,
+            y: randomY ? Math.random() * this.canvas.height : this.canvas.height + size,
+            size: size,
+            speed: Math.random() * 40 + 20,  // pixels per second
+            wobbleSpeed: Math.random() * 2 + 1,
+            wobbleAmount: Math.random() * 30 + 10,
+            wobbleOffset: Math.random() * Math.PI * 2,
+            opacity: Math.random() * 0.3 + 0.1
+        };
+    }
+
+    update(dt, time) {
+        this.bubbles.forEach(bubble => {
+            // Rise upward
+            bubble.y -= bubble.speed * dt;
+
+            // Horizontal wobble
+            bubble.x += Math.sin(time * 0.001 * bubble.wobbleSpeed + bubble.wobbleOffset) * bubble.wobbleAmount * dt;
+
+            // Reset when off screen
+            if (bubble.y < -bubble.size * 2) {
+                Object.assign(bubble, this.createBubble(false));
+            }
+        });
+    }
+
+    draw() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        this.bubbles.forEach(bubble => {
+            // Main bubble
+            const gradient = this.ctx.createRadialGradient(
+                bubble.x - bubble.size * 0.3, bubble.y - bubble.size * 0.3, 0,
+                bubble.x, bubble.y, bubble.size
+            );
+            gradient.addColorStop(0, `rgba(120, 200, 255, ${bubble.opacity * 0.8})`);
+            gradient.addColorStop(0.5, `rgba(80, 180, 220, ${bubble.opacity * 0.4})`);
+            gradient.addColorStop(1, `rgba(59, 158, 190, ${bubble.opacity * 0.1})`);
+
+            this.ctx.beginPath();
+            this.ctx.arc(bubble.x, bubble.y, bubble.size, 0, Math.PI * 2);
+            this.ctx.fillStyle = gradient;
+            this.ctx.fill();
+
+            // Bubble edge/rim
+            this.ctx.beginPath();
+            this.ctx.arc(bubble.x, bubble.y, bubble.size, 0, Math.PI * 2);
+            this.ctx.strokeStyle = `rgba(120, 200, 255, ${bubble.opacity * 0.5})`;
+            this.ctx.lineWidth = 1;
+            this.ctx.stroke();
+
+            // Highlight/shine
+            this.ctx.beginPath();
+            this.ctx.arc(
+                bubble.x - bubble.size * 0.3,
+                bubble.y - bubble.size * 0.3,
+                bubble.size * 0.25,
+                0, Math.PI * 2
+            );
+            this.ctx.fillStyle = `rgba(255, 255, 255, ${bubble.opacity * 1.2})`;
+            this.ctx.fill();
+        });
+    }
+
+    animate(time = 0) {
+        const dt = Math.min((time - this.lastTime) / 1000, 0.1);
+        this.lastTime = time;
+        this.update(dt, time);
+        this.draw();
+        this.animationId = requestAnimationFrame(t => this.animate(t));
+    }
+
+    start() {
+        if (!this.animationId) this.animate();
+    }
+
+    stop() {
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+            this.animationId = null;
+        }
+    }
+}
+
+// ============================================================================
 // AMBIENT MUSIC PLAYER
 // ============================================================================
 
@@ -452,6 +585,7 @@ class ArkadeMusic {
 const ArkadeTheme = {
     starfield: null,
     shootingStars: null,
+    bubbles: null,
     music: null,
     initialized: false,
 
@@ -459,7 +593,9 @@ const ArkadeTheme = {
         if (this.initialized) return;
 
         const {
-            enableStarfield = true,
+            theme = 'space',           // 'space' or 'underwater'
+            enableStarfield = true,    // For space theme
+            enableBubbles = true,      // For underwater theme
             enableShootingStarsOnly = false,
             enableMusic = true,
             musicVolume = 0.12,
@@ -469,17 +605,27 @@ const ArkadeTheme = {
         // Check if page already has a starfield (star-canvas)
         const hasExistingStarfield = document.getElementById('star-canvas') !== null;
 
-        if (enableStarfield) {
-            if (hasExistingStarfield && !enableShootingStarsOnly) {
-                // Just add shooting stars overlay on top of existing starfield
-                this.shootingStars = new ShootingStarOverlay();
-                this.shootingStars.start();
-                console.log('🌠 Added shooting stars to existing starfield');
-            } else if (!hasExistingStarfield) {
-                // Create full starfield with shooting stars
-                this.starfield = new ArkadeStarfield();
-                this.starfield.start();
-                console.log('✨ Created full starfield with shooting stars');
+        if (theme === 'underwater') {
+            // Underwater theme - use bubbles instead of stars
+            if (enableBubbles) {
+                this.bubbles = new ArkadeBubbles();
+                this.bubbles.start();
+                console.log('🫧 Created underwater bubble effect');
+            }
+        } else {
+            // Space theme (default) - use starfield
+            if (enableStarfield) {
+                if (hasExistingStarfield && !enableShootingStarsOnly) {
+                    // Just add shooting stars overlay on top of existing starfield
+                    this.shootingStars = new ShootingStarOverlay();
+                    this.shootingStars.start();
+                    console.log('🌠 Added shooting stars to existing starfield');
+                } else if (!hasExistingStarfield) {
+                    // Create full starfield with shooting stars
+                    this.starfield = new ArkadeStarfield();
+                    this.starfield.start();
+                    console.log('✨ Created full starfield with shooting stars');
+                }
             }
         }
 
@@ -496,6 +642,7 @@ const ArkadeTheme = {
     destroy() {
         if (this.starfield) this.starfield.stop();
         if (this.shootingStars) this.shootingStars.stop();
+        if (this.bubbles) this.bubbles.stop();
         if (this.music) this.music.pause();
         this.initialized = false;
     }
@@ -510,5 +657,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Export for module use
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { ArkadeTheme, ArkadeStarfield, ShootingStarOverlay, ArkadeMusic };
+    module.exports = { ArkadeTheme, ArkadeStarfield, ShootingStarOverlay, ArkadeBubbles, ArkadeMusic };
 }

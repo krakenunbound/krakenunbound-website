@@ -630,6 +630,7 @@
         <button class="action-btn" onclick="closeLeaderboard()">CLOSE</button>
     </div>
 
+    <script src="../../shared/js/arkade-theme.js"></script>
     <script>
         const API_BASE = 'https://kraken-arkade-api.krakenunbound.workers.dev';
 
@@ -761,6 +762,23 @@
                     gameFinished = true;
                     showResults(state.won);
                     initStars();
+                    initShootingStars();
+                    initMusic();
+                    animate();
+                    return;
+                }
+                // Restore in-progress game
+                if (state.playerName && state.activeCards && state.activeCards.length > 0) {
+                    playerName = state.playerName;
+                    activeCards = state.activeCards;
+                    solvedCategories = state.solvedCategories || [];
+                    mistakesLeft = state.mistakesLeft;
+                    document.getElementById('game-screen').style.display = 'flex';
+                    renderSolved();
+                    renderGrid();
+                    updateMistakes();
+                    initStars();
+                    initShootingStars();
                     initMusic();
                     animate();
                     return;
@@ -769,6 +787,7 @@
 
             document.getElementById('setup-screen').style.display = 'flex';
             initStars();
+            initShootingStars();
             initMusic();
             animate();
         };
@@ -875,6 +894,7 @@
                 selectedIndices = [];
                 renderSolved();
                 renderGrid();
+                saveProgress();
 
                 if (activeCards.length === 0) {
                     endGame(true);
@@ -893,6 +913,7 @@
                 animateWrong();
                 mistakesLeft--;
                 updateMistakes();
+                saveProgress();
                 if (mistakesLeft === 0) {
                     endGame(false);
                 }
@@ -960,6 +981,18 @@
             if (won) startConfetti();
 
             setTimeout(() => showResults(won), 800);
+        }
+
+        // Save in-progress game state
+        function saveProgress() {
+            if (!playerName || gameFinished) return;
+            localStorage.setItem(`kategories_${getToday()}`, JSON.stringify({
+                finished: false,
+                playerName,
+                activeCards,
+                solvedCategories,
+                mistakesLeft
+            }));
         }
 
         function showResults(won) {
@@ -1094,6 +1127,15 @@
         function initStars() {
             stars = [];
             for (let i = 0; i < 150; i++) stars.push(new Star());
+        }
+
+        // Initialize shooting stars overlay from arkade-theme.js
+        let shootingStars = null;
+        function initShootingStars() {
+            if (!shootingStars && typeof ShootingStarOverlay !== 'undefined') {
+                shootingStars = new ShootingStarOverlay();
+                shootingStars.start();
+            }
         }
 
         function startConfetti() {

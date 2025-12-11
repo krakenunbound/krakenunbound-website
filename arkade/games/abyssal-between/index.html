@@ -253,6 +253,7 @@
         </div>
     </div>
 
+    <script src="../../shared/js/arkade-theme.js"></script>
     <script>
         const API_BASE = 'https://kraken-arkade-api.krakenunbound.workers.dev';
         let playerName = '';
@@ -273,6 +274,7 @@
 
         window.onload = async function() {
             initStars();
+            initShootingStars();
             loadSettings();
             const savedName = localStorage.getItem('kraken_user');
             if (savedName) document.getElementById('playerName').value = savedName;
@@ -467,6 +469,15 @@
 
         function toggleMusic() { audio.paused ? audio.play().catch(()=>{}) : audio.pause(); }
         function tryPlayMusic() { audio.play().catch(() => {}); }
+
+        // Shooting Stars
+        let shootingStars = null;
+        function initShootingStars() {
+            if (!shootingStars && typeof ShootingStarOverlay !== 'undefined') {
+                shootingStars = new ShootingStarOverlay();
+                shootingStars.start();
+            }
+        }
 
         // Stars
         const canvas = document.getElementById('star-canvas'), ctx = canvas.getContext('2d');

@@ -49,33 +49,45 @@ async function generateWordleWord(env, targetDate) {
   const existing = await env.DB.prepare('SELECT * FROM daily_words WHERE date = ?').bind(targetDate).first();
   if (existing) return existing;
 
-  // Get past words to avoid repeats
-  const pastWords = await env.DB.prepare('SELECT word FROM daily_words').all();
-  const usedWords = new Set(pastWords.results.map(r => r.word));
+  // Get past words to avoid repeats - include in prompt
+  const pastWords = await env.DB.prepare('SELECT word FROM daily_words ORDER BY date DESC LIMIT 100').all();
+  const usedWordsList = pastWords.results.map(r => r.word);
+  const usedWords = new Set(usedWordsList);
 
   const dateObj = new Date(targetDate);
   const readableDate = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
+  // Build avoid list for the prompt (last 30 words to keep prompt size reasonable)
+  const avoidList = usedWordsList.slice(0, 30).join(', ');
+
   const prompt = `Current Date: ${readableDate}. Location: USA.
+
+You are generating a daily word puzzle like the NYT Wordle. Each day MUST have a unique, fresh word.
 
 STRICT REQUIREMENTS:
 1. Word MUST be exactly 5 letters.
-2. Word MUST be a common American English word.
-3. Difficulty: COLLEGE LEVEL - Not too easy, not obscure.
-4. GOOD examples: CRANE, BRISK, GLYPH, PLUMB, CRAVE, DWELL, FORGE
-5. NO plurals ending in S. NO proper nouns.
+2. Word MUST be a common American English word that most adults know.
+3. Difficulty: MEDIUM - Challenging but fair. Not a word most people use daily, but recognizable.
+4. NO plurals ending in S. NO proper nouns. NO obscure/archaic words.
+5. Good word types: verbs, adjectives, concrete nouns. Words with interesting letter patterns.
+
+DO NOT USE THESE WORDS (already used recently):
+${avoidList}
 
 THEME SELECTION:
-- If ${readableDate} is near a US Holiday, USE THAT THEME.
-- Otherwise, use a seasonal or interesting theme.
+- If ${readableDate} is near a US holiday (Christmas, Thanksgiving, Halloween, July 4th, etc.), use a thematic word.
+- Otherwise pick from: NATURE, FOOD, MUSIC, TOOLS, WEATHER, EMOTIONS, MOVEMENT, COLORS, ANIMALS, SCIENCE
+
+Think of a creative, satisfying word that will make solvers say "oh, good one!" when they get it.
 
 FORMAT: THEME|WORD
-Example: THANKSGIVING|FEAST
+Example: WINTER|FROST
 
-Output ONLY the format string, nothing else.`;
+Output ONLY the theme and word in that exact format, nothing else.`;
 
-  let word = 'CRANE';
+  let word = null;
   let theme = 'General';
+  let lastError = null;
 
   for (let attempt = 0; attempt < 5; attempt++) {
     try {
@@ -88,11 +100,20 @@ Output ONLY the format string, nothing else.`;
           word = candidateWord;
           theme = candidateTheme || 'General';
           break;
+        } else if (candidateWord && usedWords.has(candidateWord)) {
+          lastError = `Word "${candidateWord}" already used`;
         }
       }
     } catch (e) {
-      console.error(`Attempt ${attempt + 1} failed:`, e);
+      lastError = e.message;
+      console.error(`Wordle generation attempt ${attempt + 1} failed:`, e);
     }
+  }
+
+  // If all attempts failed, don't save a fallback - log error and return failure
+  if (!word) {
+    console.error(`Failed to generate unique Wordle word after 5 attempts. Last error: ${lastError}`);
+    return { date: targetDate, error: 'Generation failed', lastError };
   }
 
   // Save to database
@@ -108,31 +129,69 @@ async function generateConnections(env, targetDate) {
   const existing = await env.DB.prepare('SELECT * FROM daily_connections WHERE date = ?').bind(targetDate).first();
   if (existing) return existing;
 
+  // Get recent puzzles to avoid repetition
+  const recentPuzzles = await env.DB.prepare(
+    'SELECT puzzle_data FROM daily_connections ORDER BY date DESC LIMIT 14'
+  ).all();
+
+  // Extract recently used categories and words
+  const recentCategories = new Set();
+  const recentWords = new Set();
+  for (const row of recentPuzzles.results) {
+    try {
+      const data = JSON.parse(row.puzzle_data);
+      if (data.categories) {
+        for (const cat of data.categories) {
+          recentCategories.add(cat.name.toUpperCase());
+          for (const word of cat.words) {
+            recentWords.add(word.toUpperCase());
+          }
+        }
+      }
+    } catch (e) { /* ignore parse errors */ }
+  }
+
   const dateObj = new Date(targetDate);
   const readableDate = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
-  const prompt = `Create a NYT-level Connections puzzle for ${readableDate}. This must be DIFFICULT and use RED HERRINGS.
+  // Build avoid lists for the prompt
+  const avoidCategories = Array.from(recentCategories).slice(0, 40).join(', ');
+  const avoidWords = Array.from(recentWords).slice(0, 60).join(', ');
 
-DIFFICULTY TIERS (mandatory):
-1. YELLOW (Easy): Direct synonyms or obvious set membership (e.g., RUSH, HURRY, DASH, SPRINT)
-2. GREEN (Medium): Trivia or "things with X" categories requiring visualization (e.g., PIANO, TOOTH, COMB, SAW = Things with teeth)
-3. BLUE (Hard): Requires specific knowledge or compound word awareness (e.g., ATOM, SECOND, HAIR, BANANA = Things that can be "split")
-4. PURPLE (Fiendish): Wordplay, fill-in-the-blank, or linguistic tricks. NOT about word meaning, but word STRUCTURE (e.g., MOON, LIGHT, STAR, SKY = Words that follow "BLUE ___")
+  const prompt = `Create an NYT Connections-style puzzle for ${readableDate}. This is a DAILY puzzle so it MUST be completely fresh and different from recent days.
 
-CRITICAL RED HERRING RULES:
-- Include at least 2-3 words that APPEAR to fit multiple categories (this is mandatory)
-- Example: If you have a "Birds" category, include TURKEY in a "Synonyms for Failure" category instead
-- Example: SWALLOW could be a bird OR "tolerate" - use the less obvious meaning
-- Example: JACK could be a name, a card, a tool, or part of "Jack Sparrow"
-- The solver should see 5+ words that SEEM to fit one category, forcing them to find the true grouping
+CRITICAL: DO NOT USE these categories (used recently):
+${avoidCategories}
 
-PURPLE CATEGORY PATTERNS (use one):
-- Fill-in-the-blank: Words that precede/follow a hidden word (FIRE, WALL, FLY, PAPER all precede "TRAP")
-- Homophones: EWE, YOU, YEW, U (sound alike)
-- Hidden words: COCKATIEL contains "TEAL", CAMEROON contains "MAROON"
-- Famous ___: JACK (Sparrow, Nicholson, Black, Kennedy)
+CRITICAL: DO NOT USE these words (used recently):
+${avoidWords}
 
-FORMAT (JSON only):
+DIFFICULTY TIERS (you must have exactly one of each):
+1. YELLOW (Easy, difficulty: 1): Obvious grouping - synonyms, clear category membership
+2. GREEN (Medium, difficulty: 2): Requires thinking - "things that have X" or trivia knowledge
+3. BLUE (Hard, difficulty: 3): Tricky - requires specific knowledge, wordplay awareness, or lateral thinking
+4. PURPLE (Fiendish, difficulty: 4): Devious - linguistic tricks, fill-in-blank, or misdirection
+
+MANDATORY RED HERRINGS:
+- Include 2-3 words that APPEAR to belong to an obvious category but actually belong to a tricky one
+- Example: TURKEY seems like a bird but goes in "Box Office Failures"
+- Example: BEAR seems like an animal but goes in "Tolerate" (bear with me)
+- The grid should have at least one "trap" where 5+ words seem related
+
+PURPLE CATEGORY IDEAS (pick ONE style, be creative):
+- "Words before/after X": FIRE, SPEED, MOUSE, TOURIST → all precede "TRAP"
+- "Hidden within": Words containing a color, animal, or number
+- "Sound-alikes": Homophones or rhymes
+- "Famous ___": First names that go with multiple famous last names
+- "___ + common word": CANDY, JELLY, KIDNEY, COFFEE → all precede "BEAN"
+
+FRESH CATEGORY IDEAS (use unexpected themes):
+- 90s sitcoms, cocktail ingredients, yoga poses, podcast genres
+- Things in a junk drawer, camping gear, cooking verbs, texting slang
+- Board game terms, streaming platforms, coffee drinks, gym equipment
+- Weather phenomena, card game terms, hairstyles, pizza toppings
+
+FORMAT (JSON only, no other text):
 {
   "categories": [
     {"name": "CATEGORY_NAME", "words": ["WORD1", "WORD2", "WORD3", "WORD4"], "difficulty": 1},
@@ -142,14 +201,15 @@ FORMAT (JSON only):
   ]
 }
 
-Remember: A good puzzle makes the solver think "Birds!" then realize TURKEY=Flop, SWALLOW=Tolerate, SPARROW=Pirate. Output ONLY valid JSON.`;
+Each word must be a SINGLE word (no spaces), ALL CAPS. All 16 words must be unique. Be creative - surprise the solver!`;
 
   let puzzleData = null;
   let theme = 'Daily Puzzle';
+  let lastError = null;
 
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 5; attempt++) {
     try {
-      const response = await queryGroq(env, prompt, 800);
+      const response = await queryGroq(env, prompt, 1000);
       // Extract JSON from response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -163,10 +223,9 @@ Remember: A good puzzle makes the solver think "Birds!" then realize TURKEY=Flop
           }));
 
           // Second pass: fix difficulties to be unique 1-4
-          const claimedDiffs = new Map(); // maps difficulty -> category index that claimed it
+          const claimedDiffs = new Map();
           const availableDiffs = [1, 2, 3, 4];
 
-          // First pass: let each category claim unique difficulties
           parsed.categories.forEach((cat, idx) => {
             const d = cat.difficulty;
             if (d >= 1 && d <= 4 && !claimedDiffs.has(d)) {
@@ -176,10 +235,8 @@ Remember: A good puzzle makes the solver think "Birds!" then realize TURKEY=Flop
             }
           });
 
-          // Second pass: assign unclaimed difficulties
           parsed.categories.forEach((cat, idx) => {
             if (claimedDiffs.get(cat.difficulty) !== idx) {
-              // This category didn't get its requested difficulty, assign from available
               cat.difficulty = availableDiffs.shift() || 1;
             }
           });
@@ -187,30 +244,29 @@ Remember: A good puzzle makes the solver think "Birds!" then realize TURKEY=Flop
           // Check all words are valid (non-empty, single words, 16 unique)
           const allWords = parsed.categories.flatMap(c => c.words);
           const allHave4Words = parsed.categories.every(c => c.words.length === 4);
+
+          // Check for reused words
+          const hasReusedWords = allWords.some(w => recentWords.has(w));
+
           if (allHave4Words && allWords.length === 16 &&
             allWords.every(w => w.length > 0 && !w.includes(' ')) &&
-            new Set(allWords).size === 16) {
+            new Set(allWords).size === 16 && !hasReusedWords) {
             puzzleData = parsed;
             break;
+          } else if (hasReusedWords) {
+            lastError = 'Generated puzzle contained recently used words';
           }
         }
       }
     } catch (e) {
+      lastError = e.message;
       console.error(`Connections attempt ${attempt + 1} failed:`, e);
     }
   }
 
   if (!puzzleData) {
-    // Fallback puzzle with proper red herrings
-    // Red herrings: BEAR (animal or tolerate?), TURKEY (bird or flop?), LEMON (fruit or failure?)
-    puzzleData = {
-      categories: [
-        { name: "TOLERATE", words: ["BEAR", "STAND", "STOMACH", "SWALLOW"], difficulty: 1 },
-        { name: "THINGS WITH TEETH", words: ["COMB", "SAW", "ZIPPER", "GEAR"], difficulty: 2 },
-        { name: "MOVIE FLOPS", words: ["TURKEY", "BOMB", "DUD", "LEMON"], difficulty: 3 },
-        { name: "___ TRAP", words: ["MOUSE", "SPEED", "TOURIST", "BOOBY"], difficulty: 4 }
-      ]
-    };
+    console.error(`Failed to generate unique Connections puzzle after 5 attempts. Last error: ${lastError}`);
+    return { date: targetDate, error: 'Generation failed', lastError };
   }
 
   // Save to database

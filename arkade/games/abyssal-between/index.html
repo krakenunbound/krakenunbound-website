@@ -146,6 +146,51 @@
 
         .win-title { font-size: 2rem; color: #44ff44; text-shadow: 0 0 20px rgba(0, 255, 0, 0.5); margin-bottom: 15px; }
         .win-word { font-size: 2.5rem; font-weight: bold; color: var(--neon); margin: 20px 0; text-shadow: 0 0 20px rgba(255, 102, 0, 0.5); }
+
+        @media (max-width: 500px) {
+            .glass-panel {
+                padding: 15px;
+                width: 100%;
+            }
+
+            h1 {
+                font-size: 1.4rem;
+            }
+
+            input[type="text"] {
+                font-size: 1rem;
+                padding: 10px;
+            }
+
+            #name-entry input {
+                font-size: 1rem;
+                padding: 10px;
+            }
+
+            .bounds-display {
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+
+            .bound-word {
+                min-width: 80px;
+                padding: 10px 14px;
+                font-size: 1.1rem;
+            }
+
+            .stats-bar {
+                gap: 20px;
+                flex-wrap: wrap;
+            }
+
+            .stat-value {
+                font-size: 1.3rem;
+            }
+
+            .win-word {
+                font-size: 1.8rem;
+            }
+        }
     </style>
 </head>
 <body>

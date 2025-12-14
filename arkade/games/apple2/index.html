@@ -914,10 +914,41 @@
 
         let currentGame = null;
         let emulatorReady = false;
-    </script>
+        let emulatorLoading = false;
 
-    <!-- Emulator Script -->
-    <script src="dist/main2e.bundle.js"></script>
+        // Dynamically load the emulator script only when needed
+        function loadEmulatorScript() {
+            return new Promise((resolve, reject) => {
+                if (emulatorReady) {
+                    resolve();
+                    return;
+                }
+                if (emulatorLoading) {
+                    // Wait for existing load
+                    const checkReady = setInterval(() => {
+                        if (emulatorReady) {
+                            clearInterval(checkReady);
+                            resolve();
+                        }
+                    }, 100);
+                    return;
+                }
+                emulatorLoading = true;
+                const script = document.createElement('script');
+                script.src = 'dist/main2e.bundle.js';
+                script.onload = () => {
+                    emulatorReady = true;
+                    emulatorLoading = false;
+                    resolve();
+                };
+                script.onerror = () => {
+                    emulatorLoading = false;
+                    reject(new Error('Failed to load emulator'));
+                };
+                document.body.appendChild(script);
+            });
+        }
+    </script>
 
     <!-- Game Loader Script -->
     <script>
@@ -998,16 +1029,18 @@
 
             // Show loading overlay
             loadingOverlay.classList.remove('hidden');
-            loadingText.textContent = `Loading ${game.name}...`;
+            loadingText.textContent = 'Initializing emulator...';
             playOverlay.classList.add('hidden');
 
-            // Wait for emulator to be ready
-            if (typeof Apple2 === 'undefined') {
-                loadingText.textContent = 'Initializing emulator...';
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-
             try {
+                // Load emulator script dynamically (only on first game select)
+                await loadEmulatorScript();
+
+                // Give emulator a moment to initialize
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                loadingText.textContent = `Loading ${game.name}...`;
+
                 // Load the first disk
                 await loadDisk(game.disks[0]);
 

@@ -26,6 +26,45 @@ html, body {
     height: 100%;
 }
 
+/* Sound Toggle Button */
+.sound-toggle {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    cursor: pointer;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.sound-toggle:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: scale(1.1);
+    box-shadow: 0 0 20px var(--accent-glow);
+}
+
+.sound-toggle.sound-on {
+    background: rgba(59, 158, 190, 0.2);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.sound-toggle svg {
+    width: 24px;
+    height: 24px;
+}
+
 body {
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background: var(--bg-primary);

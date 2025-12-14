@@ -987,35 +987,45 @@
             }
         }
 
-        // Load a game disk into the emulator
-        async function loadDisk(diskUrl, driveNumber = 1) {
+        // Wait for emulator to be fully ready (CPU running)
+        function waitForEmulator(timeout = 5000) {
             return new Promise((resolve, reject) => {
-                fetch(diskUrl)
-                    .then(response => {
-                        if (!response.ok) throw new Error('Disk not found: ' + response.status);
-                        return response.arrayBuffer();
-                    })
-                    .then(data => {
-                        const filename = diskUrl.split('/').pop();
-                        const blob = new Blob([data], { type: 'application/octet-stream' });
-                        const file = new File([blob], filename, { type: 'application/octet-stream' });
-
-                        // Use DataTransfer API to inject file
-                        const dataTransfer = new DataTransfer();
-                        dataTransfer.items.add(file);
-                        localFileInput.files = dataTransfer.files;
-                        localFileInput.dispatchEvent(new Event('change', { bubbles: true }));
-
+                const start = Date.now();
+                const check = () => {
+                    // Check if Apple2 API is available and initialized
+                    if (typeof Apple2 !== 'undefined' && Apple2.doLoadHTTP) {
                         resolve();
-                    })
-                    .catch(reject);
+                    } else if (Date.now() - start > timeout) {
+                        reject(new Error('Emulator initialization timeout'));
+                    } else {
+                        setTimeout(check, 100);
+                    }
+                };
+                check();
             });
+        }
+
+        // Load a game disk into the emulator using the proper API
+        async function loadDisk(diskUrl, driveNumber = 1) {
+            // Build absolute URL for the disk
+            const baseUrl = window.location.href.replace(/\/[^\/]*$/, '/');
+            const fullUrl = diskUrl.startsWith('http') ? diskUrl : baseUrl + diskUrl;
+
+            console.log('Loading disk into drive', driveNumber, ':', fullUrl);
+
+            // Use the emulator's built-in HTTP loader
+            return Apple2.doLoadHTTP(driveNumber, fullUrl);
         }
 
         // Main game loader
         async function loadGame(gameId) {
             const game = GAMES[gameId];
             if (!game) return;
+
+            // Prevent loading if already loading
+            if (currentGame === gameId && loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
+                return;
+            }
 
             currentGame = gameId;
 
@@ -1036,13 +1046,23 @@
                 // Load emulator script dynamically (only on first game select)
                 await loadEmulatorScript();
 
-                // Give emulator a moment to initialize
-                await new Promise(resolve => setTimeout(resolve, 500));
+                // Wait for emulator to be fully initialized
+                loadingText.textContent = 'Starting Apple IIe...';
+                await waitForEmulator();
+
+                // Give UI a moment to render
+                await new Promise(resolve => setTimeout(resolve, 300));
 
                 loadingText.textContent = `Loading ${game.name}...`;
 
-                // Load the first disk
-                await loadDisk(game.disks[0]);
+                // Load disk(s) - drive 1 always gets first disk
+                await loadDisk(game.disks[0], 1);
+
+                // If there's a second disk, load it into drive 2
+                if (game.disks.length > 1) {
+                    loadingText.textContent = `Loading ${game.name} (Disk 2)...`;
+                    await loadDisk(game.disks[1], 2);
+                }
 
                 // Small delay then show play overlay
                 await new Promise(resolve => setTimeout(resolve, 500));
@@ -1051,7 +1071,7 @@
 
             } catch (error) {
                 console.error('Failed to load game:', error);
-                loadingText.textContent = 'Failed to load. Try refreshing.';
+                loadingText.textContent = 'Failed to load: ' + error.message;
             }
         }
 
@@ -1059,19 +1079,15 @@
         playOverlay.addEventListener('click', function() {
             playOverlay.classList.add('hidden');
             screen.focus();
+            // Reset and run the emulator when clicking play
+            if (typeof Apple2 !== 'undefined' && Apple2.reset) {
+                Apple2.reset();
+            }
         });
 
         // Also focus on screen click
         screen.addEventListener('click', function() {
             screen.focus();
-        });
-
-        // Handle Conan disk swap prompt
-        document.addEventListener('keydown', function(e) {
-            // When playing Conan and disk 2 is needed
-            if (currentGame === 'conan' && GAMES.conan.disks.length > 1) {
-                // The game will prompt - user can use folder icon or we could auto-detect
-            }
         });
 
         // Check URL for game parameter on load

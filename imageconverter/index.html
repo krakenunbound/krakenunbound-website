@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Converter - Kraken Unbound</title>
+    <meta name="description" content="Convert images between formats - PNG, JPG, WebP, ICO and more">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="ocean-bg">
+        <div class="bubbles">
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+        </div>
+        <div class="light-rays"></div>
+    </div>
+
+    <div class="container">
+        <a href="/utilities/" class="back-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Back to Utilities
+        </a>
+
+        <header>
+            <div class="kraken-logo">
+                <svg viewBox="0 0 200 200" class="kraken-svg">
+                    <!-- Kraken Head -->
+                    <ellipse cx="100" cy="70" rx="45" ry="50" fill="url(#krakenGradient)"/>
+                    <!-- Eyes -->
+                    <ellipse cx="85" cy="60" rx="12" ry="15" fill="#0a1a20"/>
+                    <ellipse cx="115" cy="60" rx="12" ry="15" fill="#0a1a20"/>
+                    <circle cx="88" cy="58" r="5" fill="#3b9ebe" class="eye-glow"/>
+                    <circle cx="118" cy="58" r="5" fill="#3b9ebe" class="eye-glow"/>
+                    <!-- Tentacles -->
+                    <path d="M55 100 Q30 130 20 170 Q25 175 35 165 Q45 140 60 115" fill="url(#tentacleGradient)" class="tentacle t1"/>
+                    <path d="M70 110 Q50 150 35 190 Q42 195 50 182 Q62 150 75 120" fill="url(#tentacleGradient)" class="tentacle t2"/>
+                    <path d="M85 115 Q75 160 70 200 Q80 202 85 190 Q88 160 90 125" fill="url(#tentacleGradient)" class="tentacle t3"/>
+                    <path d="M100 118 Q100 165 100 200 Q110 200 110 190 Q108 160 105 125" fill="url(#tentacleGradient)" class="tentacle t4"/>
+                    <path d="M115 115 Q125 160 130 200 Q120 202 115 190 Q112 160 110 125" fill="url(#tentacleGradient)" class="tentacle t5"/>
+                    <path d="M130 110 Q150 150 165 190 Q158 195 150 182 Q138 150 125 120" fill="url(#tentacleGradient)" class="tentacle t6"/>
+                    <path d="M145 100 Q170 130 180 170 Q175 175 165 165 Q155 140 140 115" fill="url(#tentacleGradient)" class="tentacle t7"/>
+                    <!-- Gradients -->
+                    <defs>
+                        <linearGradient id="krakenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#4fb8d8"/>
+                            <stop offset="50%" style="stop-color:#3b9ebe"/>
+                            <stop offset="100%" style="stop-color:#1a5a7a"/>
+                        </linearGradient>
+                        <linearGradient id="tentacleGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#3b9ebe"/>
+                            <stop offset="100%" style="stop-color:#152030"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <h1>Image Converter</h1>
+            <p class="tagline">Transform your images between formats</p>
+        </header>
+
+        <main>
+            <div id="dropZone" class="drop-zone">
+                <div class="drop-zone-content">
+                    <div class="tentacle-border"></div>
+                    <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <p class="drop-text">Drag & Drop your image here</p>
+                    <p class="drop-subtext">or click to browse</p>
+                    <input type="file" id="fileInput" accept="image/*" hidden>
+                </div>
+                <div class="ripple-effect"></div>
+            </div>
+
+            <div id="previewSection" class="preview-section hidden">
+                <div class="preview-card">
+                    <div class="preview-header">
+                        <h2>Captured Image</h2>
+                        <button id="clearBtn" class="clear-btn">X</button>
+                    </div>
+                    <div class="preview-content">
+                        <div class="image-preview">
+                            <img id="previewImage" src="" alt="Preview">
+                        </div>
+                        <div class="image-info">
+                            <div class="info-item">
+                                <span class="info-label">File Name</span>
+                                <span id="fileName" class="info-value"></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Format</span>
+                                <span id="fileFormat" class="info-value format-badge"></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Size</span>
+                                <span id="fileSize" class="info-value"></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Dimensions</span>
+                                <span id="fileDimensions" class="info-value"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="conversion-card">
+                    <h2>Convert To</h2>
+                    <div id="formatOptions" class="format-options">
+                        <!-- Format buttons will be generated by JavaScript -->
+                    </div>
+
+                    <div id="icoOptions" class="ico-options hidden">
+                        <h3>ICO Size Options</h3>
+                        <div class="ico-sizes">
+                            <label class="ico-size-option">
+                                <input type="checkbox" value="16" checked> 16x16
+                            </label>
+                            <label class="ico-size-option">
+                                <input type="checkbox" value="32" checked> 32x32
+                            </label>
+                            <label class="ico-size-option">
+                                <input type="checkbox" value="48" checked> 48x48
+                            </label>
+                            <label class="ico-size-option">
+                                <input type="checkbox" value="64"> 64x64
+                            </label>
+                            <label class="ico-size-option">
+                                <input type="checkbox" value="128"> 128x128
+                            </label>
+                            <label class="ico-size-option">
+                                <input type="checkbox" value="256"> 256x256
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="qualitySlider" class="quality-slider hidden">
+                        <label>Quality: <span id="qualityValue">92</span>%</label>
+                        <input type="range" id="quality" min="1" max="100" value="92">
+                    </div>
+
+                    <button id="convertBtn" class="convert-btn" disabled>
+                        <span class="btn-text">Select a format to convert</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="resultSection" class="result-section hidden">
+                <div class="result-card">
+                    <div class="success-animation">
+                        <svg class="checkmark" viewBox="0 0 52 52">
+                            <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                            <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                        </svg>
+                    </div>
+                    <h2>Conversion Complete!</h2>
+                    <p id="resultMessage"></p>
+                    <div class="result-actions">
+                        <button id="saveBtn" class="save-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            Save File
+                        </button>
+                        <button id="newConversionBtn" class="new-btn">
+                            Convert Another
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Kraken Unbound Utilities</p>
+        </footer>
+    </div>
+
+    <script src="converter.js"></script>
+</body>
+</html>

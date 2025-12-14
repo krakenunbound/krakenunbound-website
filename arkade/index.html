@@ -253,12 +253,12 @@
             box-shadow: 0 10px 40px rgba(255, 215, 0, 0.4);
         }
 
-        .game-card.lode-runner {
-            border-color: #ff8c00;
+        .game-card.apple2 {
+            border-color: #00ff88;
         }
 
-        .game-card.lode-runner:hover {
-            box-shadow: 0 10px 40px rgba(255, 140, 0, 0.4);
+        .game-card.apple2:hover {
+            box-shadow: 0 10px 40px rgba(0, 255, 136, 0.4);
         }
 
         .game-icon {
@@ -338,9 +338,9 @@
             text-shadow: 0 0 10px #ffd700;
         }
 
-        .lode-runner .game-title {
-            color: #ff8c00;
-            text-shadow: 0 0 10px #ff8c00;
+        .apple2 .game-title {
+            color: #00ff88;
+            text-shadow: 0 0 10px #00ff88;
         }
 
         .game-subtitle {
@@ -772,11 +772,11 @@
                         <span class="game-status status-ready">READY</span>
                     </div>
 
-                    <!-- CLASSIC GAMES -->
-                    <div class="game-card lode-runner" onclick="launchGame('lode-runner')">
-                        <div class="game-icon">🏃</div>
-                        <div class="game-title">LODE RUNNER</div>
-                        <div class="game-subtitle">Apple IIe Classic (1983)</div>
+                    <!-- CLASSIC EMULATORS -->
+                    <div class="game-card apple2" onclick="launchGame('apple2')">
+                        <div class="game-icon">🍎</div>
+                        <div class="game-title">APPLE IIe</div>
+                        <div class="game-subtitle">Classic Gaming Emulator</div>
                         <span class="game-status status-ready">READY</span>
                     </div>
                 </div>
@@ -825,7 +825,7 @@
                     'abyssal-between': { ready: true },
                     'phrase-kraken': { ready: true },
                     'ad-astra': { ready: true },
-                    'lode-runner': { ready: true }
+                    'apple2': { ready: true }
                 };
 
                 // Check if auth is bypassed (local testing mode)

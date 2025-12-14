@@ -227,6 +227,38 @@
                 grid-template-columns: repeat(2, 1fr);
             }
         }
+
+        /* Printer paper styling */
+        #printer-modal .paper {
+            width: 70em;
+            height: 90ch;
+            overflow: auto;
+            background-color: white;
+            color: black;
+        }
+
+        #printer-modal .line {
+            font-family: monospace;
+            white-space: pre;
+        }
+
+        #http_url {
+            width: 100%;
+            padding: 8px;
+            background: #1a2540;
+            border: 1px solid #0ff;
+            color: #fff;
+            border-radius: 4px;
+        }
+
+        #save_name {
+            width: 200px;
+            padding: 8px;
+            background: #1a2540;
+            border: 1px solid #0ff;
+            color: #fff;
+            border-radius: 4px;
+        }
     </style>
 
     <!-- Disk Index with Lode Runner -->
@@ -438,6 +470,59 @@
                 </main>
                 <footer class="modal__footer">
                     <button class="modal__btn" data-micromodal-close aria-label="Close">Close</button>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="printer-modal" aria-hidden="true">
+        <div class="modal__overlay" tabindex="-1" data-micromodal-close>
+            <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="Printer">
+                <header class="modal__header">
+                    <span class="modal__title" id="printer-modal-title">Printer</span>
+                    <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+                </header>
+                <main class="modal__content" id="printer-modal-content">
+                    <div class="paper" tabindex="-1"></div>
+                </main>
+                <footer class="modal__footer">
+                    <a id="raw_printer_output" class="button">Download Raw Output</a>
+                    <button class="modal__btn" onclick="Apple2.clearPrinterPaper()" aria-label="Clear">Clear</button>
+                    <button class="modal__btn" data-micromodal-close aria-label="Close">Close</button>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="manage-modal" aria-hidden="true">
+        <div class="modal__overlay" tabindex="-1" data-micromodal-close>
+            <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="Manage">
+                <header class="modal__header">
+                    <span class="modal__title" id="manage-modal-title">Manage Local Saves</span>
+                    <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+                </header>
+                <main class="modal__content" id="manage-modal-content"></main>
+                <footer class="modal__footer">
+                    <button class="modal__btn" data-micromodal-close aria-label="OK">OK</button>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="http-modal" aria-hidden="true">
+        <div class="modal__overlay" tabindex="-1" data-micromodal-close>
+            <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="Load URL">
+                <header class="modal__header">
+                    <span class="modal__title" id="http-modal-title">Load URL</span>
+                    <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+                </header>
+                <main class="modal__content" id="http-modal-content">
+                    <form action="#">
+                        <input type="text" id="http_url">
+                    </form>
+                </main>
+                <footer class="modal__footer">
+                    <button class="modal__btn" data-micromodal-close aria-label="OK">OK</button>
                 </footer>
             </div>
         </div>

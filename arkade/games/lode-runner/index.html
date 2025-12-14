@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=640, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Lode Runner">
+    <title>Lode Runner - Kraken Arkade</title>
+    <meta name="description" content="Play classic Lode Runner on the Apple IIe emulator - Kraken Arkade">
+
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="stylesheet" href="css/apple2.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.2/css/all.css">
+
+    <style>
+        /* Kraken Arkade Theme Override */
+        :root {
+            --kraken-bg: #0a0a1a;
+            --kraken-accent: #0ff;
+            --kraken-secondary: #1a0a2e;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--kraken-bg) 0%, var(--kraken-secondary) 50%, #0a1a2e 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        .outer {
+            margin: 0 auto;
+            padding: 20px 0;
+        }
+
+        #header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 10px;
+            padding: 0 10px;
+        }
+
+        .back-link {
+            color: var(--kraken-accent);
+            text-decoration: none;
+            font-size: 14px;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        .back-link svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        #subtitle {
+            flex: 1;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            padding: 0;
+            color: #fff;
+        }
+
+        .arkade-title {
+            font-size: 24px;
+            background: linear-gradient(135deg, #0ff, #f0f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        .game-title {
+            display: block;
+            font-size: 14px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        /* Dark themed display */
+        .overscan {
+            border-color: #1a3a4a;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+        }
+
+        /* Dark buttons */
+        button, a.button {
+            background: linear-gradient(135deg, #1a3a4a, #0a2030);
+            color: var(--kraken-accent);
+            border: 1px solid #0ff;
+        }
+
+        button:hover, a.button:hover {
+            background: linear-gradient(135deg, #2a5a6a, #1a3a4a);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+
+        button:active, a.button:active {
+            background: #0a1a2a;
+        }
+
+        /* Dark insets */
+        .inset {
+            background: rgba(0, 20, 40, 0.6);
+            border-color: #1a3a4a;
+        }
+
+        /* Disk labels */
+        .disk-label {
+            color: #888;
+        }
+
+        /* KHz display */
+        #khz {
+            background: #000;
+            color: var(--kraken-accent);
+            border-color: #1a3a4a;
+        }
+
+        /* Reset button */
+        #reset {
+            background: linear-gradient(135deg, #4a1a1a, #2a0a0a);
+            border-color: #f55;
+            color: #f55;
+        }
+
+        #reset:hover {
+            box-shadow: 0 0 15px rgba(255, 85, 85, 0.3);
+        }
+
+        /* Keyboard styling */
+        #keyboard .key {
+            background: linear-gradient(135deg, #1a3a4a, #0a2030);
+            border-left-color: #2a5a6a;
+            border-top-color: #2a5a6a;
+            border-right-color: #051520;
+            border-bottom-color: #051520;
+            color: #aaa;
+        }
+
+        #keyboard .pressed {
+            background: #051520;
+            border-left-color: #1a3a4a;
+            border-top-color: #1a3a4a;
+        }
+
+        #keyboard .active {
+            color: var(--kraken-accent);
+        }
+
+        #keyboard .key-POWER,
+        #keyboard .key-POW {
+            background-color: #1a2030;
+        }
+
+        /* Modal styling */
+        .modal__container {
+            background: linear-gradient(135deg, #0a1525, #1a2540);
+            border: 2px solid var(--kraken-accent);
+        }
+
+        .modal__header {
+            background: linear-gradient(135deg, #1a3a4a, #0a2030);
+            border-color: #0ff;
+        }
+
+        .modal__content {
+            color: #ccc;
+        }
+
+        /* Game info section */
+        .game-info {
+            background: rgba(0, 20, 40, 0.8);
+            border: 1px solid #1a3a4a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            max-width: 620px;
+        }
+
+        .game-info h3 {
+            color: var(--kraken-accent);
+            margin-bottom: 15px;
+            font-size: 18px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .control {
+            background: rgba(0, 40, 60, 0.5);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .control kbd {
+            background: #0ff;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .game-desc {
+            color: #666;
+            font-size: 14px;
+            font-style: italic;
+        }
+
+        /* Responsive */
+        @media (max-width: 660px) {
+            .controls-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+
+    <!-- Disk Index with Lode Runner -->
+    <script type="text/javascript">
+        disk_index = [
+            {
+                filename: 'loderunner.dsk',
+                name: 'Lode Runner',
+                category: 'Games',
+            }
+        ];
+    </script>
+</head>
+<body class="apple2e"
+      ondragover="Apple2.handleDragOver(0, event)"
+      ondrop="Apple2.handleDrop(0, event)"
+      ondragend="Apple2.handleDragEnd(0, event)">
+
+    <div class="outer">
+        <div id="exit-fullscreen">
+            <button onClick="Apple2.exitFullScreen();">Exit Full Page</button>
+        </div>
+
+        <!-- Header -->
+        <div id="header">
+            <a href="/arkade/" class="back-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Arkade
+            </a>
+            <div id="subtitle">
+                <span class="arkade-title">LODE RUNNER</span>
+                <span class="game-title">Apple IIe Classic (1983)</span>
+            </div>
+        </div>
+
+        <div id="display">
+            <div class="overscan">
+                <canvas id="screen" width="592" height="416" tabindex="-1"></canvas>
+            </div>
+        </div>
+
+        <div class="inset">
+            <div class="disk"
+                 ondragover="Apple2.handleDragOver(1, event)"
+                 ondrop="Apple2.handleDrop(1, event)"
+                 ondragend="Apple2.handleDragEnd(1, event)">
+                <div class="disk-light" id="disk1"></div>
+                <button title="Load Disk" onclick="Apple2.openLoad(1, event);">
+                    <i class="fas fa-folder-open"></i>
+                </button>
+                <button title="Save Disk" onclick="Apple2.openSave(1, event);">
+                    <i class="fas fa-save"></i>
+                </button>
+                <div id="disk-label1" class="disk-label">Disk 1</div>
+            </div>
+            <div class="disk"
+                 ondragover="Apple2.handleDragOver(2, event)"
+                 ondrop="Apple2.handleDrop(2, event)"
+                 ondragend="Apple2.handleDragEnd(2, event)">
+                <div class="disk-light" id="disk2"></div>
+                <button title="Load Disk" onclick="Apple2.openLoad(2, event);">
+                    <i class="fas fa-folder-open"></i>
+                </button>
+                <button title="Save Disk" onclick="Apple2.openSave(2, event);">
+                    <i class="fas fa-save"></i>
+                </button>
+                <div id="disk-label2" class="disk-label">Disk 2</div>
+            </div>
+        </div>
+
+        <div id="reset-row">
+            <div id="controls" class="inset">
+                <div id="khz" onclick="Apple2.toggleShowFPS()">0 kHz</div>
+                <button id="pause-run" onclick="Apple2.pauseRun()" title="Pause/Run">
+                    <i class="fas fa-pause"></i>
+                </button>
+                <button id="toggle-sound" onclick="Apple2.toggleSound()" title="Toggle Sound">
+                    <i class="fas fa-volume-off"></i>
+                </button>
+                <div class="spacer"></div>
+                <button onclick="Apple2.openOptions()" title="Options (F4)">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+            <div id="reset" type="button"
+                onclick="Apple2.reset(event)"
+                oncontextmenu="Apple2.reset(event)">
+                Reset
+            </div>
+        </div>
+
+        <div class="inset">
+            <div id="keyboard"></div>
+        </div>
+
+        <!-- Game Instructions -->
+        <div class="game-info">
+            <h3>Controls</h3>
+            <div class="controls-grid">
+                <div class="control"><kbd>I</kbd> Up</div>
+                <div class="control"><kbd>J</kbd> Left</div>
+                <div class="control"><kbd>K</kbd> Down</div>
+                <div class="control"><kbd>L</kbd> Right</div>
+                <div class="control"><kbd>U</kbd> Dig Left</div>
+                <div class="control"><kbd>O</kbd> Dig Right</div>
+            </div>
+            <p class="game-desc">Collect all the gold and escape before the guards catch you! Use digging to trap enemies and create paths.</p>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="loading-modal" aria-hidden="true">
+        <div class="modal__overlay" tabindex="-1" data-micromodal-close>
+            <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="Loading">
+                <header class="modal__header">
+                    <div class="modal__title" id="loading-modal-title">Loading...</div>
+                </header>
+                <main class="modal__content" id="loading-modal-content">
+                    <div class="meter">
+                        <div class="progress"></div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="options-modal" aria-hidden="true">
+        <div class="modal__overlay" tabindex="-1" data-micromodal-close>
+            <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="Options">
+                <header class="modal__header">
+                    <span class="modal__title" id="options-modal-title">Options</span>
+                    <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+                </header>
+                <main class="modal__content" id="options-modal-content"></main>
+                <footer class="modal__footer">
+                    <button class="modal__btn" data-micromodal-close aria-label="Close">Close</button>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="save-modal" aria-hidden="true">
+        <div class="modal__overlay" tabindex="-1" data-micromodal-close>
+            <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="Save Disk">
+                <header class="modal__header">
+                    <span class="modal__title" id="save-modal-title">Save Disk</span>
+                    <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+                </header>
+                <main class="modal__content" id="save-modal-content">
+                    <form action="#" onsubmit="return false;">
+                        <h3>Save to Browser</h3>
+                        Save Name: <input type="text" name="name" id="save_name">
+                        <button class="modal__btn" onclick="Apple2.doSave()" aria-label="Save">Save</button>
+                    </form>
+                    <hr>
+                    <h3>Download to Local Disk</h3>
+                </main>
+                <footer class="modal__footer">
+                    <a id="local_save_link" class="button">Download</a>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="load-modal" aria-hidden="true">
+        <div class="modal__overlay" tabindex="-1" data-micromodal-close>
+            <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="Load Disk">
+                <header class="modal__header">
+                    <span class="modal__title" id="load-modal-title">Load Disk</span>
+                    <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+                </header>
+                <main class="modal__content" id="load-modal-content">
+                    <table>
+                        <tr>
+                            <td>
+                                <select id="category_select" multiple="multiple" onchange="Apple2.selectCategory(event)"></select>
+                            </td>
+                            <td>
+                                <select id="disk_select" multiple="multiple" onchange="Apple2.selectDisk(event)" ondblclick="Apple2.clickDisk(event)"></select>
+                            </td>
+                        </tr>
+                    </table>
+                    <form action="#">
+                        <input type="file" id="local_file">
+                        <div id="local_file_address_input" style="display: none">
+                            $ <input id="local_file_address">
+                        </div>
+                    </form>
+                </main>
+                <footer class="modal__footer">
+                    <button class="modal__btn" data-micromodal-close aria-label="Cancel">Cancel</button>
+                    <button class="modal__btn" onclick="Apple2.doLoad(event)" aria-label="Open">Open</button>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="alert-modal" aria-hidden="true">
+        <div class="modal__overlay" tabindex="-1" data-micromodal-close>
+            <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="Alert">
+                <header class="modal__header">
+                    <span class="modal__title" id="alert-modal-title">Alert</span>
+                    <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+                </header>
+                <main class="modal__content" id="alert-modal-content">
+                    <div class="message"></div>
+                </main>
+                <footer class="modal__footer">
+                    <button class="modal__btn" data-micromodal-close aria-label="Close">Close</button>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!-- SVG Filter for green monitor -->
+    <svg width="0" height="0" xmlns="http://www.w3.org/2000/svg">
+        <filter id="green">
+            <feColorMatrix type="matrix" values="0.0 0.0 0.0 0.0 0  0.0 1.0 0.0 0.0 0  0.0 0.0 0.5 0.0 0  0.0 0.0 0.0 1.0 0"/>
+        </filter>
+    </svg>
+
+    <!-- Emulator Script -->
+    <script src="dist/main2e.bundle.js"></script>
+
+    <!-- Auto-load Lode Runner -->
+    <script>
+        window.addEventListener('load', function() {
+            // Wait for emulator to initialize then load the disk
+            setTimeout(function() {
+                if (typeof Apple2 !== 'undefined') {
+                    // Try to load the disk
+                    fetch('loderunner.dsk')
+                        .then(response => response.arrayBuffer())
+                        .then(data => {
+                            if (Apple2.loadDisk) {
+                                Apple2.loadDisk(1, {
+                                    name: 'Lode Runner',
+                                    data: new Uint8Array(data)
+                                });
+                            }
+                        })
+                        .catch(err => {
+                            console.log('Auto-load failed, disk can be loaded manually', err);
+                        });
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

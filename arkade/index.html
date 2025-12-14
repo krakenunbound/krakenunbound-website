@@ -253,6 +253,14 @@
             box-shadow: 0 10px 40px rgba(255, 215, 0, 0.4);
         }
 
+        .game-card.lode-runner {
+            border-color: #ff8c00;
+        }
+
+        .game-card.lode-runner:hover {
+            box-shadow: 0 10px 40px rgba(255, 140, 0, 0.4);
+        }
+
         .game-icon {
             font-size: 64px;
             margin-bottom: 15px;
@@ -328,6 +336,11 @@
         .ad-astra .game-title {
             color: #ffd700;
             text-shadow: 0 0 10px #ffd700;
+        }
+
+        .lode-runner .game-title {
+            color: #ff8c00;
+            text-shadow: 0 0 10px #ff8c00;
         }
 
         .game-subtitle {
@@ -758,6 +771,14 @@
                         <div class="game-subtitle">Space Trading Simulation</div>
                         <span class="game-status status-ready">READY</span>
                     </div>
+
+                    <!-- CLASSIC GAMES -->
+                    <div class="game-card lode-runner" onclick="launchGame('lode-runner')">
+                        <div class="game-icon">🏃</div>
+                        <div class="game-title">LODE RUNNER</div>
+                        <div class="game-subtitle">Apple IIe Classic (1983)</div>
+                        <span class="game-status status-ready">READY</span>
+                    </div>
                 </div>
 
                 <div class="stats-bar">
@@ -803,7 +824,8 @@
                     'spelling-kraken': { ready: true },
                     'abyssal-between': { ready: true },
                     'phrase-kraken': { ready: true },
-                    'ad-astra': { ready: true }
+                    'ad-astra': { ready: true },
+                    'lode-runner': { ready: true }
                 };
 
                 // Check if auth is bypassed (local testing mode)

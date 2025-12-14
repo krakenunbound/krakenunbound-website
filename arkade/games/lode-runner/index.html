@@ -566,6 +566,7 @@
         window.addEventListener('load', function() {
             const screen = document.getElementById('screen');
             const clickHint = document.getElementById('clickHint');
+            const localFileInput = document.getElementById('local_file');
 
             // Hide hint and focus on click
             function activateEmulator() {
@@ -593,7 +594,7 @@
 
             // Wait for emulator to fully initialize then load disk
             setTimeout(function() {
-                if (typeof Apple2 !== 'undefined' && Apple2.loadLocalFile) {
+                if (typeof Apple2 !== 'undefined') {
                     // Fetch the raw .dsk file
                     fetch('loderunner.dsk')
                         .then(response => {
@@ -603,16 +604,26 @@
                             return response.arrayBuffer();
                         })
                         .then(data => {
-                            // Create a File-like object for the emulator
+                            // Create a File object and inject it via the file input
                             const blob = new Blob([data], { type: 'application/octet-stream' });
                             const file = new File([blob], 'Lode Runner.dsk', { type: 'application/octet-stream' });
-                            // Use the emulator's local file loader
-                            Apple2.loadLocalFile(1, file);
+
+                            // Create a DataTransfer to set files on input
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.items.add(file);
+                            localFileInput.files = dataTransfer.files;
+
+                            // Trigger change event to load the disk
+                            localFileInput.dispatchEvent(new Event('change', { bubbles: true }));
+
                             // Focus screen after disk loads
-                            setTimeout(() => screen.focus(), 500);
+                            setTimeout(() => {
+                                screen.focus();
+                                if (clickHint) clickHint.style.display = 'none';
+                            }, 1000);
                         })
                         .catch(err => {
-                            console.log('Auto-load info: Drag loderunner.dsk onto the screen to play', err);
+                            console.log('Auto-load failed, use file picker or drag/drop:', err);
                         });
                 }
             }, 1500);

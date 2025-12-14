@@ -261,15 +261,9 @@
         }
     </style>
 
-    <!-- Disk Index with Lode Runner -->
+    <!-- Empty disk index - we load via drag/drop or auto-load -->
     <script type="text/javascript">
-        disk_index = [
-            {
-                filename: 'loderunner.dsk',
-                name: 'Lode Runner',
-                category: 'Games',
-            }
-        ];
+        disk_index = [];
     </script>
 </head>
 <body class="apple2e"
@@ -541,25 +535,29 @@
     <!-- Auto-load Lode Runner -->
     <script>
         window.addEventListener('load', function() {
-            // Wait for emulator to initialize then load the disk
+            // Wait for emulator to fully initialize
             setTimeout(function() {
-                if (typeof Apple2 !== 'undefined') {
-                    // Try to load the disk
+                if (typeof Apple2 !== 'undefined' && Apple2.loadLocalFile) {
+                    // Fetch the raw .dsk file
                     fetch('loderunner.dsk')
-                        .then(response => response.arrayBuffer())
-                        .then(data => {
-                            if (Apple2.loadDisk) {
-                                Apple2.loadDisk(1, {
-                                    name: 'Lode Runner',
-                                    data: new Uint8Array(data)
-                                });
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Disk not found: ' + response.status);
                             }
+                            return response.arrayBuffer();
+                        })
+                        .then(data => {
+                            // Create a File-like object for the emulator
+                            const blob = new Blob([data], { type: 'application/octet-stream' });
+                            const file = new File([blob], 'Lode Runner.dsk', { type: 'application/octet-stream' });
+                            // Use the emulator's local file loader
+                            Apple2.loadLocalFile(1, file);
                         })
                         .catch(err => {
-                            console.log('Auto-load failed, disk can be loaded manually', err);
+                            console.log('Auto-load info: Drag loderunner.dsk onto the screen to play', err);
                         });
                 }
-            }, 1000);
+            }, 1500);
         });
     </script>
 </body>

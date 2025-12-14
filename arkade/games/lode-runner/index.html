@@ -259,6 +259,34 @@
             color: #fff;
             border-radius: 4px;
         }
+
+        /* Focus indicator for screen */
+        #screen:focus {
+            outline: 2px solid var(--kraken-accent);
+            outline-offset: 2px;
+        }
+
+        /* Click hint */
+        .click-hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 255, 255, 0.9);
+            color: #000;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            z-index: 10;
+            pointer-events: none;
+            animation: fadeOut 3s forwards;
+        }
+
+        @keyframes fadeOut {
+            0%, 70% { opacity: 1; }
+            100% { opacity: 0; visibility: hidden; }
+        }
     </style>
 
     <!-- Empty disk index - we load via drag/drop or auto-load -->
@@ -292,7 +320,8 @@
 
         <div id="display">
             <div class="overscan">
-                <canvas id="screen" width="592" height="416" tabindex="-1"></canvas>
+                <canvas id="screen" width="592" height="416" tabindex="0"></canvas>
+                <div class="click-hint" id="clickHint">Click here to play</div>
             </div>
         </div>
 
@@ -532,10 +561,37 @@
     <!-- Emulator Script -->
     <script src="dist/main2e.bundle.js"></script>
 
-    <!-- Auto-load Lode Runner -->
+    <!-- Auto-load Lode Runner and keyboard fix -->
     <script>
         window.addEventListener('load', function() {
-            // Wait for emulator to fully initialize
+            const screen = document.getElementById('screen');
+            const clickHint = document.getElementById('clickHint');
+
+            // Hide hint and focus on click
+            function activateEmulator() {
+                screen.focus();
+                if (clickHint) clickHint.style.display = 'none';
+            }
+
+            // Focus the canvas on click anywhere in the emulator area
+            document.querySelector('.outer').addEventListener('click', function(e) {
+                // Don't steal focus from buttons/inputs
+                if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT') {
+                    activateEmulator();
+                }
+            });
+
+            // Also hide hint on any keypress
+            document.addEventListener('keydown', function() {
+                if (clickHint) clickHint.style.display = 'none';
+            }, { once: true });
+
+            // Auto-focus the screen on load
+            setTimeout(function() {
+                screen.focus();
+            }, 500);
+
+            // Wait for emulator to fully initialize then load disk
             setTimeout(function() {
                 if (typeof Apple2 !== 'undefined' && Apple2.loadLocalFile) {
                     // Fetch the raw .dsk file
@@ -552,6 +608,8 @@
                             const file = new File([blob], 'Lode Runner.dsk', { type: 'application/octet-stream' });
                             // Use the emulator's local file loader
                             Apple2.loadLocalFile(1, file);
+                            // Focus screen after disk loads
+                            setTimeout(() => screen.focus(), 500);
                         })
                         .catch(err => {
                             console.log('Auto-load info: Drag loderunner.dsk onto the screen to play', err);

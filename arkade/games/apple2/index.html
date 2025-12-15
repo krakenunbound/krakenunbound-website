@@ -987,13 +987,14 @@
             }
         }
 
-        // Wait for emulator to be fully ready (CPU running)
-        function waitForEmulator(timeout = 5000) {
+        // Wait for emulator to be fully ready
+        function waitForEmulator(timeout = 10000) {
             return new Promise((resolve, reject) => {
                 const start = Date.now();
                 const check = () => {
-                    // Check if Apple2 API is available and initialized
-                    if (typeof Apple2 !== 'undefined' && Apple2.doLoadHTTP) {
+                    // Check if Apple2 API and handleDrop are available
+                    if (typeof Apple2 !== 'undefined' && Apple2.handleDrop) {
+                        console.log('Emulator API ready');
                         resolve();
                     } else if (Date.now() - start > timeout) {
                         reject(new Error('Emulator initialization timeout'));
@@ -1005,16 +1006,50 @@
             });
         }
 
-        // Load a game disk into the emulator using the proper API
+        // Load a game disk by simulating a drop event
         async function loadDisk(diskUrl, driveNumber = 1) {
-            // Build absolute URL for the disk
             const baseUrl = window.location.href.replace(/\/[^\/]*$/, '/');
             const fullUrl = diskUrl.startsWith('http') ? diskUrl : baseUrl + diskUrl;
 
             console.log('Loading disk into drive', driveNumber, ':', fullUrl);
 
-            // Use the emulator's built-in HTTP loader
-            return Apple2.doLoadHTTP(driveNumber, fullUrl);
+            // Fetch the disk file
+            const response = await fetch(fullUrl);
+            if (!response.ok) {
+                throw new Error('Failed to load disk: ' + response.status);
+            }
+            const arrayBuffer = await response.arrayBuffer();
+
+            // Create a File object from the data
+            const filename = diskUrl.split('/').pop();
+            const blob = new Blob([arrayBuffer], { type: 'application/octet-stream' });
+            const file = new File([blob], filename, { type: 'application/octet-stream' });
+
+            // Create a synthetic drop event with the file
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+
+            const dropEvent = new DragEvent('drop', {
+                bubbles: true,
+                cancelable: true,
+                dataTransfer: dataTransfer
+            });
+
+            // Simulate drop on the appropriate drive element
+            const driveSelector = driveNumber === 1 ? '.disk:first-child' : '.disk:last-child';
+            const driveElement = document.querySelector(driveSelector);
+
+            if (driveElement) {
+                console.log('Simulating drop on drive', driveNumber);
+                Apple2.handleDrop(driveNumber, dropEvent);
+            } else {
+                // Fallback: drop on body (drive 0 = auto-select)
+                console.log('Simulating drop on body');
+                Apple2.handleDrop(0, dropEvent);
+            }
+
+            // Wait a moment for the disk to load
+            await new Promise(resolve => setTimeout(resolve, 500));
         }
 
         // Main game loader
@@ -1079,10 +1114,6 @@
         playOverlay.addEventListener('click', function() {
             playOverlay.classList.add('hidden');
             screen.focus();
-            // Reset and run the emulator when clicking play
-            if (typeof Apple2 !== 'undefined' && Apple2.reset) {
-                Apple2.reset();
-            }
         });
 
         // Also focus on screen click

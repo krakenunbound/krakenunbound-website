@@ -285,7 +285,7 @@
 
         <div id="display">
             <div class="overscan">
-                <canvas id="screen" width="592" height="416" tabindex="0"></canvas>
+                <canvas id="screen" width="592" height="416" tabindex="-1"></canvas>
             </div>
         </div>
 
@@ -537,5 +537,45 @@
     </svg>
 
     <script src="dist/main2e.bundle.js"></script>
+    <script>
+        // Keyboard input helper for Apple IIe emulator
+        document.addEventListener('DOMContentLoaded', function() {
+            const display = document.getElementById('display');
+
+            // Click on display to ensure keyboard focus goes to window
+            display.addEventListener('click', function() {
+                if (document.activeElement && document.activeElement !== document.body) {
+                    document.activeElement.blur();
+                }
+            });
+
+            // Prevent spacebar and arrow keys from scrolling the page
+            // These should go to the emulator instead
+            document.addEventListener('keydown', function(e) {
+                const tag = document.activeElement ? document.activeElement.tagName : '';
+                const inInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(tag);
+                const modalOpen = !!document.querySelector('.modal.is-open');
+
+                // Don't interfere with input fields or open modals
+                if (inInput || modalOpen) return;
+
+                // Prevent default for game keys
+                if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+                    e.preventDefault();
+                }
+            });
+
+            // Debug: Log first keypress to console
+            let firstKeyLogged = false;
+            window.addEventListener('keydown', function(e) {
+                if (!firstKeyLogged) {
+                    console.log('[Apple2 Debug] First keypress detected:', e.code, e.key);
+                    console.log('[Apple2 Debug] Active element:', document.activeElement);
+                    console.log('[Apple2 Debug] Modal open:', !!document.querySelector('.modal.is-open'));
+                    firstKeyLogged = true;
+                }
+            }, true); // Use capture phase to log before emulator
+        });
+    </script>
 </body>
 </html>

@@ -913,42 +913,10 @@
         };
 
         let currentGame = null;
-        let emulatorReady = false;
-        let emulatorLoading = false;
-
-        // Dynamically load the emulator script only when needed
-        function loadEmulatorScript() {
-            return new Promise((resolve, reject) => {
-                if (emulatorReady) {
-                    resolve();
-                    return;
-                }
-                if (emulatorLoading) {
-                    // Wait for existing load
-                    const checkReady = setInterval(() => {
-                        if (emulatorReady) {
-                            clearInterval(checkReady);
-                            resolve();
-                        }
-                    }, 100);
-                    return;
-                }
-                emulatorLoading = true;
-                const script = document.createElement('script');
-                script.src = 'dist/main2e.bundle.js';
-                script.onload = () => {
-                    emulatorReady = true;
-                    emulatorLoading = false;
-                    resolve();
-                };
-                script.onerror = () => {
-                    emulatorLoading = false;
-                    reject(new Error('Failed to load emulator'));
-                };
-                document.body.appendChild(script);
-            });
-        }
     </script>
+
+    <!-- Emulator Script - Load statically so disk drives initialize properly -->
+    <script src="dist/main2e.bundle.js"></script>
 
     <!-- Game Loader Script -->
     <script>
@@ -987,22 +955,34 @@
             }
         }
 
-        // Wait for emulator to be fully ready
-        function waitForEmulator(timeout = 10000) {
+        // Wait for emulator disk drives to be fully initialized
+        function waitForDiskDrives(timeout = 10000) {
             return new Promise((resolve, reject) => {
                 const start = Date.now();
                 const check = () => {
-                    // Check if Apple2 API and handleDrop are available
+                    // Check if Apple2 API exists and disk operations work
+                    // We test by checking if the internal state is ready
                     if (typeof Apple2 !== 'undefined' && Apple2.handleDrop) {
-                        console.log('Emulator API ready');
-                        resolve();
+                        // Try to access the khz display which indicates emulator is running
+                        const khzEl = document.getElementById('khz');
+                        if (khzEl && khzEl.textContent && khzEl.textContent !== '0 kHz') {
+                            console.log('Emulator fully ready, CPU running');
+                            resolve();
+                        } else if (Date.now() - start > timeout) {
+                            // Timeout but API exists, try anyway
+                            console.log('Timeout waiting for CPU, trying anyway');
+                            resolve();
+                        } else {
+                            setTimeout(check, 100);
+                        }
                     } else if (Date.now() - start > timeout) {
                         reject(new Error('Emulator initialization timeout'));
                     } else {
                         setTimeout(check, 100);
                     }
                 };
-                check();
+                // Start checking after a short delay to let emulator initialize
+                setTimeout(check, 500);
             });
         }
 
@@ -1078,12 +1058,9 @@
             playOverlay.classList.add('hidden');
 
             try {
-                // Load emulator script dynamically (only on first game select)
-                await loadEmulatorScript();
-
-                // Wait for emulator to be fully initialized
+                // Wait for emulator disk drives to be fully initialized
                 loadingText.textContent = 'Starting Apple IIe...';
-                await waitForEmulator();
+                await waitForDiskDrives();
 
                 // Give UI a moment to render
                 await new Promise(resolve => setTimeout(resolve, 300));

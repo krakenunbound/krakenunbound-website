@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=640, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Apple IIe - Kraken Arkade">
     <title>Apple IIe Emulator - Kraken Arkade</title>
     <meta name="description" content="Play classic Apple IIe games - Lode Runner, Conan, and more - Kraken Arkade">
@@ -18,34 +18,24 @@
             --kraken-bg: #0a0a1a;
             --kraken-accent: #0ff;
             --kraken-secondary: #1a0a2e;
-            --kraken-purple: #a855f7;
-            --kraken-gold: #ffd700;
-        }
-
-        * {
-            box-sizing: border-box;
         }
 
         body {
             background: linear-gradient(135deg, var(--kraken-bg) 0%, var(--kraken-secondary) 50%, #0a1a2e 100%);
             min-height: 100vh;
             font-family: 'Segoe UI', system-ui, sans-serif;
-            margin: 0;
-            padding: 0;
         }
 
         .outer {
             margin: 0 auto;
             padding: 20px 0;
-            max-width: 900px;
         }
 
-        /* Header */
         #header {
             display: flex;
             align-items: center;
             gap: 20px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             padding: 0 10px;
         }
 
@@ -60,24 +50,16 @@
             gap: 8px;
         }
 
-        .back-link:hover {
-            opacity: 1;
-        }
-
-        .back-link svg {
-            width: 24px;
-            height: 24px;
-        }
+        .back-link:hover { opacity: 1; }
+        .back-link svg { width: 24px; height: 24px; }
 
         #subtitle {
             flex: 1;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            padding: 0;
             color: #fff;
         }
 
         .arkade-title {
-            font-size: 28px;
+            font-size: 24px;
             background: linear-gradient(135deg, #0ff, #f0f);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -85,182 +67,19 @@
             font-weight: bold;
         }
 
-        .arkade-subtitle {
+        .game-title {
             display: block;
             font-size: 14px;
             color: #888;
             margin-top: 2px;
         }
 
-        /* Game Library Section */
-        .game-library {
-            background: rgba(0, 20, 40, 0.8);
-            border: 1px solid #1a3a4a;
-            border-radius: 16px;
-            padding: 20px;
-            margin: 0 10px 20px;
-        }
-
-        .library-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-
-        .library-header h2 {
-            color: var(--kraken-accent);
-            font-size: 18px;
-            margin: 0;
-            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-        }
-
-        .library-header .badge {
-            background: linear-gradient(135deg, #1a3a4a, #0a2030);
-            color: #888;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-        }
-
-        /* Game Cards Grid */
-        .games-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 16px;
-        }
-
-        .game-card {
-            background: linear-gradient(135deg, #0a1525 0%, #1a2540 100%);
-            border: 2px solid #1a3a4a;
-            border-radius: 12px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .game-card:hover {
-            transform: translateY(-4px);
-            border-color: var(--kraken-accent);
-            box-shadow: 0 8px 30px rgba(0, 255, 255, 0.2);
-        }
-
-        .game-card.selected {
-            border-color: var(--kraken-gold);
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
-        }
-
-        .game-card.selected::after {
-            content: "LOADED";
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: var(--kraken-gold);
-            color: #000;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: bold;
-        }
-
-        .game-thumbnail {
-            width: 100%;
-            height: 120px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 48px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Lode Runner - Orange/Gold theme */
-        .game-card[data-game="loderunner"] .game-thumbnail {
-            background: linear-gradient(135deg, #2a1a00, #1a0a00);
-        }
-        .game-card[data-game="loderunner"] .game-thumbnail::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background:
-                repeating-linear-gradient(
-                    0deg,
-                    transparent,
-                    transparent 10px,
-                    rgba(255, 140, 0, 0.1) 10px,
-                    rgba(255, 140, 0, 0.1) 20px
-                ),
-                repeating-linear-gradient(
-                    90deg,
-                    transparent,
-                    transparent 10px,
-                    rgba(255, 140, 0, 0.1) 10px,
-                    rgba(255, 140, 0, 0.1) 20px
-                );
-        }
-        .game-card[data-game="loderunner"] .game-icon {
-            color: #ff8c00;
-            text-shadow: 0 0 20px rgba(255, 140, 0, 0.8);
-        }
-
-        /* Conan - Purple/Red barbarian theme */
-        .game-card[data-game="conan"] .game-thumbnail {
-            background: linear-gradient(135deg, #2a0a1a, #1a0020);
-        }
-        .game-card[data-game="conan"] .game-thumbnail::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at 50% 30%, rgba(168, 85, 247, 0.2) 0%, transparent 50%);
-        }
-        .game-card[data-game="conan"] .game-icon {
-            color: #a855f7;
-            text-shadow: 0 0 20px rgba(168, 85, 247, 0.8);
-        }
-
-        .game-info {
-            padding: 12px;
-        }
-
-        .game-name {
-            color: #fff;
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-
-        .game-meta {
-            color: #666;
-            font-size: 11px;
-        }
-
-        .game-year {
-            color: var(--kraken-accent);
-        }
-
-        /* Emulator Section - Hidden until game selected */
-        .emulator-section {
-            display: none;
-            padding: 0 10px;
-        }
-
-        .emulator-section.active {
-            display: block;
-        }
-
-        /* Display styling */
+        /* Dark themed display */
         .overscan {
             border-color: #1a3a4a;
             box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
-            position: relative;
         }
 
-        #screen {
-            cursor: pointer;
-        }
-
-        /* Dark buttons */
         button, a.button {
             background: linear-gradient(135deg, #1a3a4a, #0a2030);
             color: var(--kraken-accent);
@@ -272,29 +91,19 @@
             box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
         }
 
-        button:active, a.button:active {
-            background: #0a1a2a;
-        }
-
-        /* Dark insets */
         .inset {
             background: rgba(0, 20, 40, 0.6);
             border-color: #1a3a4a;
         }
 
-        /* Disk labels */
-        .disk-label {
-            color: #888;
-        }
+        .disk-label { color: #888; }
 
-        /* KHz display */
         #khz {
             background: #000;
             color: var(--kraken-accent);
             border-color: #1a3a4a;
         }
 
-        /* Reset button */
         #reset {
             background: linear-gradient(135deg, #4a1a1a, #2a0a0a);
             border-color: #f55;
@@ -305,7 +114,6 @@
             box-shadow: 0 0 15px rgba(255, 85, 85, 0.3);
         }
 
-        /* Keyboard styling */
         #keyboard .key {
             background: linear-gradient(135deg, #1a3a4a, #0a2030);
             border-left-color: #2a5a6a;
@@ -317,20 +125,12 @@
 
         #keyboard .pressed {
             background: #051520;
-            border-left-color: #1a3a4a;
-            border-top-color: #1a3a4a;
         }
 
         #keyboard .active {
             color: var(--kraken-accent);
         }
 
-        #keyboard .key-POWER,
-        #keyboard .key-POW {
-            background-color: #1a2030;
-        }
-
-        /* Modal styling */
         .modal__container {
             background: linear-gradient(135deg, #0a1525, #1a2540);
             border: 2px solid var(--kraken-accent);
@@ -338,79 +138,88 @@
 
         .modal__header {
             background: linear-gradient(135deg, #1a3a4a, #0a2030);
-            border-color: #0ff;
         }
 
-        .modal__content {
-            color: #ccc;
-        }
+        .modal__content { color: #ccc; }
 
-        /* Controls Panel */
-        .controls-panel {
+        /* Game Downloads Panel */
+        .games-panel {
             background: rgba(0, 20, 40, 0.8);
             border: 1px solid #1a3a4a;
             border-radius: 12px;
             padding: 20px;
-            margin-top: 20px;
+            margin: 20px 10px 0;
+            max-width: 620px;
         }
 
-        .controls-panel h3 {
+        .games-panel h3 {
             color: var(--kraken-accent);
             margin: 0 0 15px 0;
             font-size: 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
 
-        .controls-panel h3 .game-badge {
-            background: linear-gradient(135deg, #1a3a4a, #0a2030);
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            color: #fff;
-        }
-
-        .controls-grid {
+        .game-downloads {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 10px;
-            margin-bottom: 15px;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
         }
 
-        .control {
+        .game-item {
             background: rgba(0, 40, 60, 0.5);
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-            color: #aaa;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            border: 1px solid #1a3a4a;
+            border-radius: 8px;
+            padding: 15px;
         }
 
-        .control kbd {
-            background: var(--kraken-accent);
-            color: #000;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-family: monospace;
-            min-width: 28px;
-            text-align: center;
+        .game-item h4 {
+            color: #fff;
+            margin: 0 0 5px 0;
+            font-size: 14px;
         }
 
-        .game-description {
+        .game-item .year {
+            color: var(--kraken-accent);
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .game-item .controls {
+            font-size: 11px;
             color: #666;
-            font-size: 13px;
-            font-style: italic;
-            line-height: 1.5;
-            border-top: 1px solid #1a3a4a;
-            padding-top: 15px;
-            margin-top: 5px;
+            margin-bottom: 10px;
+            line-height: 1.4;
         }
 
-        /* Printer paper styling */
+        .download-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #1a3a4a, #0a2030);
+            color: var(--kraken-accent);
+            border: 1px solid #0ff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 12px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        .download-link:hover {
+            background: linear-gradient(135deg, #2a5a6a, #1a3a4a);
+        }
+
+        .instructions {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #1a3a4a;
+            color: #888;
+            font-size: 13px;
+        }
+
+        .instructions strong {
+            color: var(--kraken-accent);
+        }
+
+        /* Printer modal */
         #printer-modal .paper {
             width: 70em;
             height: 90ch;
@@ -435,128 +244,18 @@
         #http_url { width: 100%; }
         #save_name { width: 200px; }
 
-        /* Focus indicator for screen */
         #screen:focus {
             outline: 2px solid var(--kraken-accent);
             outline-offset: 2px;
         }
 
-        /* Loading overlay */
-        .loading-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.9);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-            border-radius: 4px;
-        }
-
-        .loading-overlay.hidden {
-            display: none;
-        }
-
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid #1a3a4a;
-            border-top-color: var(--kraken-accent);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .loading-text {
-            color: var(--kraken-accent);
-            margin-top: 15px;
-            font-size: 14px;
-        }
-
-        /* Click to play overlay */
-        .play-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 5;
-            cursor: pointer;
-            transition: opacity 0.3s;
-        }
-
-        .play-overlay.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .play-icon {
-            width: 80px;
-            height: 80px;
-            border: 3px solid var(--kraken-accent);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 15px;
-        }
-
-        .play-icon svg {
-            width: 40px;
-            height: 40px;
-            fill: var(--kraken-accent);
-            margin-left: 5px;
-        }
-
-        .play-text {
-            color: var(--kraken-accent);
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        /* Responsive */
         @media (max-width: 660px) {
-            .games-grid {
-                grid-template-columns: repeat(2, 1fr);
+            .game-downloads {
+                grid-template-columns: 1fr;
             }
-            .controls-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        /* No game selected message */
-        .select-game-prompt {
-            text-align: center;
-            padding: 60px 20px;
-            color: #666;
-        }
-
-        .select-game-prompt svg {
-            width: 64px;
-            height: 64px;
-            stroke: #1a3a4a;
-            margin-bottom: 20px;
-        }
-
-        .select-game-prompt p {
-            font-size: 16px;
-            margin: 0;
         }
     </style>
 
-    <!-- Empty disk index -->
     <script type="text/javascript">
         disk_index = [];
     </script>
@@ -571,7 +270,6 @@
             <button onClick="Apple2.exitFullScreen();">Exit Full Page</button>
         </div>
 
-        <!-- Header -->
         <div id="header">
             <a href="/arkade/" class="back-link">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -581,149 +279,115 @@
             </a>
             <div id="subtitle">
                 <span class="arkade-title">APPLE IIe</span>
-                <span class="arkade-subtitle">Classic Gaming Emulator</span>
+                <span class="game-title">Classic Gaming Emulator</span>
             </div>
         </div>
 
-        <!-- Game Library -->
-        <div class="game-library">
-            <div class="library-header">
-                <h2><i class="fas fa-gamepad"></i> Game Library</h2>
-                <span class="badge">Select a game to play</span>
-            </div>
-            <div class="games-grid" id="gamesGrid">
-                <!-- Lode Runner -->
-                <div class="game-card" data-game="loderunner" onclick="loadGame('loderunner')">
-                    <div class="game-thumbnail">
-                        <span class="game-icon"><i class="fas fa-running"></i></span>
-                    </div>
-                    <div class="game-info">
-                        <div class="game-name">Lode Runner</div>
-                        <div class="game-meta"><span class="game-year">1983</span> - Broderbund</div>
-                    </div>
-                </div>
-
-                <!-- Conan: Halls of Volta -->
-                <div class="game-card" data-game="conan" onclick="loadGame('conan')">
-                    <div class="game-thumbnail">
-                        <span class="game-icon"><i class="fas fa-fist-raised"></i></span>
-                    </div>
-                    <div class="game-info">
-                        <div class="game-name">Conan: Halls of Volta</div>
-                        <div class="game-meta"><span class="game-year">1984</span> - Datasoft</div>
-                    </div>
-                </div>
+        <div id="display">
+            <div class="overscan">
+                <canvas id="screen" width="592" height="416" tabindex="0"></canvas>
             </div>
         </div>
 
-        <!-- Emulator Section -->
-        <div class="emulator-section" id="emulatorSection">
-            <div id="display">
-                <div class="overscan">
-                    <canvas id="screen" width="592" height="416" tabindex="0"></canvas>
-                    <div class="loading-overlay" id="loadingOverlay">
-                        <div class="loading-spinner"></div>
-                        <div class="loading-text" id="loadingText">Loading game...</div>
-                    </div>
-                    <div class="play-overlay" id="playOverlay">
-                        <div class="play-icon">
-                            <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
-                        </div>
-                        <div class="play-text">Click to Play</div>
-                    </div>
-                </div>
+        <div class="inset">
+            <div class="disk"
+                 ondragover="Apple2.handleDragOver(1, event)"
+                 ondrop="Apple2.handleDrop(1, event)"
+                 ondragend="Apple2.handleDragEnd(1, event)">
+                <div class="disk-light" id="disk1"></div>
+                <button title="Load Disk" onclick="Apple2.openLoad(1, event);">
+                    <i class="fas fa-folder-open"></i>
+                </button>
+                <button title="Save Disk" onclick="Apple2.openSave(1, event);">
+                    <i class="fas fa-save"></i>
+                </button>
+                <div id="disk-label1" class="disk-label">Disk 1</div>
             </div>
-
-            <div class="inset">
-                <div class="disk"
-                     ondragover="Apple2.handleDragOver(1, event)"
-                     ondrop="Apple2.handleDrop(1, event)"
-                     ondragend="Apple2.handleDragEnd(1, event)">
-                    <div class="disk-light" id="disk1"></div>
-                    <button title="Load Disk" onclick="Apple2.openLoad(1, event);">
-                        <i class="fas fa-folder-open"></i>
-                    </button>
-                    <button title="Save Disk" onclick="Apple2.openSave(1, event);">
-                        <i class="fas fa-save"></i>
-                    </button>
-                    <div id="disk-label1" class="disk-label">Disk 1</div>
-                </div>
-                <div class="disk"
-                     ondragover="Apple2.handleDragOver(2, event)"
-                     ondrop="Apple2.handleDrop(2, event)"
-                     ondragend="Apple2.handleDragEnd(2, event)">
-                    <div class="disk-light" id="disk2"></div>
-                    <button title="Load Disk" onclick="Apple2.openLoad(2, event);">
-                        <i class="fas fa-folder-open"></i>
-                    </button>
-                    <button title="Save Disk" onclick="Apple2.openSave(2, event);">
-                        <i class="fas fa-save"></i>
-                    </button>
-                    <div id="disk-label2" class="disk-label">Disk 2</div>
-                </div>
-            </div>
-
-            <div id="reset-row">
-                <div id="controls" class="inset">
-                    <div id="khz" onclick="Apple2.toggleShowFPS()">0 kHz</div>
-                    <button id="pause-run" onclick="Apple2.pauseRun()" title="Pause/Run">
-                        <i class="fas fa-pause"></i>
-                    </button>
-                    <button id="toggle-sound" onclick="Apple2.toggleSound()" title="Toggle Sound">
-                        <i class="fas fa-volume-off"></i>
-                    </button>
-                    <div class="spacer"></div>
-                    <button onclick="Apple2.openOptions()" title="Options (F4)">
-                        <i class="fas fa-cog"></i>
-                    </button>
-                </div>
-                <div id="reset" type="button"
-                    onclick="Apple2.reset(event)"
-                    oncontextmenu="Apple2.reset(event)">
-                    Reset
-                </div>
-            </div>
-
-            <div class="inset">
-                <div id="keyboard"></div>
-            </div>
-
-            <!-- Dynamic Controls Panel -->
-            <div class="controls-panel" id="controlsPanel">
-                <h3>
-                    <i class="fas fa-keyboard"></i> Controls
-                    <span class="game-badge" id="currentGameBadge">Lode Runner</span>
-                </h3>
-                <div class="controls-grid" id="controlsGrid">
-                    <!-- Filled dynamically -->
-                </div>
-                <p class="game-description" id="gameDescription">
-                    <!-- Filled dynamically -->
-                </p>
+            <div class="disk"
+                 ondragover="Apple2.handleDragOver(2, event)"
+                 ondrop="Apple2.handleDrop(2, event)"
+                 ondragend="Apple2.handleDragEnd(2, event)">
+                <div class="disk-light" id="disk2"></div>
+                <button title="Load Disk" onclick="Apple2.openLoad(2, event);">
+                    <i class="fas fa-folder-open"></i>
+                </button>
+                <button title="Save Disk" onclick="Apple2.openSave(2, event);">
+                    <i class="fas fa-save"></i>
+                </button>
+                <div id="disk-label2" class="disk-label">Disk 2</div>
             </div>
         </div>
 
-        <!-- No game selected prompt -->
-        <div class="select-game-prompt" id="selectPrompt">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                <path d="M9 12l2 2 4-4"/>
-            </svg>
-            <p>Select a game from the library above to start playing</p>
+        <div id="reset-row">
+            <div id="controls" class="inset">
+                <div id="khz" onclick="Apple2.toggleShowFPS()">0 kHz</div>
+                <button id="pause-run" onclick="Apple2.pauseRun()" title="Pause/Run">
+                    <i class="fas fa-pause"></i>
+                </button>
+                <button id="toggle-sound" onclick="Apple2.toggleSound()" title="Toggle Sound">
+                    <i class="fas fa-volume-off"></i>
+                </button>
+                <div class="spacer"></div>
+                <button onclick="Apple2.openOptions()" title="Options (F4)">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+            <div id="reset" type="button"
+                onclick="Apple2.reset(event)"
+                oncontextmenu="Apple2.reset(event)">
+                Reset
+            </div>
+        </div>
+
+        <div class="inset">
+            <div id="keyboard"></div>
+        </div>
+
+        <!-- Game Downloads -->
+        <div class="games-panel">
+            <h3><i class="fas fa-gamepad"></i> Available Games</h3>
+            <div class="game-downloads">
+                <div class="game-item">
+                    <h4>Lode Runner</h4>
+                    <div class="year">1983 - Broderbund</div>
+                    <div class="controls">
+                        I/J/K/L = Move | U = Dig Left | O = Dig Right
+                    </div>
+                    <a href="roms/loderunner.dsk" download class="download-link">
+                        <i class="fas fa-download"></i> Download Disk
+                    </a>
+                </div>
+                <div class="game-item">
+                    <h4>Conan: Halls of Volta</h4>
+                    <div class="year">1984 - Datasoft</div>
+                    <div class="controls">
+                        Arrows = Move | Space = Attack<br>
+                        (2 disks - load Disk 2 when prompted)
+                    </div>
+                    <a href="roms/conan1.dsk" download class="download-link">
+                        <i class="fas fa-download"></i> Disk 1
+                    </a>
+                    <a href="roms/conan2.dsk" download class="download-link">
+                        <i class="fas fa-download"></i> Disk 2
+                    </a>
+                </div>
+            </div>
+            <div class="instructions">
+                <strong>How to play:</strong> Download a game disk above, then drag and drop it onto Drive 1.
+                Click on the emulator screen and press any key to boot. The emulator will start loading the game.
+            </div>
         </div>
     </div>
 
     <!-- Modals -->
     <div class="modal" id="loading-modal" aria-hidden="true">
         <div class="modal__overlay" tabindex="-1" data-micromodal-close>
-            <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="Loading">
+            <div class="modal__container" role="dialog" aria-modal="true">
                 <header class="modal__header">
-                    <div class="modal__title" id="loading-modal-title">Loading...</div>
+                    <div class="modal__title">Loading...</div>
                 </header>
-                <main class="modal__content" id="loading-modal-content">
-                    <div class="meter">
-                        <div class="progress"></div>
-                    </div>
+                <main class="modal__content">
+                    <div class="meter"><div class="progress"></div></div>
                 </main>
             </div>
         </div>
@@ -731,14 +395,14 @@
 
     <div class="modal" id="options-modal" aria-hidden="true">
         <div class="modal__overlay" tabindex="-1" data-micromodal-close>
-            <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="Options">
+            <div class="modal__container" role="dialog" aria-modal="true">
                 <header class="modal__header">
-                    <span class="modal__title" id="options-modal-title">Options</span>
-                    <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+                    <span class="modal__title">Options</span>
+                    <button class="modal__close" data-micromodal-close></button>
                 </header>
                 <main class="modal__content" id="options-modal-content"></main>
                 <footer class="modal__footer">
-                    <button class="modal__btn" data-micromodal-close aria-label="Close">Close</button>
+                    <button class="modal__btn" data-micromodal-close>Close</button>
                 </footer>
             </div>
         </div>
@@ -746,16 +410,16 @@
 
     <div class="modal" id="save-modal" aria-hidden="true">
         <div class="modal__overlay" tabindex="-1" data-micromodal-close>
-            <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="Save Disk">
+            <div class="modal__container" role="dialog" aria-modal="true">
                 <header class="modal__header">
-                    <span class="modal__title" id="save-modal-title">Save Disk</span>
-                    <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+                    <span class="modal__title">Save Disk</span>
+                    <button class="modal__close" data-micromodal-close></button>
                 </header>
-                <main class="modal__content" id="save-modal-content">
+                <main class="modal__content">
                     <form action="#" onsubmit="return false;">
                         <h3>Save to Browser</h3>
-                        Save Name: <input type="text" name="name" id="save_name">
-                        <button class="modal__btn" onclick="Apple2.doSave()" aria-label="Save">Save</button>
+                        Save Name: <input type="text" id="save_name">
+                        <button class="modal__btn" onclick="Apple2.doSave()">Save</button>
                     </form>
                     <hr>
                     <h3>Download to Local Disk</h3>
@@ -769,20 +433,16 @@
 
     <div class="modal" id="load-modal" aria-hidden="true">
         <div class="modal__overlay" tabindex="-1" data-micromodal-close>
-            <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="Load Disk">
+            <div class="modal__container" role="dialog" aria-modal="true">
                 <header class="modal__header">
-                    <span class="modal__title" id="load-modal-title">Load Disk</span>
-                    <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+                    <span class="modal__title">Load Disk</span>
+                    <button class="modal__close" data-micromodal-close></button>
                 </header>
-                <main class="modal__content" id="load-modal-content">
+                <main class="modal__content">
                     <table>
                         <tr>
-                            <td>
-                                <select id="category_select" multiple="multiple" onchange="Apple2.selectCategory(event)"></select>
-                            </td>
-                            <td>
-                                <select id="disk_select" multiple="multiple" onchange="Apple2.selectDisk(event)" ondblclick="Apple2.clickDisk(event)"></select>
-                            </td>
+                            <td><select id="category_select" multiple onchange="Apple2.selectCategory(event)"></select></td>
+                            <td><select id="disk_select" multiple onchange="Apple2.selectDisk(event)" ondblclick="Apple2.clickDisk(event)"></select></td>
                         </tr>
                     </table>
                     <form action="#">
@@ -793,8 +453,8 @@
                     </form>
                 </main>
                 <footer class="modal__footer">
-                    <button class="modal__btn" data-micromodal-close aria-label="Cancel">Cancel</button>
-                    <button class="modal__btn" onclick="Apple2.doLoad(event)" aria-label="Open">Open</button>
+                    <button class="modal__btn" data-micromodal-close>Cancel</button>
+                    <button class="modal__btn" onclick="Apple2.doLoad(event)">Open</button>
                 </footer>
             </div>
         </div>
@@ -802,16 +462,16 @@
 
     <div class="modal" id="alert-modal" aria-hidden="true">
         <div class="modal__overlay" tabindex="-1" data-micromodal-close>
-            <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="Alert">
+            <div class="modal__container" role="dialog" aria-modal="true">
                 <header class="modal__header">
-                    <span class="modal__title" id="alert-modal-title">Alert</span>
-                    <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+                    <span class="modal__title">Alert</span>
+                    <button class="modal__close" data-micromodal-close></button>
                 </header>
-                <main class="modal__content" id="alert-modal-content">
+                <main class="modal__content">
                     <div class="message"></div>
                 </main>
                 <footer class="modal__footer">
-                    <button class="modal__btn" data-micromodal-close aria-label="Close">Close</button>
+                    <button class="modal__btn" data-micromodal-close>Close</button>
                 </footer>
             </div>
         </div>
@@ -819,18 +479,18 @@
 
     <div class="modal" id="printer-modal" aria-hidden="true">
         <div class="modal__overlay" tabindex="-1" data-micromodal-close>
-            <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="Printer">
+            <div class="modal__container" role="dialog" aria-modal="true">
                 <header class="modal__header">
-                    <span class="modal__title" id="printer-modal-title">Printer</span>
-                    <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+                    <span class="modal__title">Printer</span>
+                    <button class="modal__close" data-micromodal-close></button>
                 </header>
                 <main class="modal__content" id="printer-modal-content">
                     <div class="paper" tabindex="-1"></div>
                 </main>
                 <footer class="modal__footer">
                     <a id="raw_printer_output" class="button">Download Raw Output</a>
-                    <button class="modal__btn" onclick="Apple2.clearPrinterPaper()" aria-label="Clear">Clear</button>
-                    <button class="modal__btn" data-micromodal-close aria-label="Close">Close</button>
+                    <button class="modal__btn" onclick="Apple2.clearPrinterPaper()">Clear</button>
+                    <button class="modal__btn" data-micromodal-close>Close</button>
                 </footer>
             </div>
         </div>
@@ -838,14 +498,14 @@
 
     <div class="modal" id="manage-modal" aria-hidden="true">
         <div class="modal__overlay" tabindex="-1" data-micromodal-close>
-            <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="Manage">
+            <div class="modal__container" role="dialog" aria-modal="true">
                 <header class="modal__header">
-                    <span class="modal__title" id="manage-modal-title">Manage Local Saves</span>
-                    <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+                    <span class="modal__title">Manage Local Saves</span>
+                    <button class="modal__close" data-micromodal-close></button>
                 </header>
                 <main class="modal__content" id="manage-modal-content"></main>
                 <footer class="modal__footer">
-                    <button class="modal__btn" data-micromodal-close aria-label="OK">OK</button>
+                    <button class="modal__btn" data-micromodal-close>OK</button>
                 </footer>
             </div>
         </div>
@@ -853,259 +513,29 @@
 
     <div class="modal" id="http-modal" aria-hidden="true">
         <div class="modal__overlay" tabindex="-1" data-micromodal-close>
-            <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="Load URL">
+            <div class="modal__container" role="dialog" aria-modal="true">
                 <header class="modal__header">
-                    <span class="modal__title" id="http-modal-title">Load URL</span>
-                    <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+                    <span class="modal__title">Load URL</span>
+                    <button class="modal__close" data-micromodal-close></button>
                 </header>
-                <main class="modal__content" id="http-modal-content">
+                <main class="modal__content">
                     <form action="#">
                         <input type="text" id="http_url">
                     </form>
                 </main>
                 <footer class="modal__footer">
-                    <button class="modal__btn" data-micromodal-close aria-label="OK">OK</button>
+                    <button class="modal__btn" data-micromodal-close>OK</button>
                 </footer>
             </div>
         </div>
     </div>
 
-    <!-- SVG Filter for green monitor -->
     <svg width="0" height="0" xmlns="http://www.w3.org/2000/svg">
         <filter id="green">
             <feColorMatrix type="matrix" values="0.0 0.0 0.0 0.0 0  0.0 1.0 0.0 0.0 0  0.0 0.0 0.5 0.0 0  0.0 0.0 0.0 1.0 0"/>
         </filter>
     </svg>
 
-    <!-- Game Data -->
-    <script>
-        const GAMES = {
-            loderunner: {
-                name: 'Lode Runner',
-                year: 1983,
-                publisher: 'Broderbund',
-                disks: ['roms/loderunner.dsk'],
-                controls: [
-                    { key: 'I', action: 'Up' },
-                    { key: 'J', action: 'Left' },
-                    { key: 'K', action: 'Down' },
-                    { key: 'L', action: 'Right' },
-                    { key: 'U', action: 'Dig Left' },
-                    { key: 'O', action: 'Dig Right' }
-                ],
-                description: 'Collect all the gold and escape before the guards catch you! Use digging to trap enemies and create paths through the levels. One of the most iconic puzzle-platformers of the 8-bit era.'
-            },
-            conan: {
-                name: 'Conan: Halls of Volta',
-                year: 1984,
-                publisher: 'Datasoft',
-                disks: ['roms/conan1.dsk', 'roms/conan2.dsk'],
-                controls: [
-                    { key: 'A', action: 'Left' },
-                    { key: 'D', action: 'Right' },
-                    { key: 'W', action: 'Up/Jump' },
-                    { key: 'S', action: 'Down/Duck' },
-                    { key: 'SPACE', action: 'Attack' },
-                    { key: 'Q', action: 'Throw' }
-                ],
-                description: 'As Conan the Barbarian, battle through the treacherous Halls of Volta to rescue the maiden. Fight enemies, avoid traps, and use your sword skills to survive this classic action-adventure. Insert Disk 2 when prompted.'
-            }
-        };
-
-        let currentGame = null;
-    </script>
-
-    <!-- Emulator Script - Load statically so disk drives initialize properly -->
     <script src="dist/main2e.bundle.js"></script>
-
-    <!-- Game Loader Script -->
-    <script>
-        const screen = document.getElementById('screen');
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const loadingText = document.getElementById('loadingText');
-        const playOverlay = document.getElementById('playOverlay');
-        const emulatorSection = document.getElementById('emulatorSection');
-        const selectPrompt = document.getElementById('selectPrompt');
-        const controlsGrid = document.getElementById('controlsGrid');
-        const gameDescription = document.getElementById('gameDescription');
-        const currentGameBadge = document.getElementById('currentGameBadge');
-        const localFileInput = document.getElementById('local_file');
-
-        // Update controls panel for selected game
-        function updateControlsPanel(gameId) {
-            const game = GAMES[gameId];
-            if (!game) return;
-
-            currentGameBadge.textContent = game.name;
-            gameDescription.textContent = game.description;
-
-            controlsGrid.innerHTML = game.controls.map(ctrl =>
-                `<div class="control"><kbd>${ctrl.key}</kbd> ${ctrl.action}</div>`
-            ).join('');
-        }
-
-        // Mark selected game card
-        function updateSelectedCard(gameId) {
-            document.querySelectorAll('.game-card').forEach(card => {
-                card.classList.remove('selected');
-            });
-            const selectedCard = document.querySelector(`.game-card[data-game="${gameId}"]`);
-            if (selectedCard) {
-                selectedCard.classList.add('selected');
-            }
-        }
-
-        // Wait for emulator disk drives to be fully initialized
-        function waitForDiskDrives(timeout = 10000) {
-            return new Promise((resolve, reject) => {
-                const start = Date.now();
-                const check = () => {
-                    // Check if Apple2 API exists and disk operations work
-                    // We test by checking if the internal state is ready
-                    if (typeof Apple2 !== 'undefined' && Apple2.handleDrop) {
-                        // Try to access the khz display which indicates emulator is running
-                        const khzEl = document.getElementById('khz');
-                        if (khzEl && khzEl.textContent && khzEl.textContent !== '0 kHz') {
-                            console.log('Emulator fully ready, CPU running');
-                            resolve();
-                        } else if (Date.now() - start > timeout) {
-                            // Timeout but API exists, try anyway
-                            console.log('Timeout waiting for CPU, trying anyway');
-                            resolve();
-                        } else {
-                            setTimeout(check, 100);
-                        }
-                    } else if (Date.now() - start > timeout) {
-                        reject(new Error('Emulator initialization timeout'));
-                    } else {
-                        setTimeout(check, 100);
-                    }
-                };
-                // Start checking after a short delay to let emulator initialize
-                setTimeout(check, 500);
-            });
-        }
-
-        // Load a game disk by simulating a drop event
-        async function loadDisk(diskUrl, driveNumber = 1) {
-            const baseUrl = window.location.href.replace(/\/[^\/]*$/, '/');
-            const fullUrl = diskUrl.startsWith('http') ? diskUrl : baseUrl + diskUrl;
-
-            console.log('Loading disk into drive', driveNumber, ':', fullUrl);
-
-            // Fetch the disk file
-            const response = await fetch(fullUrl);
-            if (!response.ok) {
-                throw new Error('Failed to load disk: ' + response.status);
-            }
-            const arrayBuffer = await response.arrayBuffer();
-
-            // Create a File object from the data
-            const filename = diskUrl.split('/').pop();
-            const blob = new Blob([arrayBuffer], { type: 'application/octet-stream' });
-            const file = new File([blob], filename, { type: 'application/octet-stream' });
-
-            // Create a synthetic drop event with the file
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-
-            const dropEvent = new DragEvent('drop', {
-                bubbles: true,
-                cancelable: true,
-                dataTransfer: dataTransfer
-            });
-
-            // Simulate drop on the appropriate drive element
-            const driveSelector = driveNumber === 1 ? '.disk:first-child' : '.disk:last-child';
-            const driveElement = document.querySelector(driveSelector);
-
-            if (driveElement) {
-                console.log('Simulating drop on drive', driveNumber);
-                Apple2.handleDrop(driveNumber, dropEvent);
-            } else {
-                // Fallback: drop on body (drive 0 = auto-select)
-                console.log('Simulating drop on body');
-                Apple2.handleDrop(0, dropEvent);
-            }
-
-            // Wait a moment for the disk to load
-            await new Promise(resolve => setTimeout(resolve, 500));
-        }
-
-        // Main game loader
-        async function loadGame(gameId) {
-            const game = GAMES[gameId];
-            if (!game) return;
-
-            // Prevent loading if already loading
-            if (currentGame === gameId && loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
-                return;
-            }
-
-            currentGame = gameId;
-
-            // Show emulator section, hide prompt
-            emulatorSection.classList.add('active');
-            selectPrompt.style.display = 'none';
-
-            // Update UI
-            updateSelectedCard(gameId);
-            updateControlsPanel(gameId);
-
-            // Show loading overlay
-            loadingOverlay.classList.remove('hidden');
-            loadingText.textContent = 'Initializing emulator...';
-            playOverlay.classList.add('hidden');
-
-            try {
-                // Wait for emulator disk drives to be fully initialized
-                loadingText.textContent = 'Starting Apple IIe...';
-                await waitForDiskDrives();
-
-                // Give UI a moment to render
-                await new Promise(resolve => setTimeout(resolve, 300));
-
-                loadingText.textContent = `Loading ${game.name}...`;
-
-                // Load disk(s) - drive 1 always gets first disk
-                await loadDisk(game.disks[0], 1);
-
-                // If there's a second disk, load it into drive 2
-                if (game.disks.length > 1) {
-                    loadingText.textContent = `Loading ${game.name} (Disk 2)...`;
-                    await loadDisk(game.disks[1], 2);
-                }
-
-                // Small delay then show play overlay
-                await new Promise(resolve => setTimeout(resolve, 500));
-                loadingOverlay.classList.add('hidden');
-                playOverlay.classList.remove('hidden');
-
-            } catch (error) {
-                console.error('Failed to load game:', error);
-                loadingText.textContent = 'Failed to load: ' + error.message;
-            }
-        }
-
-        // Click to play handler
-        playOverlay.addEventListener('click', function() {
-            playOverlay.classList.add('hidden');
-            screen.focus();
-        });
-
-        // Also focus on screen click
-        screen.addEventListener('click', function() {
-            screen.focus();
-        });
-
-        // Check URL for game parameter on load
-        window.addEventListener('load', function() {
-            const params = new URLSearchParams(window.location.search);
-            const gameParam = params.get('game');
-            if (gameParam && GAMES[gameParam]) {
-                setTimeout(() => loadGame(gameParam), 500);
-            }
-        });
-    </script>
 </body>
 </html>

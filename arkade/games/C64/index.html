@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Commodore 64 - Kraken Arkade">
+    <title>Commodore 64 Emulator - Kraken Arkade</title>
+    <meta name="description" content="Play classic Commodore 64 games - Altered Beast, Castlevania, Gauntlet 2, and more - Kraken Arkade">
+
+    <link rel="shortcut icon" href="/favicon.ico">
+
+    <style>
+        /* Kraken Arkade Theme */
+        :root {
+            --kraken-bg: #0a0a1a;
+            --kraken-accent: #0ff;
+            --kraken-secondary: #1a0a2e;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--kraken-bg) 0%, var(--kraken-secondary) 50%, #0a1a2e 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Header */
+        #header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 10px;
+            padding: 20px 20px 0;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .back-link {
+            color: var(--kraken-accent);
+            text-decoration: none;
+            font-size: 14px;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-link:hover { opacity: 1; }
+        .back-link svg { width: 24px; height: 24px; }
+
+        #subtitle {
+            flex: 1;
+            color: #fff;
+        }
+
+        .arkade-title {
+            font-size: 24px;
+            background: linear-gradient(135deg, #0ff, #f0f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+        }
+
+        .game-title {
+            display: block;
+            font-size: 14px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        /* Page Layout */
+        .page-wrapper {
+            display: flex;
+            gap: 15px;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Game Library Sidebar */
+        .game-library {
+            width: 180px;
+            flex-shrink: 0;
+            background: rgba(0, 15, 30, 0.9);
+            border: 1px solid #1a3a4a;
+            border-radius: 12px;
+            padding: 10px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            position: sticky;
+            top: 20px;
+        }
+
+        .game-library.collapsed {
+            width: 40px;
+            padding: 10px 5px;
+        }
+
+        .library-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #1a3a4a;
+        }
+
+        .library-header h3 {
+            color: var(--kraken-accent);
+            font-size: 12px;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .game-library.collapsed .library-header h3 {
+            display: none;
+        }
+
+        .library-toggle {
+            background: none;
+            border: none;
+            color: var(--kraken-accent);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 14px;
+        }
+
+        .game-card {
+            background: rgba(0, 30, 50, 0.6);
+            border: 1px solid #1a3a4a;
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .game-card:hover {
+            border-color: var(--kraken-accent);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .game-card.active {
+            border-color: #0f0;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        .game-card img {
+            width: 100%;
+            height: auto;
+            border-radius: 4px;
+            display: block;
+            image-rendering: pixelated;
+        }
+
+        .game-card .game-name {
+            color: #fff;
+            font-size: 11px;
+            font-weight: bold;
+            margin-top: 6px;
+            text-align: center;
+        }
+
+        .game-card .game-year {
+            color: var(--kraken-accent);
+            font-size: 9px;
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        .game-library.collapsed .game-card {
+            padding: 4px;
+        }
+
+        .game-library.collapsed .game-card img {
+            width: 32px;
+            height: 32px;
+            object-fit: cover;
+        }
+
+        .game-library.collapsed .game-name,
+        .game-library.collapsed .game-year {
+            display: none;
+        }
+
+        /* Emulator Main Area */
+        .emulator-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* EmulatorJS Container */
+        #game {
+            width: 100%;
+            height: 480px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+            background: #000;
+        }
+
+        /* Controls Panel (Right Side) */
+        .controls-panel {
+            width: 220px;
+            flex-shrink: 0;
+            background: rgba(0, 15, 30, 0.9);
+            border: 1px solid #1a3a4a;
+            border-radius: 12px;
+            padding: 12px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            position: sticky;
+            top: 20px;
+        }
+
+        .controls-panel h3 {
+            color: var(--kraken-accent);
+            font-size: 12px;
+            margin: 0 0 12px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #1a3a4a;
+            padding-bottom: 8px;
+        }
+
+        .current-game-name {
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .no-game-loaded {
+            color: #666;
+            font-size: 12px;
+            text-align: center;
+            padding: 20px 10px;
+        }
+
+        .control-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(26, 58, 74, 0.5);
+            font-size: 11px;
+        }
+
+        .control-item:last-child {
+            border-bottom: none;
+        }
+
+        .control-action {
+            color: #aaa;
+        }
+
+        .control-key {
+            color: var(--kraken-accent);
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        .game-tips {
+            background: rgba(0, 40, 60, 0.4);
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 12px;
+        }
+
+        .game-tips h4 {
+            color: #fa0;
+            font-size: 10px;
+            margin: 0 0 6px 0;
+        }
+
+        .game-tips p {
+            color: #888;
+            font-size: 10px;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .game-trivia {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #1a3a4a;
+        }
+
+        .game-trivia h4 {
+            color: #f0f;
+            font-size: 10px;
+            margin: 0 0 8px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .trivia-item {
+            color: #999;
+            font-size: 10px;
+            line-height: 1.4;
+            margin-bottom: 8px;
+            padding-left: 12px;
+            position: relative;
+        }
+
+        .trivia-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 6px;
+            width: 4px;
+            height: 4px;
+            background: #0ff;
+            border-radius: 50%;
+        }
+
+        /* Emulator Help Text */
+        .emulator-help {
+            background: rgba(0, 30, 50, 0.6);
+            border: 1px solid #1a3a4a;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            color: #888;
+            font-size: 11px;
+        }
+
+        .emulator-help h4 {
+            color: var(--kraken-accent);
+            margin: 0 0 10px 0;
+            font-size: 12px;
+        }
+
+        .emulator-help kbd {
+            background: #1a3a4a;
+            color: var(--kraken-accent);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 10px;
+        }
+
+        .help-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        /* C64 specific styling */
+        .c64-note {
+            background: rgba(100, 50, 0, 0.3);
+            border: 1px solid #c96;
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 15px;
+            color: #fc9;
+            font-size: 10px;
+        }
+
+        .c64-note strong {
+            color: #fd0;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <a href="/arkade/" class="back-link">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+            Arkade
+        </a>
+        <div id="subtitle">
+            <span class="arkade-title">Commodore 64</span>
+            <span class="game-title" id="header-game-title">Select a game from the library</span>
+        </div>
+    </div>
+
+    <div class="page-wrapper">
+        <!-- Game Library Sidebar -->
+        <div class="game-library" id="game-library">
+            <div class="library-header">
+                <h3>Games</h3>
+                <button class="library-toggle" onclick="toggleLibrary()" title="Toggle sidebar">
+                    <svg id="library-toggle-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                </button>
+            </div>
+            <div id="game-list">
+                <!-- Games will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Emulator Main Area -->
+        <div class="emulator-main">
+            <div id="game"></div>
+
+            <div class="emulator-help">
+                <h4>Emulator Controls</h4>
+                <div class="help-row"><span>Joystick</span><kbd>Arrow Keys</kbd></div>
+                <div class="help-row"><span>Fire Button</span><kbd>Z or Space</kbd></div>
+                <div class="help-row"><span>Menu</span><kbd>ESC</kbd></div>
+                <div class="help-row"><span>Save State</span><kbd>Shift+F2</kbd></div>
+                <div class="help-row"><span>Load State</span><kbd>F4</kbd></div>
+                <div class="help-row"><span>Fullscreen</span><kbd>F11</kbd></div>
+            </div>
+
+            <div class="c64-note">
+                <strong>C64 Note:</strong> Most games auto-start from disk. If not, type <kbd>LOAD"*",8,1</kbd> then <kbd>RUN</kbd>. Joystick is typically in Port 2.
+            </div>
+        </div>
+
+        <!-- Controls Panel -->
+        <div class="controls-panel">
+            <h3>Controls</h3>
+            <div id="no-game-msg" class="no-game-loaded">
+                Select a game from the library to see controls
+            </div>
+            <div id="game-controls" style="display: none;">
+                <div class="current-game-name" id="current-game-name"></div>
+                <div id="controls-list"></div>
+                <div class="game-tips" id="game-tips" style="display: none;">
+                    <h4>Tips</h4>
+                    <p id="tips-text"></p>
+                </div>
+                <div class="game-trivia" id="game-trivia" style="display: none;">
+                    <h4>Did You Know?</h4>
+                    <div id="trivia-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // GAME LIBRARY CONFIGURATION
+        // ============================================
+        const gameLibrary = [
+            {
+                id: 'alteredbeast',
+                name: 'Altered Beast',
+                year: '1989',
+                publisher: 'Activision',
+                thumbnail: 'thumbnails/alteredbeast.png',
+                rom: 'roms/Altered Beast (USA).D64',
+                controls: [
+                    { action: 'Move', key: 'Joystick / Arrows' },
+                    { action: 'Jump', key: 'Up' },
+                    { action: 'Crouch', key: 'Down' },
+                    { action: 'Punch', key: 'Fire + Direction' },
+                    { action: 'Kick', key: 'Fire + Up' },
+                    { action: 'Pause', key: 'Shift Lock' }
+                ],
+                tips: 'Defeat white two-headed wolves to get Spirit Balls. Collect 3 to transform into a beast! Each stage has a different beast form with unique powers.',
+                trivia: [
+                    'Originally a 1988 Sega arcade game with iconic "Rise from your grave!" voice.',
+                    'The C64 port impressively fits all beast transformations despite hardware limits.',
+                    'Controls were praised for adapting a 2-button game to 1-button joystick.',
+                    'Supports 2-player simultaneous play.',
+                    'The dragon beast can fly and shoot lightning!',
+                    'Beasts only get one attack in the C64 version, not two like the arcade.'
+                ]
+            },
+            {
+                id: 'castlevania',
+                name: 'Castlevania',
+                year: '1990',
+                publisher: 'Konami',
+                thumbnail: 'thumbnails/castlevania.png',
+                rom: 'roms/Castlevania (USA).D64',
+                controls: [
+                    { action: 'Move', key: 'Left / Right' },
+                    { action: 'Jump', key: 'Up' },
+                    { action: 'Crouch', key: 'Down' },
+                    { action: 'Whip', key: 'Fire (tap)' },
+                    { action: 'Sub-weapon', key: 'Fire (hold)' },
+                    { action: 'Stairs', key: 'Diagonal + Direction' },
+                    { action: 'Pause', key: 'Ctrl+P' }
+                ],
+                tips: 'Jump is mapped to UP since C64 only has one fire button. Hold fire to throw sub-weapons. Stairs require diagonal joystick movement.',
+                trivia: [
+                    'The C64 port came out 4 years after the NES original!',
+                    'Converted by Unlimited Software for Konami in 1990.',
+                    'One of the last major releases for the C64 in North America.',
+                    'Uses hearts as ammo for sub-weapons, not health.',
+                    'The whip can be upgraded twice by finding Morning Star items.',
+                    'Dracula requires 2 forms to be defeated in the final battle.'
+                ]
+            },
+            {
+                id: 'gauntlet2',
+                name: 'Gauntlet II',
+                year: '1987',
+                publisher: 'US Gold',
+                thumbnail: 'thumbnails/gauntlet2.png',
+                rom: 'roms/GAUNTL2U.D64',
+                controls: [
+                    { action: 'Move', key: '8 Directions' },
+                    { action: 'Fire', key: 'Fire Button' },
+                    { action: 'Magic', key: 'Space (keyboard)' }
+                ],
+                tips: 'Food restores health - don\'t shoot it! Generators spawn enemies until destroyed. Potions clear the screen of enemies.',
+                trivia: [
+                    'Contains all 100 levels from the arcade version!',
+                    'Developed by Gremlin Graphics, published by US Gold.',
+                    'Supports 2 simultaneous players (arcade had 4).',
+                    'Features the "It" monster that makes all enemies target you.',
+                    'Shots can bounce off walls with certain power-ups.',
+                    'Death (the Grim Reaper) drains 200 health on contact!',
+                    'Levels randomize after level 5 for endless replayability.'
+                ]
+            },
+            {
+                id: 'lunarrescue',
+                name: 'Lunar Rescue',
+                year: '1984',
+                publisher: 'Program One',
+                thumbnail: 'thumbnails/lunarrescue.png',
+                rom: 'roms/Lunar Rescue (USA).D64',
+                controls: [
+                    { action: 'Release Ship', key: 'Fire' },
+                    { action: 'Move Left/Right', key: 'Left / Right' },
+                    { action: 'Thrust (slow descent)', key: 'Fire' },
+                    { action: 'Shoot (ascent)', key: 'Fire' }
+                ],
+                tips: 'Fuel is limited! Use thrust sparingly. On the return trip, you must shoot through asteroids. Land on platforms to rescue astronauts.',
+                trivia: [
+                    'Original arcade game by Taito from 1979.',
+                    'Combines Space Invaders with Lunar Lander gameplay.',
+                    'Unofficial C64 conversion by Program One.',
+                    'Three landing platforms, six astronauts to rescue.',
+                    'Descent phase is pure skill - avoid asteroids!',
+                    'Ascent phase switches to a shooting game.'
+                ]
+            },
+            {
+                id: 'mariobros',
+                name: 'Mario Bros',
+                year: '1987',
+                publisher: 'Ocean Software',
+                thumbnail: 'thumbnails/mariobros.png',
+                rom: 'roms/Mario Bros (1987)(Ocean Software).d64',
+                controls: [
+                    { action: 'Move', key: 'Left / Right' },
+                    { action: 'Jump', key: 'Fire' }
+                ],
+                tips: 'Bump enemies from below to flip them, then kick them off! POW block hits all grounded enemies. Collect coins for bonus points.',
+                trivia: [
+                    'This is the game where Luigi first appeared as a playable character!',
+                    'Coded by Allan Shortt for Ocean Software.',
+                    'Controls were criticized for being too slippery.',
+                    'Features turtles, crabs (need 2 hits), and Fighter Flies.',
+                    'The original arcade was released in 1983 by Nintendo.',
+                    'An earlier Atari conversion from 1984 is considered better.',
+                    'Commodore User magazine accidentally gave it 9/10 (meant to be 7/10)!'
+                ]
+            },
+            {
+                id: 'ultima3',
+                name: 'Ultima III: Exodus',
+                year: '1983',
+                publisher: 'Origin Systems',
+                thumbnail: 'thumbnails/ultima3.png',
+                rom: 'roms/Ultima III - Exodus (USA).D64',
+                controls: [
+                    { action: 'Move', key: 'Arrows / [;\'/]' },
+                    { action: 'Attack', key: 'A + direction' },
+                    { action: 'Cast Spell', key: 'C' },
+                    { action: 'Enter Town/Dungeon', key: 'E' },
+                    { action: 'Get Chest', key: 'G' },
+                    { action: 'Board Ship', key: 'B' },
+                    { action: 'Talk/Transact', key: 'T' }
+                ],
+                tips: 'Visit Lord British to level up after gaining XP! Max out Wisdom for Clerics, Intelligence for Wizards, then get 45 Dexterity for reliable hits.',
+                trivia: [
+                    'First Ultima with a party system (up to 4 characters).',
+                    'Richard Garriott (Lord British) created this at age 22.',
+                    'Originally came on 3 floppy disks - lots of disk swapping!',
+                    'The SID chip music was groundbreaking for RPGs.',
+                    'Exodus is a computer, not a demon - plot twist!',
+                    'Only Exotic weapons work in the final castle.',
+                    'Fan-made "Gold" version compresses to 1 disk.'
+                ]
+            }
+        ];
+
+        let currentGame = null;
+
+        // Get game ID from URL parameter
+        function getGameFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('game');
+        }
+
+        // Toggle library sidebar
+        function toggleLibrary() {
+            const library = document.getElementById('game-library');
+            const icon = document.getElementById('library-toggle-icon');
+            library.classList.toggle('collapsed');
+            // Flip the SVG chevron direction
+            if (library.classList.contains('collapsed')) {
+                icon.innerHTML = '<path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>';
+            } else {
+                icon.innerHTML = '<path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>';
+            }
+        }
+
+        // Build the game library UI
+        function buildGameLibrary() {
+            const container = document.getElementById('game-list');
+            const selectedGameId = getGameFromURL();
+            container.innerHTML = '';
+
+            gameLibrary.forEach(function(game) {
+                const card = document.createElement('div');
+                card.className = 'game-card';
+                if (game.id === selectedGameId) {
+                    card.classList.add('active');
+                }
+                card.dataset.gameId = game.id;
+                card.onclick = function() { loadGame(game.id); };
+
+                card.innerHTML = '<img src="' + game.thumbnail + '" alt="' + game.name + '" onerror="this.style.display=\'none\'">' +
+                    '<div class="game-name">' + game.name + '</div>' +
+                    '<div class="game-year">' + game.year + '</div>';
+
+                container.appendChild(card);
+            });
+        }
+
+        // Update controls panel
+        function updateControlsPanel(game) {
+            var noGameMsg = document.getElementById('no-game-msg');
+            var gameControls = document.getElementById('game-controls');
+            var gameName = document.getElementById('current-game-name');
+            var controlsList = document.getElementById('controls-list');
+            var gameTips = document.getElementById('game-tips');
+            var tipsText = document.getElementById('tips-text');
+            var gameTrivia = document.getElementById('game-trivia');
+            var triviaList = document.getElementById('trivia-list');
+            var headerTitle = document.getElementById('header-game-title');
+
+            if (!game) {
+                noGameMsg.style.display = 'block';
+                gameControls.style.display = 'none';
+                headerTitle.textContent = 'Select a game from the library';
+                return;
+            }
+
+            noGameMsg.style.display = 'none';
+            gameControls.style.display = 'block';
+            gameName.textContent = game.name;
+            headerTitle.textContent = game.name + ' (' + game.year + ') - ' + game.publisher;
+
+            // Build controls list
+            controlsList.innerHTML = '';
+            if (game.controls) {
+                game.controls.forEach(function(ctrl) {
+                    var item = document.createElement('div');
+                    item.className = 'control-item';
+                    item.innerHTML = '<span class="control-action">' + ctrl.action + '</span>' +
+                        '<span class="control-key">' + ctrl.key + '</span>';
+                    controlsList.appendChild(item);
+                });
+            }
+
+            // Show tips if available
+            if (game.tips) {
+                gameTips.style.display = 'block';
+                tipsText.textContent = game.tips;
+            } else {
+                gameTips.style.display = 'none';
+            }
+
+            // Show trivia if available
+            if (game.trivia && game.trivia.length > 0) {
+                gameTrivia.style.display = 'block';
+                triviaList.innerHTML = '';
+                game.trivia.forEach(function(fact) {
+                    var item = document.createElement('div');
+                    item.className = 'trivia-item';
+                    item.textContent = fact;
+                    triviaList.appendChild(item);
+                });
+            } else {
+                gameTrivia.style.display = 'none';
+            }
+        }
+
+        // Load a game - navigates to URL with game parameter
+        function loadGame(gameId) {
+            window.location.href = '?game=' + gameId;
+        }
+
+        // Find game by ID
+        function findGame(gameId) {
+            for (var i = 0; i < gameLibrary.length; i++) {
+                if (gameLibrary[i].id === gameId) {
+                    return gameLibrary[i];
+                }
+            }
+            return null;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            buildGameLibrary();
+
+            var gameId = getGameFromURL();
+            if (gameId) {
+                var game = findGame(gameId);
+                if (game) {
+                    currentGame = game;
+                    updateControlsPanel(game);
+                }
+            }
+        });
+    </script>
+
+    <!-- EmulatorJS Configuration - must be before loader.js -->
+    <script>
+        var selectedGameId = new URLSearchParams(window.location.search).get('game');
+        var selectedGame = null;
+
+        // Find the game
+        var tempLibrary = [
+            { id: 'alteredbeast', rom: 'roms/Altered Beast (USA).D64' },
+            { id: 'castlevania', rom: 'roms/Castlevania (USA).D64' },
+            { id: 'gauntlet2', rom: 'roms/GAUNTL2U.D64' },
+            { id: 'lunarrescue', rom: 'roms/Lunar Rescue (USA).D64' },
+            { id: 'mariobros', rom: 'roms/Mario Bros (1987)(Ocean Software).d64' },
+            { id: 'ultima3', rom: 'roms/Ultima III - Exodus (USA).D64' }
+        ];
+
+        for (var i = 0; i < tempLibrary.length; i++) {
+            if (tempLibrary[i].id === selectedGameId) {
+                selectedGame = tempLibrary[i];
+                break;
+            }
+        }
+
+        // EmulatorJS config
+        EJS_player = '#game';
+        EJS_core = 'vice_x64sc';
+        EJS_pathtodata = 'data/';
+        EJS_startOnLoaded = true;
+
+        // Enable direct keyboard input for C64 games
+        EJS_defaultOptions = {
+            'direct-keyboard-input': true
+        };
+
+        // Only set game URL if a game is selected
+        if (selectedGame) {
+            EJS_gameUrl = selectedGame.rom;
+        } else {
+            EJS_gameUrl = '';
+        }
+    </script>
+    <script src="data/loader.js"></script>
+</body>
+</html>

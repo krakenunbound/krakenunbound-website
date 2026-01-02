@@ -261,6 +261,22 @@
             box-shadow: 0 10px 40px rgba(0, 255, 136, 0.4);
         }
 
+        .game-card.c64 {
+            border-color: #8888ff;
+        }
+
+        .game-card.c64:hover {
+            box-shadow: 0 10px 40px rgba(136, 136, 255, 0.4);
+        }
+
+        .game-card.atari2600 {
+            border-color: #ff8844;
+        }
+
+        .game-card.atari2600:hover {
+            box-shadow: 0 10px 40px rgba(255, 136, 68, 0.4);
+        }
+
         .game-icon {
             font-size: 64px;
             margin-bottom: 15px;
@@ -341,6 +357,16 @@
         .apple2 .game-title {
             color: #00ff88;
             text-shadow: 0 0 10px #00ff88;
+        }
+
+        .c64 .game-title {
+            color: #8888ff;
+            text-shadow: 0 0 10px #8888ff;
+        }
+
+        .atari2600 .game-title {
+            color: #ff8844;
+            text-shadow: 0 0 10px #ff8844;
         }
 
         .game-subtitle {
@@ -779,6 +805,20 @@
                         <div class="game-subtitle">Classic Gaming Emulator</div>
                         <span class="game-status status-ready">READY</span>
                     </div>
+
+                    <div class="game-card c64" onclick="launchGame('C64')">
+                        <div class="game-icon">💾</div>
+                        <div class="game-title">COMMODORE 64</div>
+                        <div class="game-subtitle">8-bit Home Computer</div>
+                        <span class="game-status status-ready">READY</span>
+                    </div>
+
+                    <div class="game-card atari2600" onclick="launchGame('atari2600')">
+                        <div class="game-icon">🕹️</div>
+                        <div class="game-title">ATARI 2600</div>
+                        <div class="game-subtitle">Video Computer System</div>
+                        <span class="game-status status-ready">READY</span>
+                    </div>
                 </div>
 
                 <div class="stats-bar">
@@ -825,7 +865,9 @@
                     'abyssal-between': { ready: true },
                     'phrase-kraken': { ready: true },
                     'ad-astra': { ready: true },
-                    'apple2': { ready: true }
+                    'apple2': { ready: true },
+                    'C64': { ready: true },
+                    'atari2600': { ready: true }
                 };
 
                 // Check if auth is bypassed (local testing mode)

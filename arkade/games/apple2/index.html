@@ -114,6 +114,193 @@
             box-shadow: 0 0 15px rgba(255, 85, 85, 0.3);
         }
 
+        /* Apple II shortcut buttons */
+        .shortcuts-row {
+            display: flex;
+            gap: 8px;
+            margin: 10px 10px 0;
+            flex-wrap: wrap;
+        }
+
+        .shortcut-btn {
+            background: linear-gradient(135deg, #2a1a4a, #1a0a3a);
+            border: 1px solid #a0f;
+            color: #c8f;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .shortcut-btn:hover {
+            background: linear-gradient(135deg, #3a2a5a, #2a1a4a);
+            box-shadow: 0 0 10px rgba(170, 0, 255, 0.4);
+        }
+
+        .shortcut-btn.reboot {
+            background: linear-gradient(135deg, #4a2a1a, #3a1a0a);
+            border-color: #fa0;
+            color: #fc8;
+        }
+
+        .shortcut-btn.reboot:hover {
+            box-shadow: 0 0 10px rgba(255, 170, 0, 0.4);
+        }
+
+        .shortcut-btn.swap {
+            background: linear-gradient(135deg, #1a4a2a, #0a3a1a);
+            border-color: #0f8;
+            color: #8fc;
+        }
+
+        .shortcut-btn.swap:hover {
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+        }
+
+        /* Game Library Sidebar */
+        .page-wrapper {
+            display: flex;
+            gap: 15px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .game-library {
+            width: 180px;
+            flex-shrink: 0;
+            background: rgba(0, 15, 30, 0.9);
+            border: 1px solid #1a3a4a;
+            border-radius: 12px;
+            padding: 10px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            position: sticky;
+            top: 20px;
+        }
+
+        .game-library.collapsed {
+            width: 40px;
+            padding: 10px 5px;
+        }
+
+        .library-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #1a3a4a;
+        }
+
+        .library-header h3 {
+            color: var(--kraken-accent);
+            font-size: 12px;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .game-library.collapsed .library-header h3 {
+            display: none;
+        }
+
+        .library-toggle {
+            background: none;
+            border: none;
+            color: var(--kraken-accent);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 14px;
+        }
+
+        .game-card {
+            background: rgba(0, 30, 50, 0.6);
+            border: 1px solid #1a3a4a;
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .game-card:hover {
+            border-color: var(--kraken-accent);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .game-card.active {
+            border-color: #0f0;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        .game-card img {
+            width: 100%;
+            height: auto;
+            border-radius: 4px;
+            display: block;
+            image-rendering: pixelated;
+        }
+
+        .game-card .game-name {
+            color: #fff;
+            font-size: 11px;
+            font-weight: bold;
+            margin-top: 6px;
+            text-align: center;
+        }
+
+        .game-card .game-year {
+            color: var(--kraken-accent);
+            font-size: 9px;
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        .game-card .disk-count {
+            color: #888;
+            font-size: 9px;
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        .game-library.collapsed .game-card {
+            padding: 4px;
+        }
+
+        .game-library.collapsed .game-card img {
+            width: 32px;
+            height: 32px;
+            object-fit: cover;
+        }
+
+        .game-library.collapsed .game-name,
+        .game-library.collapsed .game-year,
+        .game-library.collapsed .disk-count {
+            display: none;
+        }
+
+        .emulator-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* Loading indicator for games */
+        .game-card.loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .game-card.loading::after {
+            content: 'Loading...';
+            display: block;
+            text-align: center;
+            color: var(--kraken-accent);
+            font-size: 10px;
+            margin-top: 4px;
+        }
+
         #keyboard .key {
             background: linear-gradient(135deg, #1a3a4a, #0a2030);
             border-left-color: #2a5a6a;
@@ -141,83 +328,6 @@
         }
 
         .modal__content { color: #ccc; }
-
-        /* Game Downloads Panel */
-        .games-panel {
-            background: rgba(0, 20, 40, 0.8);
-            border: 1px solid #1a3a4a;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 10px 0;
-            max-width: 620px;
-        }
-
-        .games-panel h3 {
-            color: var(--kraken-accent);
-            margin: 0 0 15px 0;
-            font-size: 16px;
-        }
-
-        .game-downloads {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .game-item {
-            background: rgba(0, 40, 60, 0.5);
-            border: 1px solid #1a3a4a;
-            border-radius: 8px;
-            padding: 15px;
-        }
-
-        .game-item h4 {
-            color: #fff;
-            margin: 0 0 5px 0;
-            font-size: 14px;
-        }
-
-        .game-item .year {
-            color: var(--kraken-accent);
-            font-size: 12px;
-            margin-bottom: 10px;
-        }
-
-        .game-item .controls {
-            font-size: 11px;
-            color: #666;
-            margin-bottom: 10px;
-            line-height: 1.4;
-        }
-
-        .download-link {
-            display: inline-block;
-            background: linear-gradient(135deg, #1a3a4a, #0a2030);
-            color: var(--kraken-accent);
-            border: 1px solid #0ff;
-            padding: 6px 12px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-size: 12px;
-            margin-right: 5px;
-            margin-bottom: 5px;
-        }
-
-        .download-link:hover {
-            background: linear-gradient(135deg, #2a5a6a, #1a3a4a);
-        }
-
-        .instructions {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #1a3a4a;
-            color: #888;
-            font-size: 13px;
-        }
-
-        .instructions strong {
-            color: var(--kraken-accent);
-        }
 
         /* Printer modal */
         #printer-modal .paper {
@@ -249,10 +359,119 @@
             outline-offset: 2px;
         }
 
-        @media (max-width: 660px) {
-            .game-downloads {
-                grid-template-columns: 1fr;
-            }
+        /* Controls Panel (Right Side) */
+        .controls-panel {
+            width: 200px;
+            flex-shrink: 0;
+            background: rgba(0, 15, 30, 0.9);
+            border: 1px solid #1a3a4a;
+            border-radius: 12px;
+            padding: 12px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            position: sticky;
+            top: 20px;
+        }
+
+        .controls-panel h3 {
+            color: var(--kraken-accent);
+            font-size: 12px;
+            margin: 0 0 12px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #1a3a4a;
+            padding-bottom: 8px;
+        }
+
+        .current-game-name {
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .no-game-loaded {
+            color: #666;
+            font-size: 12px;
+            text-align: center;
+            padding: 20px 10px;
+        }
+
+        .control-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(26, 58, 74, 0.5);
+            font-size: 11px;
+        }
+
+        .control-item:last-child {
+            border-bottom: none;
+        }
+
+        .control-action {
+            color: #aaa;
+        }
+
+        .control-key {
+            color: var(--kraken-accent);
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        .game-tips {
+            background: rgba(0, 40, 60, 0.4);
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 12px;
+        }
+
+        .game-tips h4 {
+            color: #fa0;
+            font-size: 10px;
+            margin: 0 0 6px 0;
+        }
+
+        .game-tips p {
+            color: #888;
+            font-size: 10px;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .game-trivia {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #1a3a4a;
+        }
+
+        .game-trivia h4 {
+            color: #f0f;
+            font-size: 10px;
+            margin: 0 0 8px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .trivia-item {
+            color: #999;
+            font-size: 10px;
+            line-height: 1.4;
+            margin-bottom: 8px;
+            padding-left: 12px;
+            position: relative;
+        }
+
+        .trivia-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 6px;
+            width: 4px;
+            height: 4px;
+            background: #0ff;
+            border-radius: 50%;
         }
     </style>
 
@@ -265,12 +484,28 @@
       ondrop="Apple2.handleDrop(0, event)"
       ondragend="Apple2.handleDragEnd(0, event)">
 
-    <div class="outer">
-        <div id="exit-fullscreen">
-            <button onClick="Apple2.exitFullScreen();">Exit Full Page</button>
+    <div class="page-wrapper">
+        <!-- Game Library Sidebar -->
+        <div class="game-library" id="game-library">
+            <div class="library-header">
+                <h3>Games</h3>
+                <button class="library-toggle" onclick="toggleLibrary()" title="Toggle sidebar">
+                    <i class="fas fa-chevron-left" id="library-toggle-icon"></i>
+                </button>
+            </div>
+            <div id="game-list">
+                <!-- Games will be populated by JavaScript -->
+            </div>
         </div>
 
-        <div id="header">
+        <!-- Main Emulator Area -->
+        <div class="emulator-main">
+            <div class="outer">
+                <div id="exit-fullscreen">
+                    <button onClick="Apple2.exitFullScreen();">Exit Full Page</button>
+                </div>
+
+                <div id="header">
             <a href="/arkade/" class="back-link">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M19 12H5M12 19l-7-7 7-7"/>
@@ -343,41 +578,56 @@
             <div id="keyboard"></div>
         </div>
 
-        <!-- Game Downloads -->
-        <div class="games-panel">
-            <h3><i class="fas fa-gamepad"></i> Available Games</h3>
-            <div class="game-downloads">
-                <div class="game-item">
-                    <h4>Lode Runner</h4>
-                    <div class="year">1983 - Broderbund</div>
-                    <div class="controls">
-                        I/J/K/L = Move | U = Dig Left | O = Dig Right
-                    </div>
-                    <a href="roms/loderunner.dsk" download class="download-link">
-                        <i class="fas fa-download"></i> Download Disk
-                    </a>
+        <!-- Apple II Shortcut Buttons -->
+        <div class="shortcuts-row">
+            <button class="shortcut-btn reboot" onclick="appleShortcut('reboot')" title="Open Apple + Ctrl + Reset - Full reboot">
+                <i class="fas fa-power-off"></i> Reboot
+            </button>
+            <button class="shortcut-btn swap" onclick="appleShortcut('swapDrives')" title="Swap disks between Drive 1 and Drive 2">
+                <i class="fas fa-exchange-alt"></i> Swap Drives
+            </button>
+            <button class="shortcut-btn" onclick="appleShortcut('ctrlC')" title="Ctrl+C - Break/Stop program">
+                Ctrl+C
+            </button>
+            <button class="shortcut-btn" onclick="appleShortcut('ctrlK')" title="Ctrl+K - Keyboard mode (Lode Runner)">
+                Ctrl+K
+            </button>
+            <button class="shortcut-btn" onclick="appleShortcut('ctrlJ')" title="Ctrl+J - Joystick mode (Lode Runner)">
+                Ctrl+J
+            </button>
+            <button class="shortcut-btn" onclick="appleShortcut('ctrlS')" title="Ctrl+S - Toggle sound">
+                Ctrl+S
+            </button>
+            <button class="shortcut-btn" onclick="appleShortcut('ctrlR')" title="Ctrl+R - End game (Lode Runner)">
+                Ctrl+R
+            </button>
+        </div>
+
+            </div> <!-- end .outer -->
+        </div> <!-- end .emulator-main -->
+
+        <!-- Controls Panel (Right Side) -->
+        <div class="controls-panel" id="controls-panel">
+            <h3>Controls</h3>
+            <div id="controls-content">
+                <div class="no-game-loaded" id="no-game-msg">
+                    Select a game to see controls
                 </div>
-                <div class="game-item">
-                    <h4>Conan: Halls of Volta</h4>
-                    <div class="year">1984 - Datasoft</div>
-                    <div class="controls">
-                        Arrows = Move | Space = Attack<br>
-                        (2 disks - load Disk 2 when prompted)
+                <div id="game-controls" style="display: none;">
+                    <div class="current-game-name" id="current-game-name"></div>
+                    <div id="controls-list"></div>
+                    <div class="game-tips" id="game-tips" style="display: none;">
+                        <h4>Tips</h4>
+                        <p id="tips-text"></p>
                     </div>
-                    <a href="roms/conan1.dsk" download class="download-link">
-                        <i class="fas fa-download"></i> Disk 1
-                    </a>
-                    <a href="roms/conan2.dsk" download class="download-link">
-                        <i class="fas fa-download"></i> Disk 2
-                    </a>
+                    <div class="game-trivia" id="game-trivia" style="display: none;">
+                        <h4>Did You Know?</h4>
+                        <div id="trivia-list"></div>
+                    </div>
                 </div>
-            </div>
-            <div class="instructions">
-                <strong>How to play:</strong> Download a game disk above, then drag and drop it onto Drive 1.
-                Click on the emulator screen and press any key to boot. The emulator will start loading the game.
             </div>
         </div>
-    </div>
+    </div> <!-- end .page-wrapper -->
 
     <!-- Modals -->
     <div class="modal" id="loading-modal" aria-hidden="true">
@@ -538,44 +788,453 @@
 
     <script src="dist/main2e.bundle.js"></script>
     <script>
-        // Keyboard input helper for Apple IIe emulator
-        document.addEventListener('DOMContentLoaded', function() {
-            const display = document.getElementById('display');
+        // ============================================
+        // GAME LIBRARY CONFIGURATION
+        // ============================================
+        const gameLibrary = [
+            {
+                id: 'loderunner',
+                name: 'Lode Runner',
+                year: '1983',
+                publisher: 'Broderbund',
+                thumbnail: 'thumbnails/loderunner.png',
+                disks: [
+                    { drive: 1, file: 'roms/loderunner.dsk', label: 'Lode Runner' }
+                ],
+                controls: [
+                    { action: 'Move Left', key: 'J / D-Pad' },
+                    { action: 'Move Right', key: 'L / D-Pad' },
+                    { action: 'Climb Up', key: 'I / D-Pad' },
+                    { action: 'Climb Down', key: 'K / D-Pad' },
+                    { action: 'Dig Left', key: 'U / LB' },
+                    { action: 'Dig Right', key: 'O / RB' },
+                    { action: 'Start Game', key: 'Space' },
+                    { action: 'Keyboard Mode', key: 'Ctrl+K' },
+                    { action: 'Joystick Mode', key: 'Ctrl+J' }
+                ],
+                tips: 'Press Ctrl+K for keyboard or Ctrl+J for joystick/gamepad. Tested with Xbox controller. Collect all gold, then reach the top to escape!',
+                trivia: [
+                    'Ctrl+^ (Ctrl+Shift+6): Skip to next level!',
+                    'Ctrl+@ (Ctrl+Shift+2): Gain an extra life!',
+                    'Ctrl+A: Abort your man if you get stuck.',
+                    'ESC: Pause the game.',
+                    '[ and ]: Slow down or speed up the game.',
+                    'Ctrl+E from title screen: Access the Level Editor!',
+                    'In the editor, press P then enter a level number (001-150) to play any level.',
+                    'Lode Runner has 150 built-in levels.',
+                    'The game was created by Douglas E. Smith while he was a student at the University of Washington.',
+                    'It was one of the first games to include a level editor for players.'
+                ]
+            },
+            {
+                id: 'conan',
+                name: 'Conan: Halls of Volta',
+                year: '1984',
+                publisher: 'Datasoft',
+                thumbnail: 'thumbnails/conan.png',
+                disks: [
+                    { drive: 1, file: 'roms/Conan Halls of Volta/Conancracked1.dsk', label: 'Conan Disk 1' },
+                    { drive: 2, file: 'roms/Conan Halls of Volta/Conancracked2.dsk', label: 'Conan Disk 2' }
+                ],
+                controls: [
+                    { action: 'Jump/Somersault', key: 'Q' },
+                    { action: 'Climb Up', key: 'A' },
+                    { action: 'Climb Down', key: 'Z' },
+                    { action: 'Move Left', key: '← Arrow' },
+                    { action: 'Move Right', key: '→ Arrow' },
+                    { action: 'Throw Sword', key: 'Space' }
+                ],
+                tips: 'Tap arrow once to jog, twice to run. Run before jumping for longer distances! Use "Swap Drives" when prompted for next disk.',
+                trivia: [
+                    'Conan doesn\'t jump - he somersaults! If he falls, he launches into a dive.',
+                    'You start with 10 boomerang swords that return after throwing.',
+                    'An "Avian Ally" bird occasionally appears to help you.',
+                    'Enemies include bats, scorpions, giant ants, fire-breathing dragons, and floating eyeballs.',
+                    'Volta\'s castle has 7 levels with lava pits, geysers, spike pits, and floating platforms.',
+                    'When you die, a random close-up picture appears with a witty caption like "Bats in your Belfry".',
+                    'The name "Volta" comes from the huge electrical generator in his castle.',
+                    'In Bulgaria, this game was released as "The Good Knight" since Conan was unknown there.',
+                    'A ZX Spectrum version was advertised but never actually released.',
+                    'There\'s a known bug in the Apple II version on level 6!'
+                ]
+            },
+            {
+                id: 'digdug',
+                name: 'Dig Dug',
+                year: '1984',
+                publisher: 'Atari/Namco',
+                thumbnail: 'thumbnails/digdug.png',
+                disks: [
+                    { drive: 1, file: 'roms/digdug/dig dug 13k file PRODOS (san inc pack).dsk', label: 'Dig Dug' }
+                ],
+                controls: [
+                    { action: 'Move Up', key: 'I / D-Pad' },
+                    { action: 'Move Down', key: 'K / D-Pad' },
+                    { action: 'Move Left', key: 'J / D-Pad' },
+                    { action: 'Move Right', key: 'L / D-Pad' },
+                    { action: 'Pump/Dig', key: 'Space / Button' },
+                    { action: 'Keyboard Mode', key: 'Ctrl+K' },
+                    { action: 'Joystick Mode', key: 'Ctrl+J' }
+                ],
+                tips: 'Dig tunnels and inflate enemies with your pump until they pop! Drop rocks on enemies for bonus points.',
+                trivia: [
+                    'The main character is named Taizo Hori - a pun on "Horitai zo" meaning "I want to dig!" in Japanese.',
+                    'Taizo Hori is believed to be the father of Mr. Driller from the later Namco game series.',
+                    'The music only plays when you\'re moving - stand still and it stops!',
+                    'Composer Yuriko Keino couldn\'t make realistic footstep sounds, so she made a melody instead.',
+                    'Dig Dug earned $520 million in arcade sales in 1982 alone.',
+                    'The Pooka enemy name comes from "Puka Puka" - Japanese onomatopoeia for inflating.',
+                    'Level 256 is a kill screen - an enemy spawns right on top of you!',
+                    'Dig Dug appears in the movie Wreck-It Ralph (2012).',
+                    'Namco marketed it as a "strategic digging game" to differentiate from Pac-Man.',
+                    'Over 22,000 arcade cabinets were sold in the US by end of 1982.'
+                ]
+            },
+            {
+                id: 'seadragon',
+                name: 'Sea Dragon',
+                year: '1982',
+                publisher: 'Adventure Int.',
+                thumbnail: 'thumbnails/seadragon.png',
+                disks: [
+                    { drive: 1, file: 'roms/Seadragon.dsk', label: 'Sea Dragon' }
+                ],
+                controls: [
+                    { action: 'Move Up', key: 'I / Joystick' },
+                    { action: 'Move Down', key: 'K / Joystick' },
+                    { action: 'Move Left', key: 'J / Joystick' },
+                    { action: 'Move Right', key: 'L / Joystick' },
+                    { action: 'Fire Torpedo', key: 'Space / Button' },
+                    { action: 'Extra Air Cheat', key: 'Ctrl+J' }
+                ],
+                tips: 'Surface periodically to refill air! Plan ahead - you can\'t always surface in underwater caverns. Torpedoes fire forward and upward only.',
+                trivia: [
+                    'Inspired by the arcade game Scramble (1981) but set underwater.',
+                    'The Apple II version features digitized speech - a technical achievement for the 1-bit speaker!',
+                    'Voice lines include "Sea Dragon!", "Air level critical!", and "Approaching maximum damage!"',
+                    'Written by Wayne Westmoreland and Terry Gilman for the TRS-80, then ported to Apple II by John Anderson.',
+                    'Ctrl+J gives you 9999 air units instead of the default 6000!',
+                    'The TRS-80 Color Computer version had a dancing sailor on the title screen.',
+                    'Wayne Westmoreland placed the game in the public domain in 1995.',
+                    'One of the most popular games for the TRS-80 computer.',
+                    'You can only have 2 torpedoes on screen at once.',
+                    'The submarine responds slowly due to simulated underwater inertia.'
+                ]
+            }
+        ];
 
-            // Click on display to ensure keyboard focus goes to window
-            display.addEventListener('click', function() {
-                if (document.activeElement && document.activeElement !== document.body) {
-                    document.activeElement.blur();
+        let currentGame = null;
+
+        // Toggle library sidebar
+        function toggleLibrary() {
+            const library = document.getElementById('game-library');
+            const icon = document.getElementById('library-toggle-icon');
+            library.classList.toggle('collapsed');
+            if (library.classList.contains('collapsed')) {
+                icon.classList.remove('fa-chevron-left');
+                icon.classList.add('fa-chevron-right');
+            } else {
+                icon.classList.remove('fa-chevron-right');
+                icon.classList.add('fa-chevron-left');
+            }
+        }
+
+        // Build the game library UI
+        function buildGameLibrary() {
+            const container = document.getElementById('game-list');
+            container.innerHTML = '';
+
+            gameLibrary.forEach(function(game) {
+                const card = document.createElement('div');
+                card.className = 'game-card';
+                card.dataset.gameId = game.id;
+                card.onclick = function() { loadGame(game.id); };
+
+                card.innerHTML = '<img src="' + game.thumbnail + '" alt="' + game.name + '" onerror="this.src=\'img/logoicon.png\'">' +
+                    '<div class="game-name">' + game.name + '</div>' +
+                    '<div class="game-year">' + game.year + '</div>' +
+                    '<div class="disk-count">' + game.disks.length + ' disk' + (game.disks.length > 1 ? 's' : '') + '</div>';
+
+                container.appendChild(card);
+            });
+        }
+
+        // Update controls panel
+        function updateControlsPanel(game) {
+            var noGameMsg = document.getElementById('no-game-msg');
+            var gameControls = document.getElementById('game-controls');
+            var gameName = document.getElementById('current-game-name');
+            var controlsList = document.getElementById('controls-list');
+            var gameTips = document.getElementById('game-tips');
+            var tipsText = document.getElementById('tips-text');
+            var gameTrivia = document.getElementById('game-trivia');
+            var triviaList = document.getElementById('trivia-list');
+
+            if (!game) {
+                noGameMsg.style.display = 'block';
+                gameControls.style.display = 'none';
+                return;
+            }
+
+            noGameMsg.style.display = 'none';
+            gameControls.style.display = 'block';
+            gameName.textContent = game.name;
+
+            // Build controls list
+            controlsList.innerHTML = '';
+            if (game.controls) {
+                game.controls.forEach(function(ctrl) {
+                    var item = document.createElement('div');
+                    item.className = 'control-item';
+                    item.innerHTML = '<span class="control-action">' + ctrl.action + '</span>' +
+                        '<span class="control-key">' + ctrl.key + '</span>';
+                    controlsList.appendChild(item);
+                });
+            }
+
+            // Show tips if available
+            if (game.tips) {
+                gameTips.style.display = 'block';
+                tipsText.textContent = game.tips;
+            } else {
+                gameTips.style.display = 'none';
+            }
+
+            // Show trivia if available
+            if (game.trivia && game.trivia.length > 0) {
+                gameTrivia.style.display = 'block';
+                triviaList.innerHTML = '';
+                game.trivia.forEach(function(fact) {
+                    var item = document.createElement('div');
+                    item.className = 'trivia-item';
+                    item.textContent = fact;
+                    triviaList.appendChild(item);
+                });
+            } else {
+                gameTrivia.style.display = 'none';
+            }
+        }
+
+        // Load a game
+        function loadGame(gameId) {
+            var game = null;
+            for (var i = 0; i < gameLibrary.length; i++) {
+                if (gameLibrary[i].id === gameId) {
+                    game = gameLibrary[i];
+                    break;
                 }
+            }
+            if (!game) return;
+
+            // Update UI
+            var cards = document.querySelectorAll('.game-card');
+            for (var i = 0; i < cards.length; i++) {
+                cards[i].classList.remove('active');
+                if (cards[i].dataset.gameId === gameId) {
+                    cards[i].classList.add('active', 'loading');
+                }
+            }
+
+            // Load disks
+            var io = Apple2.apple2.getIO();
+            var disk2 = io.getSlot(6);
+
+            var loadPromises = [];
+            game.disks.forEach(function(diskInfo) {
+                var promise = fetch(diskInfo.file)
+                    .then(function(response) { return response.arrayBuffer(); })
+                    .then(function(arrayBuffer) {
+                        var fileName = diskInfo.file.split('/').pop();
+                        var ext = fileName.split('.').pop().toLowerCase();
+                        var name = fileName.replace('.' + ext, '');
+                        return disk2.setBinary(diskInfo.drive, name, ext, arrayBuffer)
+                            .then(function() {
+                                var labelEl = document.getElementById('disk-label' + diskInfo.drive);
+                                if (labelEl) labelEl.textContent = diskInfo.label;
+                            });
+                    });
+                loadPromises.push(promise);
             });
 
-            // Prevent spacebar and arrow keys from scrolling the page
-            // These should go to the emulator instead
-            document.addEventListener('keydown', function(e) {
-                const tag = document.activeElement ? document.activeElement.tagName : '';
-                const inInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(tag);
-                const modalOpen = !!document.querySelector('.modal.is-open');
+            Promise.all(loadPromises).then(function() {
+                currentGame = game;
+                updateControlsPanel(game);
+                appleShortcut('reboot');
 
-                // Don't interfere with input fields or open modals
-                if (inInput || modalOpen) return;
+                // Remove loading state
+                var cards = document.querySelectorAll('.game-card');
+                for (var i = 0; i < cards.length; i++) {
+                    cards[i].classList.remove('loading');
+                }
+            }).catch(function(err) {
+                alert('Error loading game: ' + err.message);
+                var cards = document.querySelectorAll('.game-card');
+                for (var i = 0; i < cards.length; i++) {
+                    cards[i].classList.remove('loading');
+                }
+            });
+        }
 
-                // Prevent default for game keys
-                if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+        // Initialize game library when DOM is ready
+        document.addEventListener('DOMContentLoaded', buildGameLibrary);
+
+        // ============================================
+        // APPLE II SHORTCUT BUTTON HANDLER
+        // ============================================
+        function appleShortcut(action) {
+            if (typeof Apple2 === 'undefined' || !Apple2.apple2) return;
+            var io = Apple2.apple2.getIO();
+            var cpu = Apple2.apple2.getCPU();
+
+            switch(action) {
+                case 'reboot':
+                    io.buttonDown(0);
+                    setTimeout(function() {
+                        cpu.reset();
+                        setTimeout(function() { io.buttonUp(0); }, 100);
+                    }, 50);
+                    break;
+                case 'ctrlC':
+                    io.keyDown(3);
+                    setTimeout(function() { io.keyUp(); }, 50);
+                    break;
+                case 'ctrlK':
+                    io.keyDown(11);
+                    setTimeout(function() { io.keyUp(); }, 50);
+                    break;
+                case 'ctrlJ':
+                    io.keyDown(10);
+                    setTimeout(function() { io.keyUp(); }, 50);
+                    break;
+                case 'ctrlS':
+                    io.keyDown(19);
+                    setTimeout(function() { io.keyUp(); }, 50);
+                    break;
+                case 'ctrlR':
+                    io.keyDown(18);
+                    setTimeout(function() { io.keyUp(); }, 50);
+                    break;
+                case 'swapDrives':
+                    var disk2 = io.getSlot(6);
+                    if (!disk2 || !disk2.getBinary || !disk2.setBinary) return;
+
+                    Promise.all([disk2.getBinary(1), disk2.getBinary(2)])
+                        .then(function(results) {
+                            var disk1Data = results[0];
+                            var disk2Data = results[1];
+                            if (!disk1Data && !disk2Data) return;
+
+                            var swapPromises = [];
+                            if (disk2Data) {
+                                swapPromises.push(disk2.setBinary(1, disk2Data.metadata.name, disk2Data.ext, disk2Data.data));
+                            }
+                            if (disk1Data) {
+                                swapPromises.push(disk2.setBinary(2, disk1Data.metadata.name, disk1Data.ext, disk1Data.data));
+                            }
+
+                            return Promise.all(swapPromises).then(function() {
+                                var label1 = document.getElementById('disk-label1');
+                                var label2 = document.getElementById('disk-label2');
+                                if (label1 && label2) {
+                                    var temp = label1.textContent;
+                                    label1.textContent = label2.textContent;
+                                    label2.textContent = temp;
+                                }
+                            });
+                        });
+                    break;
+            }
+        }
+
+        // ============================================
+        // KEYBOARD HANDLER
+        // ============================================
+        window.addEventListener('keydown', function(e) {
+            var tag = document.activeElement ? document.activeElement.tagName : '';
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+            if (document.querySelector('.modal.is-open')) return;
+
+            if (typeof Apple2 !== 'undefined' && Apple2.apple2) {
+                var io = Apple2.apple2.getIO();
+                var charCode = null;
+
+                if (e.ctrlKey && e.key.length === 1) {
+                    var upper = e.key.toUpperCase();
+                    if (upper >= 'A' && upper <= 'Z') {
+                        charCode = upper.charCodeAt(0) - 64;
+                    }
+                } else if (e.key.length === 1) {
+                    charCode = e.key.toUpperCase().charCodeAt(0);
+                }
+
+                if (e.code === 'Space') charCode = 32;
+                if (e.code === 'Enter') charCode = 13;
+                if (e.code === 'Escape') charCode = 27;
+                if (e.code === 'Backspace' || e.code === 'Delete') charCode = 127;
+                if (e.code === 'ArrowLeft') charCode = 8;
+                if (e.code === 'ArrowRight') charCode = 21;
+                if (e.code === 'ArrowUp') charCode = 11;
+                if (e.code === 'ArrowDown') charCode = 10;
+
+                if (charCode !== null) {
                     e.preventDefault();
+                    io.keyDown(charCode);
                 }
-            });
+            }
+        }, true);
 
-            // Debug: Log first keypress to console
-            let firstKeyLogged = false;
-            window.addEventListener('keydown', function(e) {
-                if (!firstKeyLogged) {
-                    console.log('[Apple2 Debug] First keypress detected:', e.code, e.key);
-                    console.log('[Apple2 Debug] Active element:', document.activeElement);
-                    console.log('[Apple2 Debug] Modal open:', !!document.querySelector('.modal.is-open'));
-                    firstKeyLogged = true;
+        window.addEventListener('keyup', function(e) {
+            if (typeof Apple2 !== 'undefined' && Apple2.apple2) {
+                Apple2.apple2.getIO().keyUp();
+            }
+        }, true);
+
+        // ============================================
+        // GAMEPAD HACK - Swap LB/RB bumper buttons
+        // The emulator maps L1->button0, R1->button1 for dig
+        // But Lode Runner has them backwards, so we swap them
+        // ============================================
+        (function() {
+            var originalGetGamepads = Navigator.prototype.getGamepads;
+
+            Navigator.prototype.getGamepads = function() {
+                var gamepads = originalGetGamepads.call(this);
+
+                // Create a modified array with swapped bumper buttons
+                var result = [];
+                for (var i = 0; i < gamepads.length; i++) {
+                    var gp = gamepads[i];
+                    if (gp) {
+                        // Create modified buttons array with swapped LB/RB
+                        var modifiedButtons = [];
+                        for (var j = 0; j < gp.buttons.length; j++) {
+                            if (j === 4) {
+                                modifiedButtons[j] = gp.buttons[5]; // LB gets RB's value
+                            } else if (j === 5) {
+                                modifiedButtons[j] = gp.buttons[4]; // RB gets LB's value
+                            } else {
+                                modifiedButtons[j] = gp.buttons[j];
+                            }
+                        }
+
+                        // Create a proxy object
+                        result[i] = {
+                            axes: gp.axes,
+                            buttons: modifiedButtons,
+                            connected: gp.connected,
+                            id: gp.id,
+                            index: gp.index,
+                            mapping: gp.mapping,
+                            timestamp: gp.timestamp
+                        };
+                    } else {
+                        result[i] = null;
+                    }
                 }
-            }, true); // Use capture phase to log before emulator
-        });
+
+                return result;
+            };
+        })();
     </script>
 </body>
 </html>

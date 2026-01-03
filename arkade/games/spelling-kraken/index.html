@@ -264,8 +264,8 @@
     <div id="setup-screen" class="glass-panel" style="display:none;">
         <h2 style="margin-bottom: 10px; color: var(--neon);">SPELLING KRAKEN</h2>
         <p style="color: #aaa; margin-bottom: 20px;">Create words from the honeycomb</p>
-        <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
-        <button class="action-btn" onclick="startGame()">PLAY</button>
+        <p style="font-size: 0.9rem; color: #888; margin: 10px 0;">Sign in through Kraken Arkade to play</p>
+        <button class="action-btn" onclick="startGame()">LOGIN VIA ARKADE</button>
     </div>
 
     <!-- Game Screen -->
@@ -308,6 +308,13 @@
     <script src="../../shared/js/arkade-theme.js"></script>
     <script>
         const API_BASE = 'https://kraken-arkade-api.krakenunbound.workers.dev';
+        const TOKEN_KEY = 'arkade_token';
+        const USER_KEY = 'arkade_user';
+
+        // Unified Arkade Auth
+        function isLoggedIn() { return !!localStorage.getItem(TOKEN_KEY); }
+        function getArkadeUsername() { return localStorage.getItem(USER_KEY); }
+
         let playerName = '';
         let puzzleData = null;
         let currentWord = '';
@@ -342,20 +349,25 @@
             initStars();
             initShootingStars();
             loadSettings();
-            const savedName = localStorage.getItem('kraken_user');
-            if (savedName) document.getElementById('playerName').value = savedName;
             document.getElementById('loading').style.display = 'none';
-            document.getElementById('setup-screen').style.display = 'flex';
+
+            // Check if logged in via Arkade - auto-start game
+            if (isLoggedIn()) {
+                playerName = getArkadeUsername().toUpperCase();
+                document.getElementById('setup-screen').style.display = 'none';
+                document.getElementById('game-screen').style.display = 'flex';
+                await loadPuzzle();
+            } else {
+                document.getElementById('setup-screen').style.display = 'flex';
+            }
         };
 
         async function startGame() {
-            const input = document.getElementById('playerName');
-            if (!input.value.trim()) return showToast('Enter your name!', true);
-            playerName = input.value.trim().toUpperCase();
-            localStorage.setItem('kraken_user', playerName);
+            // Redirect to Arkade login - all auth goes through main hub
+            window.location.href = '/arkade/?return=' + encodeURIComponent(window.location.href);
+        }
 
-            document.getElementById('setup-screen').style.display = 'none';
-            document.getElementById('game-screen').style.display = 'flex';
+        async function loadPuzzle() {
 
             try {
                 const res = await fetch(`${API_BASE}/api/spellingbee/daily`);

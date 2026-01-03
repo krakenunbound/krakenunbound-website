@@ -700,10 +700,9 @@
 
         <div id="setup" class="glass-panel" style="text-align:center;">
             <h1>WORD KRAKEN</h1>
-            <p>IDENTIFY YOURSELF:</p>
-            <input type="text" id="name-input" placeholder="NAME" autocomplete="off">
-            <br>
-            <button onclick="handleLogin()" class="action-btn" style="width: 200px;">INITIALIZE</button>
+            <p>LOGIN REQUIRED</p>
+            <p style="font-size: 0.9rem; color: #888; margin: 10px 0;">Sign in through Kraken Arkade to play</p>
+            <button onclick="handleLogin()" class="action-btn" style="width: 200px;">LOGIN VIA ARKADE</button>
             <button onclick="openScoreboard('setup')" class="action-btn" style="width: 200px; background: #333; margin-top: 10px;">LEADERBOARD</button>
             <button onclick="window.location.href='/arkade/'" class="action-btn" style="width: 200px; background: #500; margin-top: 10px;">< BACK TO ARKADE</button>
         </div>
@@ -733,12 +732,23 @@
 
     <script>
         const API_BASE = 'https://kraken-arkade-api.krakenunbound.workers.dev';
+        const TOKEN_KEY = 'arkade_token';
+        const USER_KEY = 'arkade_user';
         const rows = 6, cols = 5;
         let currentRow = 0, currentTile = 0, gameOver = false, playerName = "";
         let secretWord = "", wordTheme = "";
         const board = document.getElementById('board'), keyboard = document.getElementById('keyboard');
         const keys = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
         let lastScreen = "setup";
+
+        // Unified Arkade Auth
+        function isLoggedIn() {
+            return !!localStorage.getItem(TOKEN_KEY);
+        }
+
+        function getArkadeUsername() {
+            return localStorage.getItem(USER_KEY);
+        }
 
         // Admin settings
         let horizonPercent = parseFloat(localStorage.getItem('wordkraken_horizon') || '55');
@@ -846,10 +856,11 @@
             document.getElementById('loading').style.display = 'none';
             document.getElementById('ui-layer').style.display = 'flex';
 
-            // Pre-fill name if returning player
-            const n = localStorage.getItem('wordkraken_user');
-            if (n) {
-                document.getElementById('name-input').value = n;
+            // Check if logged in via Arkade - auto-start game
+            if (isLoggedIn()) {
+                playerName = getArkadeUsername().toUpperCase();
+                document.getElementById('setup').style.display = 'none';
+                startGame();
             }
 
             initStars();
@@ -877,13 +888,8 @@
         }
 
         function handleLogin() {
-            const i = document.getElementById('name-input');
-            if (!i.value) return showToast("IDENTIFICATION REQUIRED", true);
-            playerName = i.value.trim().toUpperCase();
-            localStorage.setItem('wordkraken_user', playerName);
-            document.getElementById('setup').style.display = 'none';
-            startMusic(); // Start music on user interaction (browser policy)
-            startGame();
+            // Redirect to Arkade login - all auth goes through main hub
+            window.location.href = '/arkade/?return=' + encodeURIComponent(window.location.href);
         }
 
         function startGame() {

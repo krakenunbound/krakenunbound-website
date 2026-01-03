@@ -606,8 +606,8 @@
     <div id="setup-screen" class="glass-panel" style="display:none;">
         <h2 style="margin-bottom: 10px; color: var(--neon-cyan);">DAILY PUZZLE</h2>
         <p style="color: #aaa; margin-bottom: 20px;">Group 16 words into 4 categories</p>
-        <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
-        <button class="action-btn" onclick="handleLogin()">PLAY TODAY'S PUZZLE</button>
+        <p style="font-size: 0.9rem; color: #888; margin: 10px 0;">Sign in through Kraken Arkade to play</p>
+        <button class="action-btn" onclick="handleLogin()">LOGIN VIA ARKADE</button>
         <button class="action-btn" style="background: #333; color: #fff;" onclick="openLeaderboard()">LEADERBOARD</button>
         <button class="action-btn" style="background: #500;" onclick="window.location.href='/arkade/'">< BACK TO ARKADE</button>
     </div>
@@ -651,6 +651,12 @@
     <script src="../../shared/js/arkade-theme.js"></script>
     <script>
         const API_BASE = 'https://kraken-arkade-api.krakenunbound.workers.dev';
+        const TOKEN_KEY = 'arkade_token';
+        const USER_KEY = 'arkade_user';
+
+        // Unified Arkade Auth
+        function isLoggedIn() { return !!localStorage.getItem(TOKEN_KEY); }
+        function getArkadeUsername() { return localStorage.getItem(USER_KEY); }
 
         let playerName = "";
         let puzzleData = null;
@@ -763,51 +769,44 @@
             await loadPuzzle();
             document.getElementById('loading').style.display = 'none';
 
-            // Pre-fill name
-            const n = localStorage.getItem('kategories_user');
-            if (n) {
-                document.getElementById('playerName').value = n;
-            }
-
-            // Check if already played today
-            const saved = localStorage.getItem(`kategories_${getToday()}`);
-            if (saved) {
-                const state = JSON.parse(saved);
-                if (state.finished) {
-                    playerName = state.playerName;
-                    solvedCategories = state.solvedCategories;
-                    mistakesLeft = state.mistakesLeft;
-                    gameFinished = true;
-                    showResults(state.won);
-                    initStars();
-                    initShootingStars();
-                    initMusic();
-                    animate();
-                    return;
-                }
-                // Restore in-progress game
-                if (state.playerName && state.activeCards && state.activeCards.length > 0) {
-                    playerName = state.playerName;
-                    activeCards = state.activeCards;
-                    solvedCategories = state.solvedCategories || [];
-                    mistakesLeft = state.mistakesLeft;
-                    document.getElementById('game-screen').style.display = 'flex';
-                    renderSolved();
-                    renderGrid();
-                    updateMistakes();
-                    initStars();
-                    initShootingStars();
-                    initMusic();
-                    animate();
-                    return;
-                }
-            }
-
-            document.getElementById('setup-screen').style.display = 'flex';
             initStars();
             initShootingStars();
             initMusic();
             animate();
+
+            // Check if logged in via Arkade
+            if (isLoggedIn()) {
+                playerName = getArkadeUsername().toUpperCase();
+
+                // Check if already played today
+                const saved = localStorage.getItem(`kategories_${getToday()}`);
+                if (saved) {
+                    const state = JSON.parse(saved);
+                    if (state.finished) {
+                        solvedCategories = state.solvedCategories;
+                        mistakesLeft = state.mistakesLeft;
+                        gameFinished = true;
+                        showResults(state.won);
+                        return;
+                    }
+                    // Restore in-progress game
+                    if (state.activeCards && state.activeCards.length > 0) {
+                        activeCards = state.activeCards;
+                        solvedCategories = state.solvedCategories || [];
+                        mistakesLeft = state.mistakesLeft;
+                        document.getElementById('game-screen').style.display = 'flex';
+                        renderSolved();
+                        renderGrid();
+                        updateMistakes();
+                        return;
+                    }
+                }
+                // Start new game
+                document.getElementById('setup-screen').style.display = 'none';
+                startGame();
+            } else {
+                document.getElementById('setup-screen').style.display = 'flex';
+            }
         };
 
         async function loadPuzzle() {
@@ -823,15 +822,8 @@
         }
 
         function handleLogin() {
-            const input = document.getElementById('playerName');
-            if (!input.value.trim()) {
-                showToast("NAME REQUIRED", true);
-                return;
-            }
-            playerName = input.value.trim().toUpperCase();
-            localStorage.setItem('kategories_user', playerName);
-            document.getElementById('setup-screen').style.display = 'none';
-            startGame();
+            // Redirect to Arkade login - all auth goes through main hub
+            window.location.href = '/arkade/?return=' + encodeURIComponent(window.location.href);
         }
 
         function startGame() {

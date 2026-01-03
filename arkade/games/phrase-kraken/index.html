@@ -699,8 +699,8 @@
     <div id="name-entry" class="glass-panel">
         <h2>Guess the Phrase</h2>
         <p style="margin-top: 15px; color: #aaa;">Famous quotes, movie lines, song lyrics, and sayings</p>
-        <input type="text" id="player-name" placeholder="Enter your name" maxlength="20">
-        <button class="action-btn" onclick="startGame()">START</button>
+        <p style="font-size: 0.9rem; color: #888; margin: 10px 0;">Sign in through Kraken Arkade to play</p>
+        <button class="action-btn" onclick="startGame()">LOGIN VIA ARKADE</button>
     </div>
 
     <!-- Game Container -->
@@ -856,6 +856,17 @@
     <script src="../../shared/js/arkade-theme.js"></script>
     <script>
         const API_BASE = '';
+        const TOKEN_KEY = 'arkade_token';
+        const USER_KEY = 'arkade_user';
+
+        // Unified Arkade Auth
+        function isLoggedIn() {
+            return !!localStorage.getItem(TOKEN_KEY);
+        }
+
+        function getArkadeUsername() {
+            return localStorage.getItem(USER_KEY);
+        }
 
         // Game State
         let playerName = '';
@@ -878,8 +889,14 @@
             loadSettings();
             initStars();
             initShootingStars();
-            loadPlayerName();
             setupKeyboard();
+
+            // Check if logged in via Arkade - auto-start game
+            if (isLoggedIn()) {
+                playerName = getArkadeUsername();
+                document.getElementById('name-entry').style.display = 'none';
+                startGameWithAuth();
+            }
         });
 
         function loadSettings() {
@@ -935,8 +952,12 @@
         }
 
         async function startGame() {
-            playerName = document.getElementById('player-name').value.trim() || 'Anonymous';
-            localStorage.setItem('krakenArkadePlayer', playerName);
+            // Redirect to Arkade login - all auth goes through main hub
+            window.location.href = '/arkade/?return=' + encodeURIComponent(window.location.href);
+        }
+
+        async function startGameWithAuth() {
+            // Called when already logged in via Arkade
 
             try {
                 const response = await fetch(`${API_BASE}/api/phrase/daily`);
